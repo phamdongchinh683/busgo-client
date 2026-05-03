@@ -64,14 +64,29 @@
             <p class="messenger__hint">Chưa có cuộc trò chuyện</p>
           } @else {
             @for (b of boxes(); track trackBox($index, b)) {
-              <button type="button" class="messenger__thread-row" (click)="openThread(b)">
-                <span class="messenger__avatar">{{ initials(b.title) }}</span>
+              @let preview = threadPreviewLine(b);
+              @let unread = boxUnreadCount(b);
+              <button
+                type="button"
+                class="messenger__thread-row"
+                [class.messenger__thread-row--unread]="unread > 0"
+                (click)="openThread(b, true)"
+              >
+                <span class="messenger__avatar-wrap">
+                  @if (unread > 0) {
+                    <span class="messenger__avatar-unread-dot" aria-hidden="true"></span>
+                  }
+                  <span class="messenger__avatar">{{ initials(b.title) }}</span>
+                </span>
                 <span class="messenger__thread-info">
                   <span class="messenger__thread-title">{{ b.title }}</span>
-                  @if (b.lastMessage) {
-                    <span class="messenger__thread-preview">{{ b.lastMessage }}</span>
+                  @if (preview) {
+                    <span class="messenger__thread-preview">{{ preview }}</span>
                   }
                 </span>
+                @if (unread > 0) {
+                  <span class="messenger__box-unread-badge">{{ boxUnreadBadgeText(b) }}</span>
+                }
               </button>
             }
             @if (boxesNext() !== null && loadingBoxes()) {
@@ -86,7 +101,7 @@
             <input type="text" [ngModel]="newTitle()" (ngModelChange)="newTitle.set($event)" placeholder="Tên nhóm / tiêu đề" />
           </label>
           <label class="messenger__label">
-            Tìm người (Tên, Email, Số điện thoại)
+            Người nhận (một người — tên, email, SĐT)
             <div class="messenger__search-row">
               <input
                 type="search"
@@ -119,14 +134,12 @@
               }
             </ul>
           }
-          @if (selectedParticipants().length > 0) {
+          @if (selectedReceiver(); as ru) {
             <div class="messenger__chips">
-              @for (u of selectedParticipants(); track u.id) {
-                <span class="messenger__chip">
-                  {{ u.fullName }}
-                  <button type="button" class="messenger__chip-x" (click)="removeParticipant(u)" aria-label="Xóa">×</button>
-                </span>
-              }
+              <span class="messenger__chip">
+                {{ ru.fullName }}
+                <button type="button" class="messenger__chip-x" (click)="clearSelectedReceiver()" aria-label="Bỏ chọn">×</button>
+              </span>
             </div>
           }
           <label class="messenger__label">

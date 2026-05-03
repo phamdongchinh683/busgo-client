@@ -1,5 +1,4 @@
 import { CommonModule } from '@angular/common';
-import { HttpErrorResponse } from '@angular/common/http';
 import {
   Component,
   computed,
@@ -10,6 +9,7 @@ import {
   effect,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -19,185 +19,28 @@ import { User } from '@app/data/interfaces/user';
 import { ChatBox, ChatMessage } from '@app/data/interfaces/chat';
 import type { UserFilters } from '@app/data/services/user';
 import { ChatDockService } from '@app/core/services/chat-dock.service';
-import { ChatRealtimeMessage, ChatSocketService } from '@app/core/services/chat-socket.service';
-
-function getCurrentUserId(): number | null {
-  const raw = localStorage.getItem('user');
-  if (!raw) return null;
-  try {
-    const u = JSON.parse(raw) as { id?: number | string };
-    if (u.id === undefined || u.id === null) return null;
-    const n = typeof u.id === 'string' ? parseInt(u.id, 10) : Number(u.id);
-    return Number.isFinite(n) ? n : null;
-  } catch {
-    return null;
-  }
-}
-
-function parseNextCursor(v: unknown): number | null {
-  if (typeof v === 'number' && Number.isFinite(v)) return v;
-  if (typeof v === 'string' && v.trim() !== '') {
-    const n = parseInt(v, 10);
-    return Number.isFinite(n) ? n : null;
-  }
-  return null;
-}
-
-function nextFromPayload(r: Record<string, unknown>): number | null {
-  const from = (o: Record<string, unknown> | undefined): number | null =>
-    o ? parseNextCursor(o['next']) : null;
-  return from(r) ?? (typeof r['data'] === 'object' && r['data'] !== null && !Array.isArray(r['data'])
-    ? from(r['data'] as Record<string, unknown>)
-    : null);
-}
-
-function extractBoxRows(r: Record<string, unknown>): unknown[] | null {
-  if (Array.isArray(r['boxes'])) return r['boxes'];
-  if (Array.isArray(r['data'])) return r['data'];
-  for (const k of ['items', 'results', 'rows', 'list', 'chats', 'payload'] as const) {
-    if (Array.isArray(r[k])) return r[k] as unknown[];
-  }
-  const data = r['data'];
-  if (data && typeof data === 'object' && !Array.isArray(data)) {
-    const d = data as Record<string, unknown>;
-    if (Array.isArray(d['boxes'])) return d['boxes'];
-    if (Array.isArray(d['data'])) return d['data'];
-    for (const k of ['boxes', 'items', 'results', 'rows', 'list', 'chats', 'payload'] as const) {
-      if (Array.isArray(d[k])) return d[k] as unknown[];
-    }
-  }
-  return null;
-}
-
-function coerceBoxId(o: Record<string, unknown>): number | null {
-  const raw = o['id'] ?? o['boxId'] ?? o['chatBoxId'];
-  if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
-  if (typeof raw === 'string' && raw.trim() !== '') {
-    const n = parseInt(raw, 10);
-    return Number.isFinite(n) ? n : null;
-  }
-  return null;
-}
-
-function coerceLastMessagePreview(o: Record<string, unknown>): string | undefined {
-  const keys = [
-    'lastMessage',
-    'lastMessge',
-    'last_message',
-    'preview',
-    'snippet',
-    'lastText',
-  ] as const;
-  for (const k of keys) {
-    const v = o[k];
-    if (typeof v === 'string' && v.trim()) return v.trim();
-  }
-  for (const k of [
-    'lastMessage',
-    'lastMessge',
-    'recentMessage',
-    'latestMessage',
-    'last_message',
-  ] as const) {
-    const v = o[k];
-    if (v && typeof v === 'object') {
-      const sub = v as Record<string, unknown>;
-      const body = sub['message'] ?? sub['body'] ?? sub['text'];
-      if (typeof body === 'string' && body.trim()) return body.trim();
-    }
-  }
-  return undefined;
-}
-
-function coerceLastMessageAt(o: Record<string, unknown>): string | undefined {
-  const keys = [
-    'lastMessageAt',
-    'last_message_at',
-    'updatedAt',
-    'lastActivityAt',
-    'last_activity_at',
-  ] as const;
-  for (const k of keys) {
-    const v = o[k];
-    if (typeof v === 'string' && v.trim()) return v.trim();
-  }
-  for (const nk of ['lastMessage', 'lastMessge'] as const) {
-    const nested = o[nk];
-    if (nested && typeof nested === 'object') {
-      const ca = (nested as Record<string, unknown>)['createdAt'];
-      if (typeof ca === 'string' && ca.trim()) return ca.trim();
-    }
-  }
-  return undefined;
-}
-
-function normalizeBoxItem(raw: unknown): ChatBox | null {
-  if (!raw || typeof raw !== 'object') return null;
-  const o = raw as Record<string, unknown>;
-  const id = coerceBoxId(o);
-  if (id === null) return null;
-  const titleRaw =
-    (typeof o['title'] === 'string' && o['title']) ||
-    (typeof o['name'] === 'string' && o['name']) ||
-    (typeof o['label'] === 'string' && o['label']) ||
-    (typeof o['subject'] === 'string' && o['subject']) ||
-    '';
-  const box: ChatBox = { id, title: titleRaw.trim() };
-  const lm = coerceLastMessagePreview(o);
-  const la = coerceLastMessageAt(o);
-  if (lm) box.lastMessage = lm;
-  return box;
-}
-
-function normalizeBoxPayload(res: unknown): { boxes: ChatBox[]; next: number | null } {
-  if (!res || typeof res !== 'object') return { boxes: [], next: null };
-  const r = res as Record<string, unknown>;
-  const rows = extractBoxRows(r);
-  const boxes: ChatBox[] = [];
-  if (rows) {
-    for (const row of rows) {
-      const b = normalizeBoxItem(row);
-      if (b) boxes.push(b);
-    }
-  }
-  return { boxes, next: nextFromPayload(r) };
-}
-
-function httpErrMessage(err: unknown): string {
-  if (err instanceof HttpErrorResponse) {
-    const body = err.error;
-    if (typeof body === 'object' && body !== null && 'message' in body) {
-      const m = (body as { message?: string }).message;
-      if (typeof m === 'string' && m.trim()) return m;
-    }
-    if (err.status === 401 || err.status === 403) {
-      return 'Phiên đăng nhập hết hạn hoặc không có quyền.';
-    }
-    if (err.message?.trim()) return err.message;
-  }
-  return '';
-}
-
-function buildUserSearchFilters(term: string): UserFilters | null {
-  const t = term.trim();
-  if (t.length < 2) return null;
-  if (t.includes('@')) return { limit: 20, email: t };
-  const digits = t.replace(/\D/g, '');
-  if (digits.length >= 9) return { limit: 20, phone: digits };
-  return { limit: 25, search: t };
-}
-
-function clientFilterUsers(users: User[], term: string): User[] {
-  const q = term.trim().toLowerCase();
-  if (q.length < 2) return users;
-  return users.filter(
-    (u) =>
-      u.fullName.toLowerCase().includes(q) ||
-      u.email.toLowerCase().includes(q) ||
-      u.phone.replace(/\D/g, '').includes(q.replace(/\D/g, '')) ||
-      u.username.toLowerCase().includes(q),
-  );
-}
+import {
+  getChatViewerUserId,
+  normalizeBoxPayload,
+  patchBoxViewerUnread,
+  viewerUnreadCount,
+} from '@app/core/utils/chat-box-list';
+import {
+  ChatRealtimeMessage,
+  ChatSocketService,
+  ChatUnreadCountPayload,
+} from '@app/core/services/chat-socket.service';
+import {
+  buildUserSearchFilters,
+  clientFilterUsers,
+  httpErrMessage,
+  listRowPreview,
+  mergeUniqueBoxes,
+  msgSenderId,
+  positiveSenderId,
+  storedFullNameOrEmpty,
+  storedUserFullName,
+} from './chat-dock.helpers';
 
 @Component({
   selector: 'app-chat-dock',
@@ -252,7 +95,7 @@ export class ChatDockComponent {
 
   readonly newTitle = signal('');
   readonly newMessage = signal('');
-  readonly selectedParticipants = signal<User[]>([]);
+  readonly selectedReceiver = signal<User | null>(null);
   readonly searchQuery = signal('');
   readonly searchResults = signal<User[]>([]);
   readonly searchingUsers = signal(false);
@@ -260,6 +103,7 @@ export class ChatDockComponent {
   readonly createError = signal('');
 
   private boxesLoadInFlight = false;
+  private threadCache = new Map<number, { messages: ChatMessage[]; next: number | null }>();
 
   @ViewChild('messageScroll') private messageScroll?: ElementRef<HTMLElement>;
   @ViewChild('boxListScroll') private boxListScroll?: ElementRef<HTMLElement>;
@@ -275,17 +119,17 @@ export class ChatDockComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((msg: ChatRealtimeMessage) => this.handleChatNew(msg));
 
-    this.socket.onChatJoined$
+    this.socket.onChatUnreadCount$
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {});
+      .subscribe((p: ChatUnreadCountPayload) => this.handleChatUnreadCount(p));
 
     effect(() => {
       const open = this.dock.panelOpen();
       if (!open) return;
 
       if (this.dock.consumePanelOpenedViaHeaderToggle()) {
-        if (this.view() === 'thread') {
-          const id = this.selectedBoxId();
+        if (untracked(() => this.view()) === 'thread') {
+          const id = untracked(() => this.selectedBoxId());
           if (id !== null) this.socket.leaveBox(id);
           this.selectedBoxId.set(null);
         }
@@ -336,7 +180,7 @@ export class ChatDockComponent {
       .getUsers(filters)
       .pipe(
         map((res) => {
-          const myId = getCurrentUserId();
+          const myId = getChatViewerUserId();
           let list = res.users.filter((u) => u.id !== myId);
           if (filters.search) list = clientFilterUsers(list, filters.search);
           return list;
@@ -351,16 +195,13 @@ export class ChatDockComponent {
   }
 
   pickUser(u: User): void {
-    this.selectedParticipants.update((list) => {
-      if (list.some((x) => x.id === u.id)) return list.filter((x) => x.id !== u.id);
-      return [...list, u];
-    });
+    this.selectedReceiver.set(u);
     this.searchResults.set([]);
     this.searchQuery.set('');
   }
 
-  removeParticipant(u: User): void {
-    this.selectedParticipants.update((list) => list.filter((x) => x.id !== u.id));
+  clearSelectedReceiver(): void {
+    this.selectedReceiver.set(null);
   }
 
   applyMessageSearch(event?: Event): void {
@@ -368,16 +209,137 @@ export class ChatDockComponent {
     this.messageSearchApplied.set(this.messageSearchDraft().trim());
   }
 
-  openThread(box: ChatBox): void {
+  openThread(box: ChatBox, emitRead = false): void {
+    const sameThread = this.view() === 'thread' && this.selectedBoxId() === box.id;
+    if (sameThread) {
+      if (emitRead) this.socket.emitChatRead(box.id);
+      return;
+    }
+
     this.messageSearchDraft.set('');
     this.messageSearchApplied.set('');
     this.selectedBoxId.set(box.id);
     this.selectedTitle.set(box.title);
     this.view.set('thread');
-    this.messages.set([]);
-    this.messagesNext.set(null);
+    const cached = this.threadCache.get(box.id);
+    if (cached) {
+      this.messages.set(cached.messages);
+      this.messagesNext.set(cached.next);
+    } else {
+      this.messages.set([]);
+      this.messagesNext.set(null);
+    }
     this.socket.joinBox(box.id);
-    this.loadMessages(box.id);
+    if (emitRead) {
+      const vid = getChatViewerUserId();
+      this.boxes.update((list) =>
+        list.map((b) => (b.id === box.id && vid !== null ? patchBoxViewerUnread(b, 0, vid) : b)),
+      );
+      const row = this.boxes().find((x) => x.id === box.id);
+      if (vid !== null && row)
+        this.dock.applySocketUnreadCount(box.id, viewerUnreadCount(row, vid));
+      this.socket.emitChatRead(box.id);
+      this.refreshBoxStateOnOpen(box.id);
+    }
+    if (!cached) this.loadMessages(box.id);
+  }
+
+  private refreshBoxStateOnOpen(boxId: number): void {
+    this.chatService
+      .listBoxes(50)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          const { boxes } = normalizeBoxPayload(res);
+          const fresh = boxes.find((b: ChatBox) => b.id === boxId);
+          if (!fresh) return;
+          this.boxes.update((list) => list.map((b) => (b.id === boxId ? { ...b, ...fresh } : b)));
+          this.dock.syncUnreadBaselineFromBoxes([fresh], getChatViewerUserId(), true);
+        },
+      });
+  }
+
+  private handleChatUnreadCount(p: ChatUnreadCountPayload): void {
+    const rawId = p.boxId;
+    const boxId =
+      typeof rawId === 'string'
+        ? parseInt(rawId, 10)
+        : typeof rawId === 'number'
+          ? rawId
+          : NaN;
+    if (!Number.isFinite(boxId)) return;
+    if (typeof p.lastMessage === 'string' && p.lastMessage.trim()) {
+      this.patchBoxPreview(
+        boxId,
+        p.lastMessage,
+      );
+    }
+    const vid = getChatViewerUserId();
+    const isActiveThreadBox =
+      this.dock.panelOpen() &&
+      this.view() === 'thread' &&
+      this.selectedBoxId() === boxId;
+
+    const hasTotals =
+      (typeof p.unreadReceiverCount === 'number' && Number.isFinite(p.unreadReceiverCount)) ||
+      (typeof p.unreadSenderCount === 'number' && Number.isFinite(p.unreadSenderCount));
+    const legacyCount = ((): number | null => {
+      if (typeof p.unreadCount === 'number' && Number.isFinite(p.unreadCount)) {
+        return Math.max(0, Math.floor(p.unreadCount));
+      }
+      if (typeof p.count === 'number' && Number.isFinite(p.count)) {
+        return Math.max(0, Math.floor(p.count));
+      }
+      return null;
+    })();
+
+    let viewerUnreadNext: number | null = null;
+
+    this.boxes.update((list) => {
+      const i = list.findIndex((b) => b.id === boxId);
+      if (i < 0) {
+        if (isActiveThreadBox) viewerUnreadNext = 0;
+        else if (legacyCount !== null) viewerUnreadNext = legacyCount;
+        else if (hasTotals) {
+          const ur =
+            typeof p.unreadReceiverCount === 'number' && Number.isFinite(p.unreadReceiverCount)
+              ? Math.max(0, Math.floor(p.unreadReceiverCount))
+              : 0;
+          const us =
+            typeof p.unreadSenderCount === 'number' && Number.isFinite(p.unreadSenderCount)
+              ? Math.max(0, Math.floor(p.unreadSenderCount))
+              : 0;
+          viewerUnreadNext = Math.max(ur, us);
+        }
+        return list;
+      }
+
+      const b = list[i];
+      let next: ChatBox = { ...b };
+
+      if (isActiveThreadBox && vid !== null) {
+        next = patchBoxViewerUnread(b, 0, vid);
+      } else if (hasTotals) {
+        if (typeof p.unreadReceiverCount === 'number' && Number.isFinite(p.unreadReceiverCount)) {
+          next.unreadReceiverCount = Math.max(0, Math.floor(p.unreadReceiverCount));
+        }
+        if (typeof p.unreadSenderCount === 'number' && Number.isFinite(p.unreadSenderCount)) {
+          next.unreadSenderCount = Math.max(0, Math.floor(p.unreadSenderCount));
+        }
+      } else if (legacyCount !== null) {
+        next = patchBoxViewerUnread(b, legacyCount, vid);
+      }
+
+      viewerUnreadNext = viewerUnreadCount(next, vid);
+
+      const out = [...list];
+      out[i] = next;
+      return out;
+    });
+
+    if (viewerUnreadNext !== null) {
+      this.dock.applySocketUnreadCount(boxId, isActiveThreadBox ? 0 : viewerUnreadNext);
+    }
   }
 
   backToList(): void {
@@ -407,7 +369,7 @@ export class ChatDockComponent {
     }
     this.newTitle.set('');
     this.newMessage.set('');
-    this.selectedParticipants.set([]);
+    this.selectedReceiver.set(null);
     this.searchQuery.set('');
     this.searchResults.set([]);
     this.createError.set('');
@@ -417,21 +379,27 @@ export class ChatDockComponent {
   submitNewChat(): void {
     const title = this.newTitle().trim();
     const message = this.newMessage().trim();
-    const myId = getCurrentUserId();
-    const others = this.selectedParticipants().map((u) => u.id);
+    const myId = getChatViewerUserId();
+    const peer = this.selectedReceiver();
+    const receiverId = peer ? Number(peer.id) : NaN;
+
     if (!title || !message || myId === null) {
-      this.createError.set('Nhập tiêu đề, nội dung và chọn ít nhất một người.');
+      this.createError.set('Nhập tiêu đề, nội dung và đăng nhập hợp lệ.');
       return;
     }
-    if (others.length === 0) {
-      this.createError.set('Tìm và chọn người nhận.');
+    if (!peer || !Number.isFinite(receiverId) || receiverId <= 0) {
+      this.createError.set('Tìm và chọn một người nhận.');
       return;
     }
-    const userIds = [...new Set([...others, myId])];
+    if (receiverId === myId) {
+      this.createError.set('Không thể chọn chính mình làm người nhận.');
+      return;
+    }
+
     this.creating.set(true);
     this.createError.set('');
     this.chatService
-      .createBox({ title, message, userIds })
+      .createBox({ title, message, receiverId })
       .pipe(finalize(() => this.creating.set(false)), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
@@ -493,17 +461,9 @@ export class ChatDockComponent {
       .subscribe({
         next: (res) => {
           const { boxes, next: n } = normalizeBoxPayload(res);
-          this.boxes.update((b) => {
-            const seen = new Set(b.map((x) => x.id));
-            const merged = [...b];
-            for (const box of boxes) {
-              if (seen.has(box.id)) continue;
-              seen.add(box.id);
-              merged.push(box);
-            }
-            return merged;
-          });
+          this.boxes.update((existing) => mergeUniqueBoxes(existing, boxes));
           this.boxesNext.set(n);
+          this.dock.syncUnreadBaselineFromBoxes(boxes, getChatViewerUserId(), true);
         },
         error: (err: unknown) =>
           this.listBoxesError.set(httpErrMessage(err) || 'Không tải thêm được.'),
@@ -520,13 +480,27 @@ export class ChatDockComponent {
   trackMsg = (_: number, m: ChatMessage) => m.id;
 
   isMine(msg: ChatMessage): boolean {
-    const uid = getCurrentUserId();
-    return uid !== null && this.messageSenderId(msg) === uid;
+    const uid = getChatViewerUserId();
+    return uid !== null && msgSenderId(msg) === uid;
   }
 
   initials(name: string): string {
     const p = name.trim().split(/\s+/).slice(0, 2);
     return p.map((w) => w[0]?.toUpperCase() ?? '').join('') || '?';
+  }
+
+  boxUnreadCount(box: ChatBox): number {
+    return viewerUnreadCount(box, getChatViewerUserId());
+  }
+
+  boxUnreadBadgeText(box: ChatBox): string {
+    const n = this.boxUnreadCount(box);
+    if (n <= 0) return '';
+    return n > 99 ? '99+' : String(n);
+  }
+
+  threadPreviewLine(box: ChatBox): string {
+    return listRowPreview(box, getChatViewerUserId());
   }
 
   private loadBoxesInitial(): void {
@@ -548,11 +522,12 @@ export class ChatDockComponent {
           const { boxes, next } = normalizeBoxPayload(res);
           this.boxes.set(boxes);
           this.boxesNext.set(next);
+          this.dock.syncUnreadBaselineFromBoxes(boxes, getChatViewerUserId(), false);
         },
         error: (err: unknown) => {
           this.listBoxesError.set(
             httpErrMessage(err) ||
-              'Không tải được danh sách chat.',
+            'Không tải được danh sách chat.',
           );
         },
       });
@@ -566,24 +541,43 @@ export class ChatDockComponent {
       .subscribe({
         next: (res) => {
           const sorted = this.sortMessages(res.messages);
-          this.messages.set(this.coalesceSenderNamesInThread(sorted));
+          const coalesced = this.coalesceSenderNamesInThread(sorted);
+          this.messages.set(coalesced);
           this.messagesNext.set(res.next ?? null);
-          const last = sorted[sorted.length - 1];
+          this.threadCache.set(boxId, { messages: coalesced, next: res.next ?? null });
+          const last = coalesced[coalesced.length - 1];
           if (last?.message?.trim()) {
-            this.patchBoxPreview(boxId, last.message, last.createdAt);
+            this.patchBoxPreview(
+              boxId,
+              last.message,
+              last.createdAt,
+              positiveSenderId(last.senderId),
+            );
           }
           this.scrollToBottom();
         },
       });
   }
 
-  private patchBoxPreview(boxId: number, text: string, createdAt?: string): void {
+  private patchBoxPreview(
+    boxId: number,
+    text: string,
+    createdAt?: string,
+    lastMessageSenderId?: number,
+  ): void {
     const t = text.trim();
     if (!t) return;
+    const at = createdAt?.trim();
+    const sid =
+      lastMessageSenderId !== undefined ? positiveSenderId(lastMessageSenderId) : undefined;
     this.boxes.update((list) =>
-      list.map((b) =>
-        b.id === boxId ? { ...b, lastMessage: t, } : b,
-      ),
+      list.map((b) => {
+        if (b.id !== boxId) return b;
+        const next: ChatBox = { ...b, lastMessage: t };
+        if (at) next.lastMessageAt = at;
+        if (sid !== undefined) next.lastMessageSenderId = sid;
+        return next;
+      }),
     );
   }
 
@@ -596,10 +590,13 @@ export class ChatDockComponent {
         next: (res) => {
           const prior = this.messageScroll?.nativeElement?.scrollHeight ?? 0;
           const sorted = this.sortMessages(res.messages);
-          this.messages.update((m) =>
-            this.coalesceSenderNamesInThread(this.sortMessages([...sorted, ...m])),
+          const merged = this.coalesceSenderNamesInThread(
+            this.sortMessages([...sorted, ...this.messages()]),
           );
-          this.messagesNext.set(res.next ?? null);
+          const nextCursor = res.next ?? null;
+          this.messages.set(merged);
+          this.messagesNext.set(nextCursor);
+          this.threadCache.set(boxId, { messages: merged, next: nextCursor });
           requestAnimationFrame(() => {
             const sc = this.messageScroll?.nativeElement;
             if (sc) sc.scrollTop = sc.scrollHeight - prior;
@@ -608,22 +605,17 @@ export class ChatDockComponent {
       });
   }
 
-  private messageSenderId(m: ChatMessage): number {
-    const n = Number(m.senderId);
-    return Number.isFinite(n) ? n : -1;
-  }
-
   private resolveSenderDisplayName(senderId: number, list: ChatMessage[]): string {
     const sid = Number(senderId);
     if (!Number.isFinite(sid) || sid <= 0) return '';
 
     for (let i = list.length - 1; i >= 0; i--) {
-      if (this.messageSenderId(list[i]) !== sid) continue;
+      if (msgSenderId(list[i]) !== sid) continue;
       const fn = list[i].fullName?.trim();
       if (fn && fn !== 'Người dùng') return fn;
     }
     for (let i = list.length - 1; i >= 0; i--) {
-      if (this.messageSenderId(list[i]) !== sid) continue;
+      if (msgSenderId(list[i]) !== sid) continue;
       const fn = list[i].fullName?.trim();
       if (fn) return fn;
     }
@@ -633,7 +625,7 @@ export class ChatDockComponent {
   private coalesceSenderNamesInThread(messages: ChatMessage[]): ChatMessage[] {
     const bySender = new Map<number, string>();
     for (const m of messages) {
-      const sid = this.messageSenderId(m);
+      const sid = msgSenderId(m);
       if (sid <= 0) continue;
       const fn = m.fullName?.trim();
       if (!fn) continue;
@@ -643,18 +635,13 @@ export class ChatDockComponent {
         bySender.set(sid, fn);
       }
     }
-    const myId = getCurrentUserId();
-    let selfName = '';
+    const myId = getChatViewerUserId();
     if (myId !== null && !bySender.has(myId)) {
-      try {
-        selfName = (JSON.parse(localStorage.getItem('user') ?? '{}') as { fullName?: string }).fullName?.trim() ?? '';
-      } catch {
-        selfName = '';
-      }
+      const selfName = storedFullNameOrEmpty();
       if (selfName) bySender.set(myId, selfName);
     }
     return messages.map((m) => {
-      const sid = this.messageSenderId(m);
+      const sid = msgSenderId(m);
       const merged = (bySender.get(sid)?.trim() || m.fullName?.trim() || '').trim() || 'Người dùng';
       return { ...m, senderId: sid > 0 ? sid : m.senderId, fullName: merged };
     });
@@ -685,27 +672,26 @@ export class ChatDockComponent {
   }
 
   private appendLocalOutgoing(_boxId: number, text: string): void {
-    const uid = getCurrentUserId();
-    const raw = localStorage.getItem('user');
-    let fullName = '';
-    try {
-      fullName = (JSON.parse(raw ?? '{}') as { fullName?: string }).fullName ?? '';
-    } catch {
-      fullName = '';
-    }
+    const uid = getChatViewerUserId();
     const optimistic: ChatMessage = {
       id: Date.now(),
       message: text,
       senderId: uid ?? -1,
-      fullName,
+      fullName: storedUserFullName(),
       phone: '',
       email: '',
       createdAt: new Date().toISOString(),
     };
-    this.patchBoxPreview(_boxId, text, optimistic.createdAt);
+    this.patchBoxPreview(
+      _boxId,
+      text,
+      optimistic.createdAt,
+      positiveSenderId(uid),
+    );
     this.messages.update((list) =>
       this.coalesceSenderNamesInThread(this.sortMessages([...list, optimistic])),
     );
+    this.threadCache.set(_boxId, { messages: this.messages(), next: this.messagesNext() });
     this.scrollToBottom();
   }
 
@@ -714,23 +700,31 @@ export class ChatDockComponent {
   }
 
   private handleSocketMessageNew(msg: ChatRealtimeMessage): void {
-    if (!this.inChatThread()) return;
-
     const boxId = Number(msg.boxId);
     if (!Number.isFinite(boxId)) return;
 
-    const myId = getCurrentUserId();
+    const myId = getChatViewerUserId();
     if (myId !== null && Number(msg.senderId) === myId) return;
 
     this.dock.bumpUnreadIfNeeded(this.dock.panelOpen(), this.selectedBoxId(), boxId);
 
-    if (this.selectedBoxId() !== boxId) return;
-
     const body = msg.body;
     if (!body) return;
+    const at = msg.createdAt?.trim() ? msg.createdAt : new Date().toISOString();
+    this.patchBoxPreview(boxId, body, at, positiveSenderId(msg.senderId));
+
+    if (!this.inChatThread()) return;
+    if (this.selectedBoxId() !== boxId) return;
+
+    const listSnap = this.messages();
+    if (this.isDupRealtime(listSnap, msg)) {
+      this.scrollToBottom();
+      return;
+    }
+
+    const sid = Number(msg.senderId);
+
     this.messages.update((list) => {
-      if (this.isDupRealtime(list, msg)) return list;
-      const sid = Number(msg.senderId);
       const resolvedName = Number.isFinite(sid) ? this.resolveSenderDisplayName(sid, list) : '';
       const row: ChatMessage = {
         id: Date.now(),
@@ -743,9 +737,7 @@ export class ChatDockComponent {
       };
       return this.coalesceSenderNamesInThread(this.sortMessages([...list, row]));
     });
-
-    const at = msg.createdAt?.trim() ? msg.createdAt : new Date().toISOString();
-    this.patchBoxPreview(boxId, body, at);
+    this.threadCache.set(boxId, { messages: this.messages(), next: this.messagesNext() });
 
     this.scrollToBottom();
   }
@@ -755,7 +747,7 @@ export class ChatDockComponent {
     return list.some(
       (m) =>
         m.message === msg.body &&
-        this.messageSenderId(m) === sid &&
+        msgSenderId(m) === sid &&
         Math.abs(new Date(m.createdAt).getTime() - new Date(msg.createdAt || 0).getTime()) < 5000,
     );
   }
@@ -769,9 +761,6 @@ export class ChatDockComponent {
 
     const preview =
       typeof msg.body === 'string' && msg.body.trim() ? msg.body.trim() : undefined;
-    const previewAt =
-      typeof msg.createdAt === 'string' && msg.createdAt.trim() ? msg.createdAt.trim() : undefined;
-
     this.boxes.update((list) => {
       if (list.some((b) => b.id === boxId)) return list;
       const row: ChatBox = { id: boxId, title };
@@ -780,16 +769,9 @@ export class ChatDockComponent {
     });
 
     this.dock.panelOpen.set(true);
-    this.dock.unreadCount.set(0);
-
-    if (this.selectedBoxId() === boxId && this.view() === 'thread') {
-      this.selectedTitle.set(title);
-      return;
-    }
-
     const openBox: ChatBox = { id: boxId, title };
     if (preview) openBox.lastMessage = preview;
-    this.openThread(openBox);
+    this.openThread(openBox, false);
   }
 }
 

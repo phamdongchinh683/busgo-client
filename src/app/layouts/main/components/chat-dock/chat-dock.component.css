@@ -161,6 +161,40 @@
   color: var(--color-text-dark) !important;
 }
 
+.messenger__thread-row--unread .messenger__thread-title {
+  font-weight: 700;
+}
+
+.messenger__avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.messenger__avatar-unread-dot {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--color-primary, #0d47a1);
+  border: 2px solid var(--color-surface, #fff);
+  z-index: 1;
+}
+
+.messenger__box-unread-badge {
+  flex-shrink: 0;
+  min-width: 20px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: var(--color-primary);
+  color: var(--color-text-inverse, #fff);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+}
+
 .messenger__avatar {
   width: 44px;
   height: 44px;

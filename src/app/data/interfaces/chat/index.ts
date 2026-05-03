@@ -2,6 +2,15 @@ export interface ChatBox {
   id: number;
   title: string;
   lastMessage?: string;
+  lastMessageAt?: string;
+  senderId?: number;
+  receiverId?: number;
+  senderMessageCount?: number;
+  receiverMessageCount?: number;
+  unreadReceiverCount?: number;
+  unreadSenderCount?: number;
+  lastMessageSenderId?: number;
+  senderFullName?: string;
 }
 
 export interface ChatBoxListResponse {
@@ -12,7 +21,7 @@ export interface ChatBoxListResponse {
 export interface CreateChatBoxBody {
   message: string;
   title: string;
-  userIds: number[];
+  receiverId: number;
 }
 
 export interface ChatMessage {

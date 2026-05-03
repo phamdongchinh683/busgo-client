@@ -1,6 +1,6 @@
 import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
-import { filter } from 'rxjs/operators';
+import { filter, take } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, of, switchMap } from 'rxjs';
 import { navItems } from '../../data/mocks';
@@ -9,7 +9,9 @@ import { MainSidebarComponent, type MainNavItem } from './components/main-sideba
 import { MainTopbarComponent } from './components/main-topbar/main-topbar.component';
 import { ChatDockComponent } from './components/chat-dock/chat-dock.component';
 import { FcmDeviceService } from '../../core/services/fcm-device.service';
-
+import { ChatDockService } from '../../core/services/chat-dock.service';
+import { chat } from '../../data/services';
+import { getChatViewerUserId, normalizeBoxPayload } from '../../core/utils/chat-box-list';
 @Component({
   selector: 'app-main-layout',
   standalone: true,
@@ -41,6 +43,8 @@ export class MainLayoutComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly api = inject(auth.ApiService);
   private readonly fcmDeviceService = inject(FcmDeviceService);
+  private readonly chatDock = inject(ChatDockService);
+  private readonly chatApi = inject(chat.ApiService);
   private hasRequestedNotificationAccess = false;
 
   get pageTitle(): string {
@@ -60,6 +64,21 @@ export class MainLayoutComponent implements OnInit {
       .subscribe((e) => {
         this.currentUrl = e.urlAfterRedirects || e.url;
         this.requestNotificationOnDashboard(this.currentUrl);
+      });
+
+    this.prefetchChatUnreadBadgeFromBoxList();
+  }
+
+  private prefetchChatUnreadBadgeFromBoxList(): void {
+    if (!localStorage.getItem('token')) return;
+    this.chatApi
+      .listBoxes(100)
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          const { boxes } = normalizeBoxPayload(res);
+          this.chatDock.syncUnreadBaselineFromBoxes(boxes, getChatViewerUserId(), false);
+        },
       });
   }
 
@@ -88,12 +107,13 @@ export class MainLayoutComponent implements OnInit {
       this.userEmail = user.email || '';
       this.userRole = (user.staffProfileRole || user.role || '').replace(/_/g, ' ');
       this.userInitial = this.userName.charAt(0).toUpperCase();
-    } catch {}
+    } catch { }
   }
 
   private handleLogoutSuccess() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    this.chatDock.clearUnreadState();
     this.router.navigate(['/login']);
   }
 

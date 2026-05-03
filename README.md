@@ -136,6 +136,22 @@ Cache is invalidated after relevant mutations (create/update/delete/withdraw/mar
 - On logout, app removes current device token from backend before final session cleanup
 - Main logic is centralized in `src/app/core/services/fcm-device.service.ts`
 
+### Chat Realtime Flow
+
+- Socket client is centralized in `src/app/core/services/chat-socket.service.ts` and exposes streams:
+  - `onChatNew$` for `chat:new`
+  - `onMessageNew$` for `message:new`
+  - `onChatUnreadCount$` for `chat:unread:count`
+- Chat UI lives in `src/app/layouts/main/components/chat-dock/chat-dock.component.ts`.
+- When receiving `chat:new`, client opens that `boxId` immediately via `openThread(box)` and joins the room, so subsequent `message:new` for that box is handled in the active thread.
+- Unread badge is driven by:
+  - per-box unread fields in chat list (`unreadReceiverCount` / `unreadSenderCount`)
+  - topbar aggregate in `ChatDockService.unreadCount`
+- On click a chat row:
+  - client emits `chat:read`
+  - optimistic unread reset is applied for that row
+  - server then confirms snapshot by emitting `chat:unread:count` with `{ unreadReceiverCount, unreadSenderCount, boxId }`
+
 ## Routing Overview
 
 Main routes in `src/app/app.routes.ts`:
@@ -177,3 +193,8 @@ Authenticated pages are rendered inside `MainLayoutComponent`.
 - **Redirected to `/login` unexpectedly**
   - Backend likely returned unauthorized/token-expired
   - Re-login and confirm token exists in `localStorage`
+
+- **`chat:new` arrives but `message:new` does not show**
+  - Ensure backend emits `chat:new` (not `new:chat`)
+  - Ensure payload has valid numeric `boxId`
+  - Confirm client joins the same `boxId` room and server emits `message:new` to that room

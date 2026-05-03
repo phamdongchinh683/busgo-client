@@ -14,6 +14,24 @@ export interface ChatRealtimeMessage {
   userIds?: number[];
 }
 
+export interface ChatUnreadCountPayload {
+  boxId: number | string;
+  count?: number;
+  unreadCount?: number;
+  unreadReceiverCount?: number;
+  unreadSenderCount?: number;
+  lastMessage?: string;
+}
+
+function optNonNegativeIntSocket(v: unknown): number | undefined {
+  if (typeof v === 'number' && Number.isFinite(v)) return Math.max(0, Math.floor(v));
+  if (typeof v === 'string' && v.trim() !== '') {
+    const n = parseInt(v, 10);
+    return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : undefined;
+  }
+  return undefined;
+}
+
 function stringifySocketError(err: unknown): string {
   if (err instanceof Error) return `${err.name} ${err.message}`;
   try {
@@ -30,11 +48,13 @@ export class ChatSocketService {
   private readonly messageNew$ = new Subject<ChatRealtimeMessage>();
   private readonly chatNew$ = new Subject<ChatRealtimeMessage>();
   private readonly chatJoined$ = new Subject<{ boxId: number | string }>();
+  private readonly chatUnreadCount$ = new Subject<ChatUnreadCountPayload>();
   private socketHandlers: Array<{ event: string; fn: (...args: unknown[]) => void }> = [];
 
   readonly onMessageNew$ = this.messageNew$.asObservable();
   readonly onChatNew$ = this.chatNew$.asObservable();
   readonly onChatJoined$ = this.chatJoined$.asObservable();
+  readonly onChatUnreadCount$ = this.chatUnreadCount$.asObservable();
 
   private joinedBoxId: number | null = null;
 
@@ -69,7 +89,12 @@ export class ChatSocketService {
   connect(): void {
     if (!localStorage.getItem('token')) return;
     if (this.socket?.connected) return;
-    this.teardownSocket();
+    if (this.socket?.active) return;
+
+    if (this.socket) {
+      this.socket.connect();
+      return;
+    }
 
     this.socket = io(socketUrl, {
       transports: ['websocket', 'polling'],
@@ -117,6 +142,42 @@ export class ChatSocketService {
       }
     };
 
+    const onChatUnreadCount = (...args: unknown[]) => {
+      const raw = args[0] as Record<string, unknown>;
+      if (!raw || typeof raw !== 'object') return;
+
+      const boxId = raw['boxId'];
+      if (boxId === undefined || boxId === null) return;
+
+      const unreadCountAlias = optNonNegativeIntSocket(raw['unreadCount']);
+      const countLegacy = optNonNegativeIntSocket(raw['count']);
+      const viewerUnread =
+        unreadCountAlias !== undefined ? unreadCountAlias : countLegacy !== undefined ? countLegacy : undefined;
+      const unreadReceiverCount = optNonNegativeIntSocket(raw['unreadReceiverCount']);
+      const unreadSenderCount = optNonNegativeIntSocket(raw['unreadSenderCount']);
+      const lastMessage =
+        typeof raw['lastMessage'] === 'string' && raw['lastMessage'].trim()
+          ? raw['lastMessage'].trim()
+          : undefined;
+
+      if (
+        viewerUnread === undefined &&
+        unreadReceiverCount === undefined &&
+        unreadSenderCount === undefined
+      ) {
+        return;
+      }
+
+      this.chatUnreadCount$.next({
+        boxId: boxId as number | string,
+        ...(viewerUnread !== undefined ? { count: viewerUnread } : {}),
+        ...(unreadCountAlias !== undefined ? { unreadCount: unreadCountAlias } : {}),
+        ...(unreadReceiverCount !== undefined ? { unreadReceiverCount } : {}),
+        ...(unreadSenderCount !== undefined ? { unreadSenderCount } : {}),
+        ...(lastMessage !== undefined ? { lastMessage } : {}),
+      });
+    };
+
     this.socket.on('message:new', onMessageNew);
     this.socketHandlers.push({ event: 'message:new', fn: onMessageNew });
 
@@ -125,6 +186,9 @@ export class ChatSocketService {
 
     this.socket.on('chat:joined', onChatJoined);
     this.socketHandlers.push({ event: 'chat:joined', fn: onChatJoined });
+
+    this.socket.on('chat:unread:count', onChatUnreadCount);
+    this.socketHandlers.push({ event: 'chat:unread:count', fn: onChatUnreadCount });
   }
 
   disconnect(): void {
@@ -139,7 +203,6 @@ export class ChatSocketService {
     if (!this.socket?.connected) this.connect();
     const sock = this.socket;
     if (!sock) return;
-
     if (this.joinedBoxId !== null && this.joinedBoxId !== id) {
       this.leaveBox(this.joinedBoxId);
     }
@@ -166,6 +229,13 @@ export class ChatSocketService {
       boxId: id,
       createdAt: new Date().toISOString(),
     });
+  }
+
+  emitChatRead(boxId: number): void {
+    const id = Number(boxId);
+    if (!Number.isFinite(id)) return;
+    if (!this.socket?.connected) this.connect();
+    this.socket?.emit('chat:read', { boxId: id });
   }
 
   private teardownSocket(): void {
