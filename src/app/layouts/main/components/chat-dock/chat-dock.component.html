@@ -68,6 +68,9 @@
                 <span class="messenger__avatar">{{ initials(b.title) }}</span>
                 <span class="messenger__thread-info">
                   <span class="messenger__thread-title">{{ b.title }}</span>
+                  @if (b.lastMessage) {
+                    <span class="messenger__thread-preview">{{ b.lastMessage }}</span>
+                  }
                 </span>
               </button>
             }

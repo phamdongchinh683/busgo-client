@@ -1,6 +1,7 @@
 export interface ChatBox {
   id: number;
   title: string;
+  lastMessage?: string;
 }
 
 export interface ChatBoxListResponse {

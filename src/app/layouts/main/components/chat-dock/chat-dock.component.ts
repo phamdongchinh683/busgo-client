@@ -79,6 +79,58 @@ function coerceBoxId(o: Record<string, unknown>): number | null {
   return null;
 }
 
+function coerceLastMessagePreview(o: Record<string, unknown>): string | undefined {
+  const keys = [
+    'lastMessage',
+    'lastMessge',
+    'last_message',
+    'preview',
+    'snippet',
+    'lastText',
+  ] as const;
+  for (const k of keys) {
+    const v = o[k];
+    if (typeof v === 'string' && v.trim()) return v.trim();
+  }
+  for (const k of [
+    'lastMessage',
+    'lastMessge',
+    'recentMessage',
+    'latestMessage',
+    'last_message',
+  ] as const) {
+    const v = o[k];
+    if (v && typeof v === 'object') {
+      const sub = v as Record<string, unknown>;
+      const body = sub['message'] ?? sub['body'] ?? sub['text'];
+      if (typeof body === 'string' && body.trim()) return body.trim();
+    }
+  }
+  return undefined;
+}
+
+function coerceLastMessageAt(o: Record<string, unknown>): string | undefined {
+  const keys = [
+    'lastMessageAt',
+    'last_message_at',
+    'updatedAt',
+    'lastActivityAt',
+    'last_activity_at',
+  ] as const;
+  for (const k of keys) {
+    const v = o[k];
+    if (typeof v === 'string' && v.trim()) return v.trim();
+  }
+  for (const nk of ['lastMessage', 'lastMessge'] as const) {
+    const nested = o[nk];
+    if (nested && typeof nested === 'object') {
+      const ca = (nested as Record<string, unknown>)['createdAt'];
+      if (typeof ca === 'string' && ca.trim()) return ca.trim();
+    }
+  }
+  return undefined;
+}
+
 function normalizeBoxItem(raw: unknown): ChatBox | null {
   if (!raw || typeof raw !== 'object') return null;
   const o = raw as Record<string, unknown>;
@@ -90,7 +142,11 @@ function normalizeBoxItem(raw: unknown): ChatBox | null {
     (typeof o['label'] === 'string' && o['label']) ||
     (typeof o['subject'] === 'string' && o['subject']) ||
     '';
-  return { id, title: titleRaw.trim() };
+  const box: ChatBox = { id, title: titleRaw.trim() };
+  const lm = coerceLastMessagePreview(o);
+  const la = coerceLastMessageAt(o);
+  if (lm) box.lastMessage = lm;
+  return box;
 }
 
 function normalizeBoxPayload(res: unknown): { boxes: ChatBox[]; next: number | null } {
@@ -512,9 +568,23 @@ export class ChatDockComponent {
           const sorted = this.sortMessages(res.messages);
           this.messages.set(this.coalesceSenderNamesInThread(sorted));
           this.messagesNext.set(res.next ?? null);
+          const last = sorted[sorted.length - 1];
+          if (last?.message?.trim()) {
+            this.patchBoxPreview(boxId, last.message, last.createdAt);
+          }
           this.scrollToBottom();
         },
       });
+  }
+
+  private patchBoxPreview(boxId: number, text: string, createdAt?: string): void {
+    const t = text.trim();
+    if (!t) return;
+    this.boxes.update((list) =>
+      list.map((b) =>
+        b.id === boxId ? { ...b, lastMessage: t, } : b,
+      ),
+    );
   }
 
   private loadOlder(boxId: number, next: number): void {
@@ -632,6 +702,7 @@ export class ChatDockComponent {
       email: '',
       createdAt: new Date().toISOString(),
     };
+    this.patchBoxPreview(_boxId, text, optimistic.createdAt);
     this.messages.update((list) =>
       this.coalesceSenderNamesInThread(this.sortMessages([...list, optimistic])),
     );
@@ -673,6 +744,9 @@ export class ChatDockComponent {
       return this.coalesceSenderNamesInThread(this.sortMessages([...list, row]));
     });
 
+    const at = msg.createdAt?.trim() ? msg.createdAt : new Date().toISOString();
+    this.patchBoxPreview(boxId, body, at);
+
     this.scrollToBottom();
   }
 
@@ -693,9 +767,16 @@ export class ChatDockComponent {
     const title =
       typeof msg.title === 'string' && msg.title.trim() ? msg.title.trim() : 'Chat';
 
+    const preview =
+      typeof msg.body === 'string' && msg.body.trim() ? msg.body.trim() : undefined;
+    const previewAt =
+      typeof msg.createdAt === 'string' && msg.createdAt.trim() ? msg.createdAt.trim() : undefined;
+
     this.boxes.update((list) => {
       if (list.some((b) => b.id === boxId)) return list;
-      return [{ id: boxId, title }, ...list];
+      const row: ChatBox = { id: boxId, title };
+      if (preview) row.lastMessage = preview;
+      return [row, ...list];
     });
 
     this.dock.panelOpen.set(true);
@@ -706,7 +787,9 @@ export class ChatDockComponent {
       return;
     }
 
-    this.openThread({ id: boxId, title });
+    const openBox: ChatBox = { id: boxId, title };
+    if (preview) openBox.lastMessage = preview;
+    this.openThread(openBox);
   }
 }
 
