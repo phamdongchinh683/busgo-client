@@ -11,12 +11,14 @@ import {
   OnInit,
   Output,
   ViewChild,
+  effect,
   inject,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs/operators';
 import { timeout } from 'rxjs/operators';
 import { notification } from '../../../../data/services';
+import { ChatDockService } from '../../../../core/services/chat-dock.service';
 import { NotificationItem, NotificationStatus, VerifyAccountStatus } from '../../../../data/interfaces/notification';
 import { Messaging } from '@angular/fire/messaging';
 import { onMessage } from 'firebase/messaging';
@@ -64,6 +66,15 @@ export class MainTopbarComponent implements OnInit {
   private readonly host = inject(ElementRef<HTMLElement>);
   private readonly messaging = inject(Messaging);
   private readonly cdr = inject(ChangeDetectorRef);
+  readonly chatDock = inject(ChatDockService);
+
+  constructor() {
+    effect(() => {
+      this.chatDock.unreadCount();
+      this.chatDock.panelOpen();
+      this.cdr.markForCheck();
+    });
+  }
 
   ngOnInit() {
     const unsubscribe = onMessage(this.messaging, (payload) => {
@@ -100,6 +111,10 @@ export class MainTopbarComponent implements OnInit {
   @HostListener('document:keydown', ['$event'])
   onDocumentKeydown(event: KeyboardEvent) {
     if (event.key !== 'Escape') return;
+
+    if (this.chatDock.panelOpen()) {
+      return;
+    }
 
     if (this.isVerifyDialogOpen) {
       if (!this.isVerifyingAccount) {

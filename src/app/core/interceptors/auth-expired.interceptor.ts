@@ -2,6 +2,7 @@ import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
+import { clearStoredCredentials, textIndicatesExpiredSession } from '../utils/auth-expiry';
 
 type ApiErrorBody = {
   errorCode?: string;
@@ -14,8 +15,7 @@ export const authExpiredInterceptor: HttpInterceptorFn = (req, next) => {
   return next(req).pipe(
     catchError((error: unknown) => {
       if (shouldRedirectToLogin(error)) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        clearStoredCredentials();
 
         if (router.url !== '/login') {
           void router.navigate(['/login']);
@@ -32,11 +32,15 @@ function shouldRedirectToLogin(error: unknown): boolean {
 
   const body = (error.error ?? {}) as ApiErrorBody;
   const errorCode = (body.errorCode ?? '').toLowerCase();
-  const message = (body.message ?? '').toLowerCase();
+  const message = (typeof body.message === 'string' ? body.message : '').toLowerCase();
+  const blob =
+    typeof body.message === 'string'
+      ? `${errorCode} ${message}`
+      : `${errorCode} ${JSON.stringify(body)}`;
 
   if (error.status === 401) return true;
   if (errorCode === 'unauthorized') return true;
-  if (message.includes('token expired')) return true;
+  if (textIndicatesExpiredSession(message) || textIndicatesExpiredSession(blob)) return true;
 
   return false;
 }

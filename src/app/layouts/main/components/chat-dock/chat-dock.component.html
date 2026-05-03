@@ -1,0 +1,230 @@
+@if (dock.panelOpen()) {
+  <div id="app-chat-messenger" class="messenger" role="dialog" aria-label="Tin nhắn">
+    <header class="messenger__top">
+      @if (view() === 'thread') {
+        <button type="button" class="messenger__icon-btn" (click)="backToList()" aria-label="Quay lại">←</button>
+      } @else {
+        <span class="messenger__top-spacer"></span>
+      }
+      <h2 class="messenger__title">
+        @if (view() === 'thread') {
+          {{ selectedTitle() || 'Chat' }}
+        } @else if (view() === 'new') {
+          Tin nhắn mới
+        } @else {
+          Chat
+        }
+      </h2>
+      <button type="button" class="messenger__icon-btn" (click)="dock.closePanel()" aria-label="Đóng">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
+      </button>
+    </header>
+
+    <div class="messenger__tabs" role="tablist" aria-label="Chế độ chat">
+      <button
+        type="button"
+        class="messenger__tab"
+        role="tab"
+        [attr.aria-selected]="view() === 'list'"
+        [class.messenger__tab--active]="view() === 'list'"
+        (click)="goToListView()"
+      >
+        Hội thoại
+      </button>
+      <button
+        type="button"
+        class="messenger__tab"
+        role="tab"
+        [attr.aria-selected]="view() === 'new'"
+        [class.messenger__tab--active]="view() === 'new'"
+        (click)="startNewChat()"
+      >
+        Tin mới
+      </button>
+    </div>
+
+    <div class="messenger__body">
+      @if (view() === 'list') {
+        <div
+          #boxListScroll
+          class="messenger__list-col"
+          (scroll)="onBoxListScroll($event)"
+        >
+          <button type="button" class="messenger__compose-fab" (click)="startNewChat()">
+            <span>+</span> Tin nhắn mới
+          </button>
+          @if (loadingBoxes() && boxes().length === 0) {
+            <p class="messenger__hint">Đang tải…</p>
+          } @else if (listBoxesError()) {
+            <p class="messenger__err">{{ listBoxesError() }}</p>
+            <button type="button" class="messenger__retry" (click)="retryLoadBoxes()">Thử lại</button>
+          } @else if (boxes().length === 0) {
+            <p class="messenger__hint">Chưa có cuộc trò chuyện</p>
+          } @else {
+            @for (b of boxes(); track trackBox($index, b)) {
+              <button type="button" class="messenger__thread-row" (click)="openThread(b)">
+                <span class="messenger__avatar">{{ initials(b.title) }}</span>
+                <span class="messenger__thread-info">
+                  <span class="messenger__thread-title">{{ b.title }}</span>
+                </span>
+              </button>
+            }
+            @if (boxesNext() !== null && loadingBoxes()) {
+              <p class="messenger__hint messenger__hint--sm">Đang tải thêm…</p>
+            }
+          }
+        </div>
+      } @else if (view() === 'new') {
+        <div class="messenger__new-form">
+          <label class="messenger__label">
+            Tiêu đề
+            <input type="text" [ngModel]="newTitle()" (ngModelChange)="newTitle.set($event)" placeholder="Tên nhóm / tiêu đề" />
+          </label>
+          <label class="messenger__label">
+            Tìm người (Tên, Email, Số điện thoại)
+            <div class="messenger__search-row">
+              <input
+                type="search"
+                [value]="searchQuery()"
+                (input)="onRecipientSearchInput($event)"
+                (keydown.enter)="onRecipientSearchSubmit($event)"
+                placeholder="Tìm kiếm ở đây..."
+                autocomplete="off"
+              />
+              <button type="button" class="messenger__search-btn" (click)="onRecipientSearchSubmit()">
+                Tìm
+              </button>
+            </div>
+          </label>
+          @if (searchingUsers()) {
+            <p class="messenger__hint messenger__hint--sm">Đang tìm…</p>
+          }
+          @if (searchResults().length > 0) {
+            <ul class="messenger__searchhits">
+              @for (u of searchResults(); track u.id) {
+                <li>
+                  <button type="button" class="messenger__hit" (click)="pickUser(u)">
+                    <span class="messenger__avatar messenger__avatar--sm">{{ initials(u.fullName) }}</span>
+                    <span class="messenger__hit-text">
+                      <strong>{{ u.fullName }}</strong>
+                      <small>{{ u.email }} · {{ u.phone }}</small>
+                    </span>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+          @if (selectedParticipants().length > 0) {
+            <div class="messenger__chips">
+              @for (u of selectedParticipants(); track u.id) {
+                <span class="messenger__chip">
+                  {{ u.fullName }}
+                  <button type="button" class="messenger__chip-x" (click)="removeParticipant(u)" aria-label="Xóa">×</button>
+                </span>
+              }
+            </div>
+          }
+          <label class="messenger__label">
+            Tin nhắn đầu tiên
+            <textarea rows="3" [ngModel]="newMessage()" (ngModelChange)="newMessage.set($event)" placeholder="Nội dung…"></textarea>
+          </label>
+          @if (createError()) {
+            <p class="messenger__err">{{ createError() }}</p>
+          }
+          <button type="button" class="messenger__send-lg" (click)="submitNewChat()" [disabled]="creating()">
+            {{ creating() ? 'Đang tạo…' : 'Tạo cuộc trò chuyện' }}
+          </button>
+        </div>
+      } @else {
+        <div class="messenger__chat-col">
+          <div class="messenger__msg-search">
+            <input
+              type="search"
+              class="messenger__msg-search-input"
+              placeholder="Gõ từ khóa, Enter để tìm trong cuộc trò chuyện…"
+              title="Enter để lọc tin đã tải · không gọi API"
+              [ngModel]="messageSearchDraft()"
+              (ngModelChange)="messageSearchDraft.set($event)"
+              (keydown.enter)="applyMessageSearch($event)"
+              autocomplete="off"
+              aria-label="Tìm trong cuộc trò chuyện, nhấn Enter để áp dụng"
+            />
+            @if (messageSearchApplied().trim()) {
+              <span class="messenger__msg-search-count">{{ visibleMessages().length }}/{{ messages().length }}</span>
+            }
+          </div>
+          <div #messageScroll class="messenger__bubbles" (scroll)="onMessagesScroll($event)">
+            @if (loadingMoreMessages()) {
+              <p class="messenger__hint messenger__hint--sm">Tải tin cũ…</p>
+            }
+            @if (loadingMessages()) {
+              <p class="messenger__hint">Đang tải…</p>
+            } @else if (messages().length === 0) {
+              <p class="messenger__hint">Chưa có tin nhắn</p>
+            } @else if (messageSearchApplied().trim() && visibleMessages().length === 0) {
+              <p class="messenger__hint">Không có tin nhắn khớp «{{ messageSearchApplied().trim() }}»</p>
+            } @else {
+              @for (m of visibleMessages(); track trackMsg($index, m)) {
+                <div class="messenger__row" [class.messenger__row--mine]="isMine(m)">
+                  @if (!isMine(m)) {
+                    <span class="messenger__avatar messenger__avatar--bubble">{{ initials(m.fullName || '?') }}</span>
+                  }
+                  <div class="messenger__bubble-wrap">
+                    @if (!isMine(m)) {
+                      <span class="messenger__who">{{ m.fullName || 'Người dùng' }}</span>
+                    }
+                    <div class="messenger__bubble" [class.messenger__bubble--mine]="isMine(m)">
+                      {{ m.message }}
+                    </div>
+                    <time class="messenger__time">{{ m.createdAt | date: 'short' }}</time>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+          <div class="messenger__composer">
+            @if (sendError()) {
+              <p class="messenger__err">{{ sendError() }}</p>
+            }
+            <div class="messenger__composer-inner">
+              <textarea
+                rows="1"
+                class="messenger__compose-input"
+                placeholder="Nhập tin nhắn…"
+                title="Enter để gửi"
+                [ngModel]="draft()"
+                (ngModelChange)="draft.set($event)"
+                (keydown)="onComposerKeydown($event)"
+              ></textarea>
+              <button
+                type="button"
+                class="messenger__send-btn"
+                (click)="sendDraft()"
+                [disabled]="!draft().trim()"
+                aria-label="Gửi tin nhắn"
+              >
+                <svg
+                  class="messenger__send-icon"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="m22 2-7 20-4-9-9-4Z" />
+                  <path d="M22 2 11 13" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+}

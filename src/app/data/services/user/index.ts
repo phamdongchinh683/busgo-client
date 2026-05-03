@@ -22,6 +22,11 @@ export interface UserFilters {
   companyId?: number;
   email?: string;
   phone?: string;
+  /** Partial match; depends on API support */
+  username?: string;
+  fullName?: string;
+  /** Generic search; depends on API support */
+  search?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -36,6 +41,9 @@ export class ApiService {
     if (filters.companyId) params['companyId'] = String(filters.companyId);
     if (filters.email) params['email'] = filters.email;
     if (filters.phone) params['phone'] = filters.phone;
+    if (filters.username) params['username'] = filters.username;
+    if (filters.fullName) params['fullName'] = filters.fullName;
+    if (filters.search) params['search'] = filters.search;
 
     return this.http.get<UserListResponse>(`${constant.baseUrl}/super-admin/user`, {
       params,

@@ -7,12 +7,13 @@ import { navItems } from '../../data/mocks';
 import { auth } from '../../data/services';
 import { MainSidebarComponent, type MainNavItem } from './components/main-sidebar/main-sidebar.component';
 import { MainTopbarComponent } from './components/main-topbar/main-topbar.component';
+import { ChatDockComponent } from './components/chat-dock/chat-dock.component';
 import { FcmDeviceService } from '../../core/services/fcm-device.service';
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [RouterOutlet, MainSidebarComponent, MainTopbarComponent],
+  imports: [RouterOutlet, MainSidebarComponent, MainTopbarComponent, ChatDockComponent],
   templateUrl: './main-layout.component.html',
   styleUrl: './main-layout.component.css',
 })

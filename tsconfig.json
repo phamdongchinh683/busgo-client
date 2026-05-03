@@ -4,7 +4,8 @@
     "baseUrl": "./",
     "paths": {
       "@app/shared/*": ["src/app/shared/*"],
-      "@app/data/*": ["src/app/data/*"]
+      "@app/data/*": ["src/app/data/*"],
+      "@app/core/*": ["src/app/core/*"]
     },
     "outDir": "./dist/out-tsc",
     "strict": true,
