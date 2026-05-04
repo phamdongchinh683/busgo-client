@@ -269,10 +269,14 @@ export class ChatDockComponent {
           : NaN;
     if (!Number.isFinite(boxId)) return;
     if (typeof p.lastMessage === 'string' && p.lastMessage.trim()) {
-      this.patchBoxPreview(
-        boxId,
-        p.lastMessage,
-      );
+      const sid =
+        typeof p.lastMessageSenderId === 'number' && Number.isFinite(p.lastMessageSenderId)
+          ? p.lastMessageSenderId
+          : undefined;
+      this.patchBoxPreview(boxId, p.lastMessage, p.lastMessageAt, sid, {
+        clearLastMessageSenderWhenNoId: true,
+        lastSenderFullNameHint: p.lastMessageSenderFullName,
+      });
     }
     const vid = getChatViewerUserId();
     const isActiveThreadBox =
@@ -564,18 +568,31 @@ export class ChatDockComponent {
     text: string,
     createdAt?: string,
     lastMessageSenderId?: number,
+    opts?: {
+      clearLastMessageSenderWhenNoId?: boolean;
+      lastSenderFullNameHint?: string;
+    },
   ): void {
     const t = text.trim();
     if (!t) return;
     const at = createdAt?.trim();
     const sid =
       lastMessageSenderId !== undefined ? positiveSenderId(lastMessageSenderId) : undefined;
+    const vid = getChatViewerUserId();
     this.boxes.update((list) =>
       list.map((b) => {
         if (b.id !== boxId) return b;
         const next: ChatBox = { ...b, lastMessage: t };
         if (at) next.lastMessageAt = at;
-        if (sid !== undefined) next.lastMessageSenderId = sid;
+        if (sid !== undefined) {
+          next.lastMessageSenderId = sid;
+        } else if (opts?.clearLastMessageSenderWhenNoId) {
+          delete next.lastMessageSenderId;
+        }
+        const hint = opts?.lastSenderFullNameHint?.trim();
+        if (hint && sid !== undefined && vid !== null && sid !== vid) {
+          next.senderFullName = hint;
+        }
         return next;
       }),
     );

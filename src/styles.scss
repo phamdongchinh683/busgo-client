@@ -121,13 +121,13 @@ textarea {
   font-family: var(--font-family-base);
 }
 
-button:not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back),
+button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back),
 input[type='button'],
 input[type='submit'],
 input[type='reset'],
 .btn,
 .app-btn,
-[class*='btn-']:not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.btn-forgot-back):not(.notification-filter-btn) {
+[class*='btn-']:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.btn-forgot-back):not(.notification-filter-btn) {
   color: var(--color-primary) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
@@ -143,13 +143,13 @@ input[type='reset'],
     box-shadow var(--motion-base) var(--ease-standard);
 }
 
-button:not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back)::after,
+button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back)::after,
 input[type='button']::after,
 input[type='submit']::after,
 input[type='reset']::after,
 .btn::after,
 .app-btn::after,
-[class*='btn-']:not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.btn-forgot-back):not(.notification-filter-btn)::after {
+[class*='btn-']:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.btn-forgot-back):not(.notification-filter-btn)::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -164,30 +164,30 @@ input[type='reset']::after,
   transform: translate3d(-140%, 0, 0);
 }
 
-button:not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):hover,
+button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):hover,
 .btn:hover,
 .app-btn:hover,
-[class*='btn-']:not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.btn-forgot-back):not(.notification-filter-btn):hover {
+[class*='btn-']:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.btn-forgot-back):not(.notification-filter-btn):hover {
   background: var(--color-primary-hover-bg) !important;
   border-color: var(--color-primary) !important;
   transform: translate3d(0, -1px, 0) scale(1.03);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent);
 }
 
-button:not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):hover::after,
+button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):hover::after,
 input[type='button']:hover::after,
 input[type='submit']:hover::after,
 input[type='reset']:hover::after,
 .btn:hover::after,
 .app-btn:hover::after,
-[class*='btn-']:not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.btn-forgot-back):not(.notification-filter-btn):hover::after {
+[class*='btn-']:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.btn-forgot-back):not(.notification-filter-btn):hover::after {
   animation: app-energy-sweep var(--motion-slow) var(--ease-flow);
 }
 
-button:not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):disabled:hover,
+button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):disabled:hover,
 .btn:disabled:hover,
 .app-btn:disabled:hover,
-[class*='btn-']:not(.btn-password-toggle):not(.btn-eye):not(.btn-forgot-back):not(.notification-filter-btn):disabled:hover {
+[class*='btn-']:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.btn-forgot-back):not(.notification-filter-btn):disabled:hover {
   background: var(--color-primary-disabled-hover-bg) !important;
   border-color: var(--color-primary-disabled-hover-border) !important;
 }
@@ -245,10 +245,10 @@ button:focus-visible {
   outline-offset: 2px;
 }
 
-button:not(:disabled):active,
+button:not(:disabled):not(.btn-chat):not(.btn-notification):not(.btn-logout):active,
 .btn:not(:disabled):active,
 .app-btn:not(:disabled):active,
-[class*='btn-']:not(:disabled):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.btn-forgot-back):not(.notification-filter-btn):active {
+[class*='btn-']:not(:disabled):not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.btn-forgot-back):not(.notification-filter-btn):active {
   transform: translate3d(0, 0, 0) scale(0.98);
   box-shadow: none;
 }

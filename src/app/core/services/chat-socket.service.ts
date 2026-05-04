@@ -21,6 +21,12 @@ export interface ChatUnreadCountPayload {
   unreadReceiverCount?: number;
   unreadSenderCount?: number;
   lastMessage?: string;
+  /** ISO time of the last message, when the server sends it */
+  lastMessageAt?: string;
+  /** User id of whoever sent the last message (drives list preview “Name: text”) */
+  lastMessageSenderId?: number;
+  /** Display name for the last sender when the server includes it */
+  lastMessageSenderFullName?: string;
 }
 
 function optNonNegativeIntSocket(v: unknown): number | undefined {
@@ -160,6 +166,35 @@ export class ChatSocketService {
           ? raw['lastMessage'].trim()
           : undefined;
 
+      const lastMessageAtRaw =
+        typeof raw['lastMessageAt'] === 'string'
+          ? raw['lastMessageAt'].trim()
+          : typeof raw['last_message_at'] === 'string'
+            ? (raw['last_message_at'] as string).trim()
+            : '';
+      const lastMessageCreatedRaw =
+        typeof raw['createdAt'] === 'string'
+          ? raw['createdAt'].trim()
+          : typeof raw['updatedAt'] === 'string'
+            ? (raw['updatedAt'] as string).trim()
+            : '';
+      const lastMessageAt =
+        lastMessageAtRaw || lastMessageCreatedRaw ? lastMessageAtRaw || lastMessageCreatedRaw : undefined;
+
+      const lastMessageSenderId =
+        optNonNegativeIntSocket(raw['lastMessageSenderId']) ??
+        optNonNegativeIntSocket(raw['last_message_sender_id']);
+
+      const lmSenderFnRaw =
+        typeof raw['lastMessageSenderFullName'] === 'string'
+          ? raw['lastMessageSenderFullName'].trim()
+          : typeof raw['last_message_sender_full_name'] === 'string'
+            ? (raw['last_message_sender_full_name'] as string).trim()
+            : typeof raw['lastSenderFullName'] === 'string'
+              ? (raw['lastSenderFullName'] as string).trim()
+              : '';
+      const lastMessageSenderFullName = lmSenderFnRaw || undefined;
+
       if (
         viewerUnread === undefined &&
         unreadReceiverCount === undefined &&
@@ -175,6 +210,9 @@ export class ChatSocketService {
         ...(unreadReceiverCount !== undefined ? { unreadReceiverCount } : {}),
         ...(unreadSenderCount !== undefined ? { unreadSenderCount } : {}),
         ...(lastMessage !== undefined ? { lastMessage } : {}),
+        ...(lastMessageAt !== undefined ? { lastMessageAt } : {}),
+        ...(lastMessageSenderId !== undefined ? { lastMessageSenderId } : {}),
+        ...(lastMessageSenderFullName !== undefined ? { lastMessageSenderFullName } : {}),
       });
     };
 
