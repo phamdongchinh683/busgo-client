@@ -17,6 +17,7 @@ export interface ChatRealtimeMessage {
   boxId: number | string;
   createdAt?: string;
   senderName: string;
+  title?: string;
 }
 
 function coerceChatRealtimePayload(raw: unknown): ChatRealtimeMessage | null {
@@ -235,19 +236,28 @@ export class ChatSocketService {
     this.socketHandlers.push({ event: 'chat:unread:count', fn: onChatUnreadCount });
 
     const onUsersOnline = (...args: unknown[]) => {
-      const raw = args[0] as Record<string, unknown> | undefined;
-      const ids = coerceOnlineUserIds(raw?.['userIds']);
+      const raw = args[0];
+      const ids =
+        raw && typeof raw === 'object' && !Array.isArray(raw)
+          ? coerceOnlineUserIds((raw as Record<string, unknown>)['userIds'])
+          : [];
       this.onlineUserIds.set(new Set(ids));
     };
     const onUserOnline = (...args: unknown[]) => {
-      const raw = args[0] as Record<string, unknown> | undefined;
-      const id = parseSocketUserId(raw?.['userId']);
+      const raw = args[0];
+      const id =
+        raw && typeof raw === 'object' && !Array.isArray(raw)
+          ? parseSocketUserId((raw as Record<string, unknown>)['userId'])
+          : null;
       if (id === null) return;
       this.onlineUserIds.update((prev: ReadonlySet<number>) => new Set([...prev, id]));
     };
     const onUserOffline = (...args: unknown[]) => {
-      const raw = args[0] as Record<string, unknown> | undefined;
-      const id = parseSocketUserId(raw?.['userId']);
+      const raw = args[0];
+      const id =
+        raw && typeof raw === 'object' && !Array.isArray(raw)
+          ? parseSocketUserId((raw as Record<string, unknown>)['userId'])
+          : null;
       if (id === null) return;
       this.onlineUserIds.update((prev: ReadonlySet<number>) => {
         const next = new Set(prev);

@@ -500,14 +500,16 @@ export class ChatDockComponent {
     return box.displayName?.trim() ?? '';
   }
 
-  /** User để đối chiếu presence: chỉ `senderId` trên box ↔ `onlineUserIds` từ socket. */
   peerUserId(box: ChatBox): number | null {
-    const sid = box.senderId;
-    if (sid === undefined || sid === null || !Number.isFinite(Number(sid))) return null;
-    const n = Number(sid);
     const me = getChatViewerUserId();
-    if (me !== null && n === me) return null;
-    return n;
+    const n = (v: number | undefined): number | null =>
+      v !== undefined && Number.isFinite(Number(v)) ? Number(v) : null;
+    const s = n(box.senderId);
+    const r = n(box.receiverId);
+    if (s !== null && r !== null && me !== null) return s === me ? r : r === me ? s : s;
+    if (s !== null && (me === null || s !== me)) return s;
+    if (r !== null && (me === null || r !== me)) return r;
+    return null;
   }
 
   peerOnline(box: ChatBox): boolean {
@@ -723,13 +725,13 @@ export class ChatDockComponent {
 
     const body = msg.body;
     if (!body) return;
-    const convoFill = msg.senderName.trim();
+    const convoFill = msg.title?.trim() || msg.senderName.trim();
     if (convoFill && myId !== null && Number(msg.senderId) !== myId) {
       this.boxes.update((list) =>
         list.map((b) => {
           if (b.id !== boxId) return b;
           if (b.displayName?.trim()) return b;
-          return { ...b, title: convoFill };
+          return { ...b, displayName: convoFill };
         }),
       );
     }
@@ -775,7 +777,7 @@ export class ChatDockComponent {
     const boxId = Number(msg.boxId);
     if (!Number.isFinite(boxId)) return;
 
-    const peerTitle = msg.senderName.trim()
+    const peerTitle = msg.title?.trim() || msg.senderName.trim() || 'Chat';
 
     const preview =
       typeof msg.body === 'string' && msg.body.trim() ? msg.body.trim() : undefined;
