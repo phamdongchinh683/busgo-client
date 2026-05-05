@@ -10,6 +10,7 @@ import { MainTopbarComponent } from './components/main-topbar/main-topbar.compon
 import { ChatDockComponent } from './components/chat-dock/chat-dock.component';
 import { FcmDeviceService } from '../../core/services/fcm-device.service';
 import { ChatDockService } from '../../core/services/chat-dock.service';
+import { ChatSocketService } from '../../core/services/chat-socket.service';
 import { chat } from '../../data/services';
 import { getChatViewerUserId, normalizeBoxPayload } from '../../core/utils/chat-box-list';
 @Component({
@@ -44,6 +45,7 @@ export class MainLayoutComponent implements OnInit {
   private readonly api = inject(auth.ApiService);
   private readonly fcmDeviceService = inject(FcmDeviceService);
   private readonly chatDock = inject(ChatDockService);
+  private readonly chatSocket = inject(ChatSocketService);
   private readonly chatApi = inject(chat.ApiService);
   private hasRequestedNotificationAccess = false;
 
@@ -111,6 +113,7 @@ export class MainLayoutComponent implements OnInit {
   }
 
   private handleLogoutSuccess() {
+    this.chatSocket.disconnect();
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     this.chatDock.clearUnreadState();

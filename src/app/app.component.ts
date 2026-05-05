@@ -1,5 +1,6 @@
-import { Component, HostListener } from '@angular/core';
+import { Component, HostListener, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { ChatSocketService } from './core/services/chat-socket.service';
 
 @Component({
   selector: 'app-root',
@@ -8,6 +9,14 @@ import { RouterOutlet } from '@angular/router';
   templateUrl: './app.component.html',
 })
 export class AppComponent {
+  private readonly chatSocket = inject(ChatSocketService);
+
+  @HostListener('window:beforeunload')
+  @HostListener('window:pagehide')
+  onWindowClose(): void {
+    this.chatSocket.disconnect();
+  }
+
   @HostListener('document:contextmenu', ['$event'])
   onContextMenu(event: MouseEvent): void {
     event.preventDefault();
