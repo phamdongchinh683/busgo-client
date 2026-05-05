@@ -70,9 +70,7 @@ export function listRowPreview(box: ChatBox, myUserId: number | null): string {
   const lastSid = Number(box.lastMessageSenderId);
   const labeled =
     myUserId !== null && Number.isFinite(lastSid) ? lastSid === myUserId : false;
-  const who = labeled
-    ? storedUserFullName()
-    : box.senderFullName?.trim() || box.title?.trim() || '';
+  const who = labeled ? storedUserFullName() : box.displayName?.trim()
   return who ? `${who}: ${text}` : text;
 }
 

@@ -6,15 +6,27 @@
       } @else {
         <span class="messenger__top-spacer"></span>
       }
-      <h2 class="messenger__title">
-        @if (view() === 'thread') {
-          {{ selectedTitle() || 'Chat' }}
-        } @else if (view() === 'new') {
-          Tin nhắn mới
-        } @else {
-          Chat
-        }
-      </h2>
+      <div class="messenger__title-block">
+        <h2
+          class="messenger__title"
+          [class.messenger__title--thread]="view() === 'thread'"
+        >
+          @if (view() === 'thread') {
+            <span class="messenger__title-primary">{{ selectedTitle() || 'Chat' }}</span>
+            @if (selectedPeerOnline()) {
+              <span class="messenger__title-divider" aria-hidden="true">·</span>
+              <span class="messenger__status-online">
+                <span class="messenger__peer-online-dot" aria-hidden="true"></span>
+                Đang hoạt động
+              </span>
+            }
+          } @else if (view() === 'new') {
+            Tin nhắn mới
+          } @else {
+            Chat
+          }
+        </h2>
+      </div>
       <button type="button" class="messenger__icon-btn" (click)="dock.closePanel()" aria-label="Đóng">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M18 6L6 18M6 6l12 12" />
@@ -22,28 +34,30 @@
       </button>
     </header>
 
-    <div class="messenger__tabs" role="tablist" aria-label="Chế độ chat">
-      <button
-        type="button"
-        class="messenger__tab"
-        role="tab"
-        [attr.aria-selected]="view() === 'list'"
-        [class.messenger__tab--active]="view() === 'list'"
-        (click)="goToListView()"
-      >
-        Hội thoại
-      </button>
-      <button
-        type="button"
-        class="messenger__tab"
-        role="tab"
-        [attr.aria-selected]="view() === 'new'"
-        [class.messenger__tab--active]="view() === 'new'"
-        (click)="startNewChat()"
-      >
-        Tin mới
-      </button>
-    </div>
+    @if (view() !== 'thread') {
+      <div class="messenger__tabs" role="tablist" aria-label="Chế độ chat">
+        <button
+          type="button"
+          class="messenger__tab"
+          role="tab"
+          [attr.aria-selected]="view() === 'list'"
+          [class.messenger__tab--active]="view() === 'list'"
+          (click)="goToListView()"
+        >
+          Hội thoại
+        </button>
+        <button
+          type="button"
+          class="messenger__tab"
+          role="tab"
+          [attr.aria-selected]="view() === 'new'"
+          [class.messenger__tab--active]="view() === 'new'"
+          (click)="startNewChat()"
+        >
+          Tin mới
+        </button>
+      </div>
+    }
 
     <div class="messenger__body">
       @if (view() === 'list') {
@@ -76,10 +90,13 @@
                   @if (unread > 0) {
                     <span class="messenger__avatar-unread-dot" aria-hidden="true"></span>
                   }
-                  <span class="messenger__avatar">{{ initials(b.title) }}</span>
+                  @if (peerOnline(b)) {
+                    <span class="messenger__presence-online" aria-label="Đang hoạt động"></span>
+                  }
+                  <span class="messenger__avatar">{{ initials(boxDisplayLabel(b)) }}</span>
                 </span>
                 <span class="messenger__thread-info">
-                  <span class="messenger__thread-title">{{ b.title }}</span>
+                  <span class="messenger__thread-title">{{ boxDisplayLabel(b) }}</span>
                   @if (preview) {
                     <span class="messenger__thread-preview">{{ preview }}</span>
                   }
@@ -97,18 +114,14 @@
       } @else if (view() === 'new') {
         <div class="messenger__new-form">
           <label class="messenger__label">
-            Tiêu đề
-            <input type="text" [ngModel]="newTitle()" (ngModelChange)="newTitle.set($event)" placeholder="Tên nhóm / tiêu đề" />
-          </label>
-          <label class="messenger__label">
-            Người nhận (một người — tên, email, SĐT)
+            Người nhận
             <div class="messenger__search-row">
               <input
                 type="search"
                 [value]="searchQuery()"
                 (input)="onRecipientSearchInput($event)"
                 (keydown.enter)="onRecipientSearchSubmit($event)"
-                placeholder="Tìm kiếm ở đây..."
+                placeholder="Email hoặc số điện thoại"
                 autocomplete="off"
               />
               <button type="button" class="messenger__search-btn" (click)="onRecipientSearchSubmit()">
@@ -124,7 +137,12 @@
               @for (u of searchResults(); track u.id) {
                 <li>
                   <button type="button" class="messenger__hit" (click)="pickUser(u)">
-                    <span class="messenger__avatar messenger__avatar--sm">{{ initials(u.fullName) }}</span>
+                    <span class="messenger__avatar-wrap messenger__avatar-wrap--hit">
+                      @if (userSearchHitOnline(u)) {
+                        <span class="messenger__presence-online" aria-label="Đang hoạt động"></span>
+                      }
+                      <span class="messenger__avatar messenger__avatar--sm">{{ initials(u.fullName) }}</span>
+                    </span>
                     <span class="messenger__hit-text">
                       <strong>{{ u.fullName }}</strong>
                       <small>{{ u.email }} · {{ u.phone }}</small>

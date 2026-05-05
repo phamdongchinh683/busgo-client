@@ -1,17 +1,51 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { io, Socket } from 'socket.io-client';
 import { socketUrl } from '@app/data/constants';
 import { clearStoredCredentials, textIndicatesExpiredSession } from '@app/core/utils/auth-expiry';
+import {
+  chatConversationTitle,
+  chatSenderName,
+  pickStr,
+  viewerFullNameFromStorage,
+} from '@app/core/utils/chat-record-coerce';
 
 export interface ChatRealtimeMessage {
   senderId: number;
   body: string;
   boxId: number | string;
   createdAt?: string;
-  title?: string;
-  userIds?: number[];
+  senderName: string;
+}
+
+function coerceChatRealtimePayload(raw: unknown): ChatRealtimeMessage | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const o = raw as Record<string, unknown>;
+  const boxId = o['boxId'];
+  if (boxId === undefined || boxId === null) return null;
+  const senderRaw = o['senderId'];
+  const senderId =
+    typeof senderRaw === 'number' && Number.isFinite(senderRaw)
+      ? senderRaw
+      : typeof senderRaw === 'string' && senderRaw.trim() !== ''
+        ? parseInt(senderRaw, 10)
+        : NaN;
+  if (!Number.isFinite(senderId)) return null;
+
+  const body = pickStr(o, 'body') ?? pickStr(o, 'message') ?? '';
+  const createdAt = pickStr(o, 'createdAt');
+  const senderName = chatSenderName(o);
+  const title = chatConversationTitle(o);
+
+  return {
+    senderId,
+    body,
+    boxId: boxId as number | string,
+    senderName,
+    ...(createdAt !== undefined ? { createdAt } : {}),
+    ...(title !== undefined ? { title } : {}),
+  };
 }
 
 export interface ChatUnreadCountPayload {
@@ -21,12 +55,6 @@ export interface ChatUnreadCountPayload {
   unreadReceiverCount?: number;
   unreadSenderCount?: number;
   lastMessage?: string;
-  /** ISO time of the last message, when the server sends it */
-  lastMessageAt?: string;
-  /** User id of whoever sent the last message (drives list preview “Name: text”) */
-  lastMessageSenderId?: number;
-  /** Display name for the last sender when the server includes it */
-  lastMessageSenderFullName?: string;
 }
 
 function optNonNegativeIntSocket(v: unknown): number | undefined {
@@ -47,20 +75,39 @@ function stringifySocketError(err: unknown): string {
   }
 }
 
+function parseSocketUserId(v: unknown): number | null {
+  if (typeof v === 'number' && Number.isFinite(v)) return v;
+  if (typeof v === 'string' && v.trim() !== '') {
+    const n = parseInt(v, 10);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
+function coerceOnlineUserIds(raw: unknown): number[] {
+  if (!Array.isArray(raw)) return [];
+  const out: number[] = [];
+  for (const x of raw) {
+    const id = parseSocketUserId(x);
+    if (id !== null) out.push(id);
+  }
+  return out;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ChatSocketService {
   private readonly router = inject(Router);
   private socket: Socket | null = null;
   private readonly messageNew$ = new Subject<ChatRealtimeMessage>();
   private readonly chatNew$ = new Subject<ChatRealtimeMessage>();
-  private readonly chatJoined$ = new Subject<{ boxId: number | string }>();
   private readonly chatUnreadCount$ = new Subject<ChatUnreadCountPayload>();
   private socketHandlers: Array<{ event: string; fn: (...args: unknown[]) => void }> = [];
 
   readonly onMessageNew$ = this.messageNew$.asObservable();
   readonly onChatNew$ = this.chatNew$.asObservable();
-  readonly onChatJoined$ = this.chatJoined$.asObservable();
   readonly onChatUnreadCount$ = this.chatUnreadCount$.asObservable();
+
+  readonly onlineUserIds = signal<ReadonlySet<number>>(new Set());
 
   private joinedBoxId: number | null = null;
 
@@ -135,19 +182,13 @@ export class ChatSocketService {
     this.socketHandlers.push({ event: 'connect', fn: this.onSocketConnect });
 
     const onMessageNew = (...args: unknown[]) => {
-      const payload = args[0] as ChatRealtimeMessage;
-      this.messageNew$.next(payload);
+      const normalized = coerceChatRealtimePayload(args[0]);
+      if (normalized) this.messageNew$.next(normalized);
     };
     const onChatNew = (...args: unknown[]) => {
-      this.chatNew$.next(args[0] as ChatRealtimeMessage);
+      const normalized = coerceChatRealtimePayload(args[0]);
+      if (normalized) this.chatNew$.next(normalized);
     };
-    const onChatJoined = (...args: unknown[]) => {
-      const p = args[0] as { boxId?: number | string };
-      if (p?.boxId !== undefined && p?.boxId !== null) {
-        this.chatJoined$.next({ boxId: p.boxId });
-      }
-    };
-
     const onChatUnreadCount = (...args: unknown[]) => {
       const raw = args[0] as Record<string, unknown>;
       if (!raw || typeof raw !== 'object') return;
@@ -166,35 +207,6 @@ export class ChatSocketService {
           ? raw['lastMessage'].trim()
           : undefined;
 
-      const lastMessageAtRaw =
-        typeof raw['lastMessageAt'] === 'string'
-          ? raw['lastMessageAt'].trim()
-          : typeof raw['last_message_at'] === 'string'
-            ? (raw['last_message_at'] as string).trim()
-            : '';
-      const lastMessageCreatedRaw =
-        typeof raw['createdAt'] === 'string'
-          ? raw['createdAt'].trim()
-          : typeof raw['updatedAt'] === 'string'
-            ? (raw['updatedAt'] as string).trim()
-            : '';
-      const lastMessageAt =
-        lastMessageAtRaw || lastMessageCreatedRaw ? lastMessageAtRaw || lastMessageCreatedRaw : undefined;
-
-      const lastMessageSenderId =
-        optNonNegativeIntSocket(raw['lastMessageSenderId']) ??
-        optNonNegativeIntSocket(raw['last_message_sender_id']);
-
-      const lmSenderFnRaw =
-        typeof raw['lastMessageSenderFullName'] === 'string'
-          ? raw['lastMessageSenderFullName'].trim()
-          : typeof raw['last_message_sender_full_name'] === 'string'
-            ? (raw['last_message_sender_full_name'] as string).trim()
-            : typeof raw['lastSenderFullName'] === 'string'
-              ? (raw['lastSenderFullName'] as string).trim()
-              : '';
-      const lastMessageSenderFullName = lmSenderFnRaw || undefined;
-
       if (
         viewerUnread === undefined &&
         unreadReceiverCount === undefined &&
@@ -210,9 +222,6 @@ export class ChatSocketService {
         ...(unreadReceiverCount !== undefined ? { unreadReceiverCount } : {}),
         ...(unreadSenderCount !== undefined ? { unreadSenderCount } : {}),
         ...(lastMessage !== undefined ? { lastMessage } : {}),
-        ...(lastMessageAt !== undefined ? { lastMessageAt } : {}),
-        ...(lastMessageSenderId !== undefined ? { lastMessageSenderId } : {}),
-        ...(lastMessageSenderFullName !== undefined ? { lastMessageSenderFullName } : {}),
       });
     };
 
@@ -222,11 +231,39 @@ export class ChatSocketService {
     this.socket.on('chat:new', onChatNew);
     this.socketHandlers.push({ event: 'chat:new', fn: onChatNew });
 
-    this.socket.on('chat:joined', onChatJoined);
-    this.socketHandlers.push({ event: 'chat:joined', fn: onChatJoined });
-
     this.socket.on('chat:unread:count', onChatUnreadCount);
     this.socketHandlers.push({ event: 'chat:unread:count', fn: onChatUnreadCount });
+
+    const onUsersOnline = (...args: unknown[]) => {
+      const raw = args[0] as Record<string, unknown> | undefined;
+      const ids = coerceOnlineUserIds(raw?.['userIds']);
+      this.onlineUserIds.set(new Set(ids));
+    };
+    const onUserOnline = (...args: unknown[]) => {
+      const raw = args[0] as Record<string, unknown> | undefined;
+      const id = parseSocketUserId(raw?.['userId']);
+      if (id === null) return;
+      this.onlineUserIds.update((prev: ReadonlySet<number>) => new Set([...prev, id]));
+    };
+    const onUserOffline = (...args: unknown[]) => {
+      const raw = args[0] as Record<string, unknown> | undefined;
+      const id = parseSocketUserId(raw?.['userId']);
+      if (id === null) return;
+      this.onlineUserIds.update((prev: ReadonlySet<number>) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    };
+
+    this.socket.on('users:online', onUsersOnline);
+    this.socketHandlers.push({ event: 'users:online', fn: onUsersOnline });
+
+    this.socket.on('user:online', onUserOnline);
+    this.socketHandlers.push({ event: 'user:online', fn: onUserOnline });
+
+    this.socket.on('user:offline', onUserOffline);
+    this.socketHandlers.push({ event: 'user:offline', fn: onUserOffline });
   }
 
   disconnect(): void {
@@ -258,6 +295,11 @@ export class ChatSocketService {
     if (this.joinedBoxId === id) this.joinedBoxId = null;
   }
 
+  leaveJoinedRoom(): void {
+    if (this.joinedBoxId === null) return;
+    this.leaveBox(this.joinedBoxId);
+  }
+
   emitMessageSend(boxId: number, body: string): void {
     const id = Number(boxId);
     if (!Number.isFinite(id)) return;
@@ -266,6 +308,7 @@ export class ChatSocketService {
       body,
       boxId: id,
       createdAt: new Date().toISOString(),
+      senderName: viewerFullNameFromStorage(),
     });
   }
 
@@ -282,5 +325,6 @@ export class ChatSocketService {
     this.socketHandlers = [];
     this.socket.disconnect();
     this.socket = null;
+    this.onlineUserIds.set(new Set());
   }
 }

@@ -1,4 +1,5 @@
 import { ChatBox } from '@app/data/interfaces/chat';
+import { chatLastMessagePreview, chatPeerLabel } from '@app/core/utils/chat-record-coerce';
 
 export function getChatViewerUserId(): number | null {
   const raw = localStorage.getItem('user');
@@ -70,24 +71,17 @@ function nextFromPayload(r: Record<string, unknown>): number | null {
 
 function extractBoxRows(r: Record<string, unknown>): unknown[] | null {
   if (Array.isArray(r['boxes'])) return r['boxes'];
-  if (Array.isArray(r['data'])) return r['data'];
-  for (const k of ['items', 'results', 'rows', 'list', 'chats', 'payload'] as const) {
-    if (Array.isArray(r[k])) return r[k] as unknown[];
-  }
   const data = r['data'];
+  if (Array.isArray(data)) return data;
   if (data && typeof data === 'object' && !Array.isArray(data)) {
-    const d = data as Record<string, unknown>;
-    if (Array.isArray(d['boxes'])) return d['boxes'];
-    if (Array.isArray(d['data'])) return d['data'];
-    for (const k of ['boxes', 'items', 'results', 'rows', 'list', 'chats', 'payload'] as const) {
-      if (Array.isArray(d[k])) return d[k] as unknown[];
-    }
+    const inner = (data as Record<string, unknown>)['boxes'];
+    if (Array.isArray(inner)) return inner;
   }
   return null;
 }
 
 function coerceBoxId(o: Record<string, unknown>): number | null {
-  const raw = o['id'] ?? o['boxId'] ?? o['chatBoxId'];
+  const raw = o['id'] ?? o['boxId'];
   if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
   if (typeof raw === 'string' && raw.trim() !== '') {
     const n = parseInt(raw, 10);
@@ -106,73 +100,27 @@ function optNonNegativeInt(record: Record<string, unknown>, key: string): number
   return undefined;
 }
 
-function coerceLastMessagePreview(o: Record<string, unknown>): string | undefined {
-  const keys = ['lastMessage', 'lastMessge', 'last_message', 'preview', 'snippet'] as const;
-  for (const k of keys) {
-    const v = o[k];
-    if (typeof v === 'string' && v.trim()) return v.trim();
-  }
-  for (const nk of ['lastMessage', 'lastMessge'] as const) {
-    const nested = o[nk];
-    if (nested && typeof nested === 'object') {
-      const bm = (nested as Record<string, unknown>)['message'] ?? (nested as Record<string, unknown>)['body'];
-      if (typeof bm === 'string' && bm.trim()) return bm.trim();
-    }
-  }
-  return undefined;
-}
-
-function coerceLastMessageAt(o: Record<string, unknown>): string | undefined {
-  const keys = [
-    'lastMessageAt',
-    'last_message_at',
-    'updatedAt',
-    'lastActivityAt',
-    'last_activity_at',
-  ] as const;
-  for (const k of keys) {
-    const v = o[k];
-    if (typeof v === 'string' && v.trim()) return v.trim();
-  }
-  return undefined;
-}
-
 export function normalizeBoxItem(raw: unknown): ChatBox | null {
   if (!raw || typeof raw !== 'object') return null;
   const o = raw as Record<string, unknown>;
   const id = coerceBoxId(o);
   if (id === null) return null;
-  const titleRaw =
-    (typeof o['title'] === 'string' && o['title']) ||
-    (typeof o['name'] === 'string' && o['name']) ||
-    (typeof o['label'] === 'string' && o['label']) ||
-    (typeof o['subject'] === 'string' && o['subject']) ||
-    '';
-  const box: ChatBox = { id, title: titleRaw.trim() };
+  const box: ChatBox = { id, displayName: chatPeerLabel(o) };
 
-  const lm = coerceLastMessagePreview(o);
-  const la = coerceLastMessageAt(o);
+  const lm = chatLastMessagePreview(o);
   if (lm) box.lastMessage = lm;
-  if (la) box.lastMessageAt = la;
 
   const sid = optNonNegativeInt(o, 'senderId');
   const rid = optNonNegativeInt(o, 'receiverId');
   if (sid !== undefined) box.senderId = sid;
   if (rid !== undefined) box.receiverId = rid;
 
-  const smc = optNonNegativeInt(o, 'senderMessageCount');
-  const rmc = optNonNegativeInt(o, 'receiverMessageCount');
   const ur = optNonNegativeInt(o, 'unreadReceiverCount');
   const us = optNonNegativeInt(o, 'unreadSenderCount');
   const lms = optNonNegativeInt(o, 'lastMessageSenderId');
-  if (smc !== undefined) box.senderMessageCount = smc;
-  if (rmc !== undefined) box.receiverMessageCount = rmc;
   if (ur !== undefined) box.unreadReceiverCount = ur;
   if (us !== undefined) box.unreadSenderCount = us;
   if (lms !== undefined) box.lastMessageSenderId = lms;
-
-  const sfn = o['senderFullName'];
-  if (typeof sfn === 'string' && sfn.trim()) box.senderFullName = sfn.trim();
 
   return box;
 }

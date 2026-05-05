@@ -17,7 +17,6 @@ import { finalize, map } from 'rxjs/operators';
 import { chat, user as userApi } from '@app/data/services';
 import { User } from '@app/data/interfaces/user';
 import { ChatBox, ChatMessage } from '@app/data/interfaces/chat';
-import type { UserFilters } from '@app/data/services/user';
 import { ChatDockService } from '@app/core/services/chat-dock.service';
 import {
   getChatViewerUserId,
@@ -81,19 +80,13 @@ export class ChatDockComponent {
     return list.filter((m) => {
       const body = (m.message ?? '').toLowerCase();
       const name = (m.fullName ?? '').toLowerCase();
-      const mail = (m.email ?? '').toLowerCase();
-      const phoneDigits = (m.phone ?? '').replace(/\D/g, '');
-      const qDigits = q.replace(/\D/g, '');
       return (
         body.includes(q) ||
-        name.includes(q) ||
-        mail.includes(q) ||
-        (qDigits.length >= 3 && phoneDigits.includes(qDigits))
+        name.includes(q)
       );
     });
   });
 
-  readonly newTitle = signal('');
   readonly newMessage = signal('');
   readonly selectedReceiver = signal<User | null>(null);
   readonly searchQuery = signal('');
@@ -123,9 +116,24 @@ export class ChatDockComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((p: ChatUnreadCountPayload) => this.handleChatUnreadCount(p));
 
+    this.destroyRef.onDestroy(() => {
+      this.socket.leaveJoinedRoom();
+    });
+
     effect(() => {
       const open = this.dock.panelOpen();
-      if (!open) return;
+      if (!open) {
+        untracked(() => {
+          this.socket.leaveJoinedRoom();
+          if (this.view() === 'thread') {
+            this.messageSearchDraft.set('');
+            this.messageSearchApplied.set('');
+            this.selectedBoxId.set(null);
+            this.view.set('list');
+          }
+        });
+        return;
+      }
 
       if (this.dock.consumePanelOpenedViaHeaderToggle()) {
         if (untracked(() => this.view()) === 'thread') {
@@ -219,7 +227,7 @@ export class ChatDockComponent {
     this.messageSearchDraft.set('');
     this.messageSearchApplied.set('');
     this.selectedBoxId.set(box.id);
-    this.selectedTitle.set(box.title);
+    this.selectedTitle.set(box.displayName?.trim() || 'Chat');
     this.view.set('thread');
     const cached = this.threadCache.get(box.id);
     if (cached) {
@@ -241,7 +249,7 @@ export class ChatDockComponent {
       this.socket.emitChatRead(box.id);
       this.refreshBoxStateOnOpen(box.id);
     }
-    if (!cached) this.loadMessages(box.id);
+    this.loadMessages(box.id);
   }
 
   private refreshBoxStateOnOpen(boxId: number): void {
@@ -269,14 +277,7 @@ export class ChatDockComponent {
           : NaN;
     if (!Number.isFinite(boxId)) return;
     if (typeof p.lastMessage === 'string' && p.lastMessage.trim()) {
-      const sid =
-        typeof p.lastMessageSenderId === 'number' && Number.isFinite(p.lastMessageSenderId)
-          ? p.lastMessageSenderId
-          : undefined;
-      this.patchBoxPreview(boxId, p.lastMessage, p.lastMessageAt, sid, {
-        clearLastMessageSenderWhenNoId: true,
-        lastSenderFullNameHint: p.lastMessageSenderFullName,
-      });
+      this.patchBoxPreview(boxId, p.lastMessage, undefined, { clearLastMessageSenderWhenNoId: true });
     }
     const vid = getChatViewerUserId();
     const isActiveThreadBox =
@@ -371,7 +372,6 @@ export class ChatDockComponent {
       if (id !== null) this.socket.leaveBox(id);
       this.selectedBoxId.set(null);
     }
-    this.newTitle.set('');
     this.newMessage.set('');
     this.selectedReceiver.set(null);
     this.searchQuery.set('');
@@ -381,14 +381,17 @@ export class ChatDockComponent {
   }
 
   submitNewChat(): void {
-    const title = this.newTitle().trim();
     const message = this.newMessage().trim();
     const myId = getChatViewerUserId();
     const peer = this.selectedReceiver();
     const receiverId = peer ? Number(peer.id) : NaN;
 
-    if (!title || !message || myId === null) {
-      this.createError.set('Nhập tiêu đề, nội dung và đăng nhập hợp lệ.');
+    if (!message || myId === null) {
+      this.createError.set('Nhập nội dung và đăng nhập hợp lệ.');
+      return;
+    }
+    if (!peer?.fullName?.trim()) {
+      this.createError.set('Chọn người nhận có họ tên hợp lệ.');
       return;
     }
     if (!peer || !Number.isFinite(receiverId) || receiverId <= 0) {
@@ -403,7 +406,7 @@ export class ChatDockComponent {
     this.creating.set(true);
     this.createError.set('');
     this.chatService
-      .createBox({ title, message, receiverId })
+      .createBox({ message, receiverId })
       .pipe(finalize(() => this.creating.set(false)), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
@@ -493,6 +496,39 @@ export class ChatDockComponent {
     return p.map((w) => w[0]?.toUpperCase() ?? '').join('') || '?';
   }
 
+  boxDisplayLabel(box: ChatBox): string {
+    return box.displayName?.trim() ?? '';
+  }
+
+  /** User để đối chiếu presence: chỉ `senderId` trên box ↔ `onlineUserIds` từ socket. */
+  peerUserId(box: ChatBox): number | null {
+    const sid = box.senderId;
+    if (sid === undefined || sid === null || !Number.isFinite(Number(sid))) return null;
+    const n = Number(sid);
+    const me = getChatViewerUserId();
+    if (me !== null && n === me) return null;
+    return n;
+  }
+
+  peerOnline(box: ChatBox): boolean {
+    const pid = this.peerUserId(box);
+    if (pid === null) return false;
+    return this.socket.onlineUserIds().has(pid);
+  }
+
+  selectedPeerOnline(): boolean {
+    const id = this.selectedBoxId();
+    if (id === null) return false;
+    const box = this.boxes().find((b) => b.id === id);
+    return box ? this.peerOnline(box) : false;
+  }
+
+  userSearchHitOnline(u: User): boolean {
+    const uid = Number(u.id);
+    if (!Number.isFinite(uid)) return false;
+    return this.socket.onlineUserIds().has(uid);
+  }
+
   boxUnreadCount(box: ChatBox): number {
     return viewerUnreadCount(box, getChatViewerUserId());
   }
@@ -551,12 +587,7 @@ export class ChatDockComponent {
           this.threadCache.set(boxId, { messages: coalesced, next: res.next ?? null });
           const last = coalesced[coalesced.length - 1];
           if (last?.message?.trim()) {
-            this.patchBoxPreview(
-              boxId,
-              last.message,
-              last.createdAt,
-              positiveSenderId(last.senderId),
-            );
+            this.patchBoxPreview(boxId, last.message, positiveSenderId(last.senderId));
           }
           this.scrollToBottom();
         },
@@ -566,32 +597,21 @@ export class ChatDockComponent {
   private patchBoxPreview(
     boxId: number,
     text: string,
-    createdAt?: string,
     lastMessageSenderId?: number,
-    opts?: {
-      clearLastMessageSenderWhenNoId?: boolean;
-      lastSenderFullNameHint?: string;
-    },
+    opts?: { clearLastMessageSenderWhenNoId?: boolean },
   ): void {
     const t = text.trim();
     if (!t) return;
-    const at = createdAt?.trim();
     const sid =
       lastMessageSenderId !== undefined ? positiveSenderId(lastMessageSenderId) : undefined;
-    const vid = getChatViewerUserId();
     this.boxes.update((list) =>
       list.map((b) => {
         if (b.id !== boxId) return b;
         const next: ChatBox = { ...b, lastMessage: t };
-        if (at) next.lastMessageAt = at;
         if (sid !== undefined) {
           next.lastMessageSenderId = sid;
         } else if (opts?.clearLastMessageSenderWhenNoId) {
           delete next.lastMessageSenderId;
-        }
-        const hint = opts?.lastSenderFullNameHint?.trim();
-        if (hint && sid !== undefined && vid !== null && sid !== vid) {
-          next.senderFullName = hint;
         }
         return next;
       }),
@@ -620,23 +640,6 @@ export class ChatDockComponent {
           });
         },
       });
-  }
-
-  private resolveSenderDisplayName(senderId: number, list: ChatMessage[]): string {
-    const sid = Number(senderId);
-    if (!Number.isFinite(sid) || sid <= 0) return '';
-
-    for (let i = list.length - 1; i >= 0; i--) {
-      if (msgSenderId(list[i]) !== sid) continue;
-      const fn = list[i].fullName?.trim();
-      if (fn && fn !== 'Người dùng') return fn;
-    }
-    for (let i = list.length - 1; i >= 0; i--) {
-      if (msgSenderId(list[i]) !== sid) continue;
-      const fn = list[i].fullName?.trim();
-      if (fn) return fn;
-    }
-    return '';
   }
 
   private coalesceSenderNamesInThread(messages: ChatMessage[]): ChatMessage[] {
@@ -695,16 +698,9 @@ export class ChatDockComponent {
       message: text,
       senderId: uid ?? -1,
       fullName: storedUserFullName(),
-      phone: '',
-      email: '',
       createdAt: new Date().toISOString(),
     };
-    this.patchBoxPreview(
-      _boxId,
-      text,
-      optimistic.createdAt,
-      positiveSenderId(uid),
-    );
+    this.patchBoxPreview(_boxId, text, positiveSenderId(uid));
     this.messages.update((list) =>
       this.coalesceSenderNamesInThread(this.sortMessages([...list, optimistic])),
     );
@@ -727,8 +723,17 @@ export class ChatDockComponent {
 
     const body = msg.body;
     if (!body) return;
-    const at = msg.createdAt?.trim() ? msg.createdAt : new Date().toISOString();
-    this.patchBoxPreview(boxId, body, at, positiveSenderId(msg.senderId));
+    const convoFill = msg.senderName.trim();
+    if (convoFill && myId !== null && Number(msg.senderId) !== myId) {
+      this.boxes.update((list) =>
+        list.map((b) => {
+          if (b.id !== boxId) return b;
+          if (b.displayName?.trim()) return b;
+          return { ...b, title: convoFill };
+        }),
+      );
+    }
+    this.patchBoxPreview(boxId, body, positiveSenderId(msg.senderId));
 
     if (!this.inChatThread()) return;
     if (this.selectedBoxId() !== boxId) return;
@@ -742,14 +747,11 @@ export class ChatDockComponent {
     const sid = Number(msg.senderId);
 
     this.messages.update((list) => {
-      const resolvedName = Number.isFinite(sid) ? this.resolveSenderDisplayName(sid, list) : '';
       const row: ChatMessage = {
         id: Date.now(),
         message: body,
         senderId: Number.isFinite(sid) ? sid : msg.senderId,
-        fullName: resolvedName,
-        phone: '',
-        email: '',
+        fullName: msg.senderName.trim(),
         createdAt: msg.createdAt || new Date().toISOString(),
       };
       return this.coalesceSenderNamesInThread(this.sortMessages([...list, row]));
@@ -773,20 +775,19 @@ export class ChatDockComponent {
     const boxId = Number(msg.boxId);
     if (!Number.isFinite(boxId)) return;
 
-    const title =
-      typeof msg.title === 'string' && msg.title.trim() ? msg.title.trim() : 'Chat';
+    const peerTitle = msg.senderName.trim()
 
     const preview =
       typeof msg.body === 'string' && msg.body.trim() ? msg.body.trim() : undefined;
     this.boxes.update((list) => {
       if (list.some((b) => b.id === boxId)) return list;
-      const row: ChatBox = { id: boxId, title };
+      const row: ChatBox = { id: boxId, displayName: peerTitle };
       if (preview) row.lastMessage = preview;
       return [row, ...list];
     });
 
     this.dock.panelOpen.set(true);
-    const openBox: ChatBox = { id: boxId, title };
+    const openBox: ChatBox = { id: boxId, displayName: peerTitle };
     if (preview) openBox.lastMessage = preview;
     this.openThread(openBox, false);
   }
