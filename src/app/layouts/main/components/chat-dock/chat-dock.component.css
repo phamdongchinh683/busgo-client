@@ -2,8 +2,8 @@
   position: fixed;
   right: 20px;
   bottom: 20px;
-  width: min(380px, calc(100vw - 24px));
-  height: min(560px, calc(100vh - 100px));
+  width: min(340px, calc(100vw - 20px));
+  height: min(500px, calc(100vh - 90px));
   display: flex;
   flex-direction: column;
   border-radius: 0;
@@ -21,7 +21,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 12px;
+  padding: 5px 12px;
   background: var(--topbar-bg);
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
@@ -45,7 +45,7 @@
   margin: 0;
   width: 100%;
   font-family: var(--font-family-title);
-  font-size: 16px;
+  font-size: 15px;
   font-weight: var(--font-weight-title);
   color: var(--color-text-title);
   text-align: center;
@@ -54,10 +54,12 @@
 .messenger__title--thread {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   justify-content: center;
-  gap: 6px 10px;
-  line-height: 1.35;
+  gap: 4px 8px;
+  line-height: 1.2;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .messenger__title-primary {
@@ -79,30 +81,32 @@
 .messenger__status-online {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 4px;
   font-family: var(--font-family-base);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.01em;
-  color: color-mix(in srgb, var(--color-primary) 72%, var(--color-text-muted));
+  color: var(--color-text-muted);
 }
 
 /* inline-block: span mặc định không nhận width/height → tròn thành ô vuông */
 .messenger__peer-online-dot {
   display: inline-block;
   flex-shrink: 0;
-  width: 8px;
-  height: 8px;
-  min-width: 8px;
-  min-height: 8px;
+  position: relative;
+  width: 7px;
+  height: 7px;
+  min-width: 7px;
+  min-height: 7px;
   aspect-ratio: 1;
   border-radius: 50%;
   vertical-align: middle;
-  background: var(--color-primary);
+  background: radial-gradient(circle at 30% 30%, #7bf1c2 0%, #1dd1a1 45%, #0abf8f 100%);
   box-shadow:
-    0 0 0 2px var(--color-surface, #fff),
-    0 1px 3px color-mix(in srgb, var(--color-primary) 40%, transparent);
-  animation: messenger-presence-dot-breathe 2.5s ease-in-out infinite;
+    0 0 0 1.5px var(--color-surface, #fff),
+    0 0 0 4px rgba(16, 185, 129, 0.16),
+    0 2px 5px rgba(16, 185, 129, 0.35);
+  animation: messenger-presence-dot-breathe 2.2s ease-in-out infinite;
 }
 
 @keyframes messenger-presence-dot-breathe {
@@ -110,10 +114,18 @@
   100% {
     opacity: 1;
     transform: scale(1);
+    box-shadow:
+      0 0 0 1.5px var(--color-surface, #fff),
+      0 0 0 3px rgba(16, 185, 129, 0.13),
+      0 2px 5px rgba(16, 185, 129, 0.3);
   }
   50% {
-    opacity: 0.88;
-    transform: scale(0.94);
+    opacity: 0.96;
+    transform: scale(1.08);
+    box-shadow:
+      0 0 0 1.5px var(--color-surface, #fff),
+      0 0 0 6px rgba(16, 185, 129, 0.1),
+      0 3px 8px rgba(16, 185, 129, 0.4);
   }
 }
 
@@ -282,22 +294,17 @@
   position: absolute;
   bottom: 1px;
   right: 1px;
-  width: 11px;
-  height: 11px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   box-sizing: border-box;
   z-index: 2;
-  background: radial-gradient(
-    circle at 30% 28%,
-    color-mix(in srgb, var(--color-primary) 78%, #ffffff),
-    var(--color-primary)
-  );
-  border: 2px solid var(--color-surface, #fff);
+  background: radial-gradient(circle at 30% 30%, #7bf1c2 0%, #19cc9b 48%, #0abf8f 100%);
+  border: 1.5px solid var(--color-surface, #fff);
   box-shadow:
-    0 1px 4px color-mix(in srgb, var(--color-primary) 38%, transparent),
-    0 0 0 1px color-mix(in srgb, #ffffff 45%, transparent) inset,
-    0 0 0 0 color-mix(in srgb, var(--color-primary) 30%, transparent);
-  animation: messenger-presence-avatar-glow 2.6s ease-in-out infinite;
+    0 0 0 3px rgba(16, 185, 129, 0.14),
+    0 1px 5px rgba(16, 185, 129, 0.35);
+  animation: messenger-presence-avatar-glow 2.2s ease-in-out infinite;
 }
 
 .messenger__avatar-unread-dot {
@@ -651,6 +658,79 @@
   padding: 6px 8px 8px;
   background: var(--color-surface);
   border-top: 1px solid var(--color-border);
+}
+
+.messenger__typing {
+  margin: 0 0 7px;
+  display: flex;
+  align-items: center;
+}
+
+.messenger__typing-bubble {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  border-radius: 0;
+}
+
+.messenger__typing-text {
+  margin-right: 2px;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.messenger__typing-dots {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.messenger__typing-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+  animation: messenger-typing-zalo 1.15s cubic-bezier(0.25, 0.85, 0.35, 1) infinite;
+}
+
+.messenger__typing-dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.messenger__typing-dot:nth-child(2) {
+  animation-delay: 0.16s;
+}
+
+.messenger__typing-dot:nth-child(3) {
+  animation-delay: 0.32s;
+}
+
+@keyframes messenger-typing-zalo {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.35;
+  }
+  35% {
+    transform: translateY(-2px) scale(1.12);
+    opacity: 1;
+  }
+  65% {
+    transform: translateY(0);
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .messenger__typing-dot {
+    animation: none;
+    opacity: 0.75;
+  }
 }
 
 .messenger__composer-inner {

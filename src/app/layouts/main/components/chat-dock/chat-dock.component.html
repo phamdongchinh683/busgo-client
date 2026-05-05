@@ -17,7 +17,6 @@
               <span class="messenger__title-divider" aria-hidden="true">·</span>
               <span class="messenger__status-online">
                 <span class="messenger__peer-online-dot" aria-hidden="true"></span>
-                Đang hoạt động
               </span>
             }
           } @else if (view() === 'new') {
@@ -222,6 +221,18 @@
             @if (sendError()) {
               <p class="messenger__err">{{ sendError() }}</p>
             }
+            @if (peerTyping()) {
+              <div class="messenger__typing" aria-live="polite" aria-label="Đối phương đang nhập">
+                <span class="messenger__typing-bubble">
+                  <span class="messenger__typing-text">{{ selectedTitle() || 'Đối phương' }} đang nhập</span>
+                  <span class="messenger__typing-dots" aria-hidden="true">
+                    <span class="messenger__typing-dot"></span>
+                    <span class="messenger__typing-dot"></span>
+                    <span class="messenger__typing-dot"></span>
+                  </span>
+                </span>
+              </div>
+            }
             <div class="messenger__composer-inner">
               <textarea
                 rows="1"
@@ -229,7 +240,7 @@
                 placeholder="Nhập tin nhắn…"
                 title="Enter để gửi"
                 [ngModel]="draft()"
-                (ngModelChange)="draft.set($event)"
+                (ngModelChange)="onComposerInput($event)"
                 (keydown)="onComposerKeydown($event)"
               ></textarea>
               <button

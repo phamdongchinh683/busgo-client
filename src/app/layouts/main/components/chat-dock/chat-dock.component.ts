@@ -27,6 +27,7 @@ import {
 import {
   ChatRealtimeMessage,
   ChatSocketService,
+  ChatTypingPayload,
   ChatUnreadCountPayload,
 } from '@app/core/services/chat-socket.service';
 import {
@@ -70,6 +71,7 @@ export class ChatDockComponent {
   readonly selectedTitle = signal('');
   readonly draft = signal('');
   readonly sendError = signal('');
+  readonly peerTyping = signal(false);
   readonly messageSearchDraft = signal('');
   readonly messageSearchApplied = signal('');
 
@@ -97,6 +99,8 @@ export class ChatDockComponent {
 
   private boxesLoadInFlight = false;
   private threadCache = new Map<number, { messages: ChatMessage[]; next: number | null }>();
+  private typingStopDebounce: ReturnType<typeof setTimeout> | null = null;
+  private typingActiveBoxId: number | null = null;
 
   @ViewChild('messageScroll') private messageScroll?: ElementRef<HTMLElement>;
   @ViewChild('boxListScroll') private boxListScroll?: ElementRef<HTMLElement>;
@@ -115,8 +119,15 @@ export class ChatDockComponent {
     this.socket.onChatUnreadCount$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((p: ChatUnreadCountPayload) => this.handleChatUnreadCount(p));
+    this.socket.onChatTypingStart$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((p: ChatTypingPayload) => this.handleTypingStart(p));
+    this.socket.onChatTypingStop$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((p: ChatTypingPayload) => this.handleTypingStop(p));
 
     this.destroyRef.onDestroy(() => {
+      this.stopTypingNow();
       this.socket.leaveJoinedRoom();
     });
 
@@ -124,6 +135,8 @@ export class ChatDockComponent {
       const open = this.dock.panelOpen();
       if (!open) {
         untracked(() => {
+          this.stopTypingNow();
+          this.peerTyping.set(false);
           this.socket.leaveJoinedRoom();
           if (this.view() === 'thread') {
             this.messageSearchDraft.set('');
@@ -226,6 +239,8 @@ export class ChatDockComponent {
 
     this.messageSearchDraft.set('');
     this.messageSearchApplied.set('');
+    this.stopTypingNow();
+    this.peerTyping.set(false);
     this.selectedBoxId.set(box.id);
     this.selectedTitle.set(box.displayName?.trim() || 'Chat');
     this.view.set('thread');
@@ -348,6 +363,8 @@ export class ChatDockComponent {
   }
 
   backToList(): void {
+    this.stopTypingNow();
+    this.peerTyping.set(false);
     this.messageSearchDraft.set('');
     this.messageSearchApplied.set('');
     const id = this.selectedBoxId();
@@ -367,6 +384,8 @@ export class ChatDockComponent {
   }
 
   startNewChat(): void {
+    this.stopTypingNow();
+    this.peerTyping.set(false);
     if (this.view() === 'thread') {
       const id = this.selectedBoxId();
       if (id !== null) this.socket.leaveBox(id);
@@ -424,10 +443,16 @@ export class ChatDockComponent {
     this.sendDraft();
   }
 
+  onComposerInput(v: string): void {
+    this.draft.set(v);
+    this.scheduleTypingSignal();
+  }
+
   sendDraft(): void {
     const boxId = this.selectedBoxId();
     const text = this.draft().trim();
     if (boxId === null || !text) return;
+    this.stopTypingNow();
     this.sendError.set('');
     this.chatService
       .sendMessage(boxId, { message: text })
@@ -714,6 +739,51 @@ export class ChatDockComponent {
     return this.dock.panelOpen() && this.view() === 'thread';
   }
 
+  private scheduleTypingSignal(): void {
+    if (!this.inChatThread()) return;
+    const boxId = this.selectedBoxId();
+    if (boxId === null) return;
+    if (this.typingActiveBoxId !== boxId) {
+      this.typingActiveBoxId = boxId;
+      this.socket.emitTypingStart(boxId);
+    }
+    if (this.typingStopDebounce !== null) {
+      clearTimeout(this.typingStopDebounce);
+    }
+    this.typingStopDebounce = setTimeout(() => {
+      this.stopTypingNow();
+    }, 1200);
+  }
+
+  private stopTypingNow(): void {
+    if (this.typingStopDebounce !== null) {
+      clearTimeout(this.typingStopDebounce);
+      this.typingStopDebounce = null;
+    }
+    if (this.typingActiveBoxId !== null) {
+      this.socket.emitTypingStop(this.typingActiveBoxId);
+      this.typingActiveBoxId = null;
+    }
+  }
+
+  private handleTypingStart(p: ChatTypingPayload): void {
+    const boxId = Number(p.boxId);
+    if (!Number.isFinite(boxId)) return;
+    if (!this.inChatThread() || this.selectedBoxId() !== boxId) return;
+    const myId = getChatViewerUserId();
+    if (myId !== null && p.userId === myId) return;
+    this.peerTyping.set(true);
+  }
+
+  private handleTypingStop(p: ChatTypingPayload): void {
+    const boxId = Number(p.boxId);
+    if (!Number.isFinite(boxId)) return;
+    if (this.selectedBoxId() !== boxId) return;
+    const myId = getChatViewerUserId();
+    if (myId !== null && p.userId === myId) return;
+    this.peerTyping.set(false);
+  }
+
   private handleSocketMessageNew(msg: ChatRealtimeMessage): void {
     const boxId = Number(msg.boxId);
     if (!Number.isFinite(boxId)) return;
@@ -739,6 +809,7 @@ export class ChatDockComponent {
 
     if (!this.inChatThread()) return;
     if (this.selectedBoxId() !== boxId) return;
+    this.peerTyping.set(false);
 
     const listSnap = this.messages();
     if (this.isDupRealtime(listSnap, msg)) {

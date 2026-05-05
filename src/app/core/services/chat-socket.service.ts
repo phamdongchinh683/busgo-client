@@ -58,6 +58,11 @@ export interface ChatUnreadCountPayload {
   lastMessage?: string;
 }
 
+export interface ChatTypingPayload {
+  userId: number;
+  boxId: number | string;
+}
+
 function optNonNegativeIntSocket(v: unknown): number | undefined {
   if (typeof v === 'number' && Number.isFinite(v)) return Math.max(0, Math.floor(v));
   if (typeof v === 'string' && v.trim() !== '') {
@@ -102,11 +107,15 @@ export class ChatSocketService {
   private readonly messageNew$ = new Subject<ChatRealtimeMessage>();
   private readonly chatNew$ = new Subject<ChatRealtimeMessage>();
   private readonly chatUnreadCount$ = new Subject<ChatUnreadCountPayload>();
+  private readonly chatTypingStart$ = new Subject<ChatTypingPayload>();
+  private readonly chatTypingStop$ = new Subject<ChatTypingPayload>();
   private socketHandlers: Array<{ event: string; fn: (...args: unknown[]) => void }> = [];
 
   readonly onMessageNew$ = this.messageNew$.asObservable();
   readonly onChatNew$ = this.chatNew$.asObservable();
   readonly onChatUnreadCount$ = this.chatUnreadCount$.asObservable();
+  readonly onChatTypingStart$ = this.chatTypingStart$.asObservable();
+  readonly onChatTypingStop$ = this.chatTypingStop$.asObservable();
 
   readonly onlineUserIds = signal<ReadonlySet<number>>(new Set());
 
@@ -151,8 +160,8 @@ export class ChatSocketService {
     }
 
     this.socket = io(socketUrl, {
-      transports: ['websocket', 'polling'],
-      reconnection: true,
+      transports: ['websocket'],
+      // reconnection: true,
       auth: (cb) => {
         const raw = localStorage.getItem('token')?.replace(/^Bearer\s+/i, '').trim() ?? '';
         cb({ token: raw });
@@ -187,6 +196,7 @@ export class ChatSocketService {
       if (normalized) this.messageNew$.next(normalized);
     };
     const onChatNew = (...args: unknown[]) => {
+      console.log('[socket][chat:new] raw payload:', args[0]);
       const normalized = coerceChatRealtimePayload(args[0]);
       if (normalized) this.chatNew$.next(normalized);
     };
@@ -225,6 +235,24 @@ export class ChatSocketService {
         ...(lastMessage !== undefined ? { lastMessage } : {}),
       });
     };
+    const onChatTypingStart = (...args: unknown[]) => {
+      const raw = args[0] as Record<string, unknown>;
+      if (!raw || typeof raw !== 'object') return;
+      const boxId = raw['boxId'];
+      if (boxId === undefined || boxId === null) return;
+      const userId = parseSocketUserId(raw['userId']);
+      if (userId === null) return;
+      this.chatTypingStart$.next({ userId, boxId: boxId as number | string });
+    };
+    const onChatTypingStop = (...args: unknown[]) => {
+      const raw = args[0] as Record<string, unknown>;
+      if (!raw || typeof raw !== 'object') return;
+      const boxId = raw['boxId'];
+      if (boxId === undefined || boxId === null) return;
+      const userId = parseSocketUserId(raw['userId']);
+      if (userId === null) return;
+      this.chatTypingStop$.next({ userId, boxId: boxId as number | string });
+    };
 
     this.socket.on('message:new', onMessageNew);
     this.socketHandlers.push({ event: 'message:new', fn: onMessageNew });
@@ -234,6 +262,12 @@ export class ChatSocketService {
 
     this.socket.on('chat:unread:count', onChatUnreadCount);
     this.socketHandlers.push({ event: 'chat:unread:count', fn: onChatUnreadCount });
+
+    this.socket.on('chat:typing:start', onChatTypingStart);
+    this.socketHandlers.push({ event: 'chat:typing:start', fn: onChatTypingStart });
+
+    this.socket.on('chat:typing:stop', onChatTypingStop);
+    this.socketHandlers.push({ event: 'chat:typing:stop', fn: onChatTypingStop });
 
     const onUsersOnline = (...args: unknown[]) => {
       const raw = args[0];
@@ -327,6 +361,20 @@ export class ChatSocketService {
     if (!Number.isFinite(id)) return;
     if (!this.socket?.connected) this.connect();
     this.socket?.emit('chat:read', { boxId: id });
+  }
+
+  emitTypingStart(boxId: number): void {
+    const id = Number(boxId);
+    if (!Number.isFinite(id)) return;
+    if (!this.socket?.connected) this.connect();
+    this.socket?.emit('chat:typing:start', { boxId: id });
+  }
+
+  emitTypingStop(boxId: number): void {
+    const id = Number(boxId);
+    if (!Number.isFinite(id)) return;
+    if (!this.socket?.connected) this.connect();
+    this.socket?.emit('chat:typing:stop', { boxId: id });
   }
 
   private teardownSocket(): void {
