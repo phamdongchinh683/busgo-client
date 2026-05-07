@@ -4,73 +4,35 @@ import { Subject } from 'rxjs';
 import { io, Socket } from 'socket.io-client';
 import { socketUrl } from '@app/data/constants';
 import { clearStoredCredentials, textIndicatesExpiredSession } from '@app/core/utils/auth-expiry';
+import { viewerFullNameFromStorage } from '@app/core/utils/chat-record-coerce';
 import {
-  chatConversationTitle,
-  chatSenderName,
-  pickStr,
-  viewerFullNameFromStorage,
-} from '@app/core/utils/chat-record-coerce';
-
-export interface ChatRealtimeMessage {
-  senderId: number;
-  body: string;
-  boxId: number | string;
-  createdAt?: string;
-  senderName: string;
-  title?: string;
-}
-
-function coerceChatRealtimePayload(raw: unknown): ChatRealtimeMessage | null {
-  if (!raw || typeof raw !== 'object') return null;
-  const o = raw as Record<string, unknown>;
-  const boxId = o['boxId'];
-  if (boxId === undefined || boxId === null) return null;
-  const senderRaw = o['senderId'];
-  const senderId =
-    typeof senderRaw === 'number' && Number.isFinite(senderRaw)
-      ? senderRaw
-      : typeof senderRaw === 'string' && senderRaw.trim() !== ''
-        ? parseInt(senderRaw, 10)
-        : NaN;
-  if (!Number.isFinite(senderId)) return null;
-
-  const body = pickStr(o, 'body') ?? pickStr(o, 'message') ?? '';
-  const createdAt = pickStr(o, 'createdAt');
-  const senderName = chatSenderName(o);
-  const title = chatConversationTitle(o);
-
-  return {
-    senderId,
-    body,
-    boxId: boxId as number | string,
-    senderName,
-    ...(createdAt !== undefined ? { createdAt } : {}),
-    ...(title !== undefined ? { title } : {}),
-  };
-}
-
-export interface ChatUnreadCountPayload {
-  boxId: number | string;
-  count?: number;
-  unreadCount?: number;
-  unreadReceiverCount?: number;
-  unreadSenderCount?: number;
-  lastMessage?: string;
-}
-
-export interface ChatTypingPayload {
-  userId: number;
-  boxId: number | string;
-}
-
-function optNonNegativeIntSocket(v: unknown): number | undefined {
-  if (typeof v === 'number' && Number.isFinite(v)) return Math.max(0, Math.floor(v));
-  if (typeof v === 'string' && v.trim() !== '') {
-    const n = parseInt(v, 10);
-    return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : undefined;
-  }
-  return undefined;
-}
+  coerceCallActivePayload,
+  coerceCallSignalPayload,
+  coerceCallStartPayload,
+  coerceChatRealtimePayload,
+  coerceOnlineUserIds,
+  coerceTypingPayload,
+  coerceUnreadPayload,
+  normalizeCallType,
+  toSocketNumber,
+} from './chat-socket.parsers';
+export type {
+  ChatCallActivePayload,
+  ChatCallSignalPayload,
+  ChatCallStartPayload,
+  ChatCallType,
+  ChatRealtimeMessage,
+  ChatTypingPayload,
+  ChatUnreadCountPayload,
+} from './chat-socket.types';
+import {
+  ChatCallActivePayload,
+  ChatCallSignalPayload,
+  ChatCallStartPayload,
+  ChatRealtimeMessage,
+  ChatTypingPayload,
+  ChatUnreadCountPayload,
+} from './chat-socket.types';
 
 function stringifySocketError(err: unknown): string {
   if (err instanceof Error) return `${err.name} ${err.message}`;
@@ -79,25 +41,6 @@ function stringifySocketError(err: unknown): string {
   } catch {
     return String(err);
   }
-}
-
-function parseSocketUserId(v: unknown): number | null {
-  if (typeof v === 'number' && Number.isFinite(v)) return v;
-  if (typeof v === 'string' && v.trim() !== '') {
-    const n = parseInt(v, 10);
-    return Number.isFinite(n) ? n : null;
-  }
-  return null;
-}
-
-function coerceOnlineUserIds(raw: unknown): number[] {
-  if (!Array.isArray(raw)) return [];
-  const out: number[] = [];
-  for (const x of raw) {
-    const id = parseSocketUserId(x);
-    if (id !== null) out.push(id);
-  }
-  return out;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -109,6 +52,13 @@ export class ChatSocketService {
   private readonly chatUnreadCount$ = new Subject<ChatUnreadCountPayload>();
   private readonly chatTypingStart$ = new Subject<ChatTypingPayload>();
   private readonly chatTypingStop$ = new Subject<ChatTypingPayload>();
+  private readonly chatCallStart$ = new Subject<ChatCallStartPayload>();
+  private readonly chatCallActive$ = new Subject<ChatCallActivePayload>();
+  private readonly chatCallOffer$ = new Subject<ChatCallSignalPayload>();
+  private readonly chatCallAnswer$ = new Subject<ChatCallSignalPayload>();
+  private readonly chatCallIceCandidate$ = new Subject<ChatCallSignalPayload>();
+  private readonly chatCallReject$ = new Subject<ChatCallStartPayload>();
+  private readonly chatCallEnd$ = new Subject<ChatCallStartPayload>();
   private socketHandlers: Array<{ event: string; fn: (...args: unknown[]) => void }> = [];
 
   readonly onMessageNew$ = this.messageNew$.asObservable();
@@ -116,6 +66,13 @@ export class ChatSocketService {
   readonly onChatUnreadCount$ = this.chatUnreadCount$.asObservable();
   readonly onChatTypingStart$ = this.chatTypingStart$.asObservable();
   readonly onChatTypingStop$ = this.chatTypingStop$.asObservable();
+  readonly onChatCallStart$ = this.chatCallStart$.asObservable();
+  readonly onChatCallActive$ = this.chatCallActive$.asObservable();
+  readonly onChatCallOffer$ = this.chatCallOffer$.asObservable();
+  readonly onChatCallAnswer$ = this.chatCallAnswer$.asObservable();
+  readonly onChatCallIceCandidate$ = this.chatCallIceCandidate$.asObservable();
+  readonly onChatCallReject$ = this.chatCallReject$.asObservable();
+  readonly onChatCallEnd$ = this.chatCallEnd$.asObservable();
 
   readonly onlineUserIds = signal<ReadonlySet<number>>(new Set());
 
@@ -161,7 +118,6 @@ export class ChatSocketService {
 
     this.socket = io(socketUrl, {
       transports: ['websocket'],
-      // reconnection: true,
       auth: (cb) => {
         const raw = localStorage.getItem('token')?.replace(/^Bearer\s+/i, '').trim() ?? '';
         cb({ token: raw });
@@ -201,57 +157,44 @@ export class ChatSocketService {
       if (normalized) this.chatNew$.next(normalized);
     };
     const onChatUnreadCount = (...args: unknown[]) => {
-      const raw = args[0] as Record<string, unknown>;
-      if (!raw || typeof raw !== 'object') return;
-
-      const boxId = raw['boxId'];
-      if (boxId === undefined || boxId === null) return;
-
-      const unreadCountAlias = optNonNegativeIntSocket(raw['unreadCount']);
-      const countLegacy = optNonNegativeIntSocket(raw['count']);
-      const viewerUnread =
-        unreadCountAlias !== undefined ? unreadCountAlias : countLegacy !== undefined ? countLegacy : undefined;
-      const unreadReceiverCount = optNonNegativeIntSocket(raw['unreadReceiverCount']);
-      const unreadSenderCount = optNonNegativeIntSocket(raw['unreadSenderCount']);
-      const lastMessage =
-        typeof raw['lastMessage'] === 'string' && raw['lastMessage'].trim()
-          ? raw['lastMessage'].trim()
-          : undefined;
-
-      if (
-        viewerUnread === undefined &&
-        unreadReceiverCount === undefined &&
-        unreadSenderCount === undefined
-      ) {
-        return;
-      }
-
-      this.chatUnreadCount$.next({
-        boxId: boxId as number | string,
-        ...(viewerUnread !== undefined ? { count: viewerUnread } : {}),
-        ...(unreadCountAlias !== undefined ? { unreadCount: unreadCountAlias } : {}),
-        ...(unreadReceiverCount !== undefined ? { unreadReceiverCount } : {}),
-        ...(unreadSenderCount !== undefined ? { unreadSenderCount } : {}),
-        ...(lastMessage !== undefined ? { lastMessage } : {}),
-      });
+      const normalized = coerceUnreadPayload(args[0]);
+      if (normalized) this.chatUnreadCount$.next(normalized);
     };
     const onChatTypingStart = (...args: unknown[]) => {
-      const raw = args[0] as Record<string, unknown>;
-      if (!raw || typeof raw !== 'object') return;
-      const boxId = raw['boxId'];
-      if (boxId === undefined || boxId === null) return;
-      const userId = parseSocketUserId(raw['userId']);
-      if (userId === null) return;
-      this.chatTypingStart$.next({ userId, boxId: boxId as number | string });
+      const normalized = coerceTypingPayload(args[0]);
+      if (normalized) this.chatTypingStart$.next(normalized);
     };
     const onChatTypingStop = (...args: unknown[]) => {
-      const raw = args[0] as Record<string, unknown>;
-      if (!raw || typeof raw !== 'object') return;
-      const boxId = raw['boxId'];
-      if (boxId === undefined || boxId === null) return;
-      const userId = parseSocketUserId(raw['userId']);
-      if (userId === null) return;
-      this.chatTypingStop$.next({ userId, boxId: boxId as number | string });
+      const normalized = coerceTypingPayload(args[0]);
+      if (normalized) this.chatTypingStop$.next(normalized);
+    };
+    const onChatCallStart = (...args: unknown[]) => {
+      const normalized = coerceCallStartPayload(args[0]);
+      if (normalized) this.chatCallStart$.next(normalized);
+    };
+    const onChatCallActive = (...args: unknown[]) => {
+      const normalized = coerceCallActivePayload(args[0]);
+      if (normalized) this.chatCallActive$.next(normalized);
+    };
+    const onChatCallOffer = (...args: unknown[]) => {
+      const normalized = coerceCallSignalPayload(args[0], 'offer');
+      if (normalized) this.chatCallOffer$.next(normalized);
+    };
+    const onChatCallAnswer = (...args: unknown[]) => {
+      const normalized = coerceCallSignalPayload(args[0], 'answer');
+      if (normalized) this.chatCallAnswer$.next(normalized);
+    };
+    const onChatCallIceCandidate = (...args: unknown[]) => {
+      const normalized = coerceCallSignalPayload(args[0], 'candidate');
+      if (normalized) this.chatCallIceCandidate$.next(normalized);
+    };
+    const onChatCallReject = (...args: unknown[]) => {
+      const normalized = coerceCallStartPayload(args[0]);
+      if (normalized) this.chatCallReject$.next(normalized);
+    };
+    const onChatCallEnd = (...args: unknown[]) => {
+      const normalized = coerceCallStartPayload(args[0]);
+      if (normalized) this.chatCallEnd$.next(normalized);
     };
 
     this.socket.on('message:new', onMessageNew);
@@ -269,6 +212,27 @@ export class ChatSocketService {
     this.socket.on('chat:typing:stop', onChatTypingStop);
     this.socketHandlers.push({ event: 'chat:typing:stop', fn: onChatTypingStop });
 
+    this.socket.on('chat:call:start', onChatCallStart);
+    this.socketHandlers.push({ event: 'chat:call:start', fn: onChatCallStart });
+
+    this.socket.on('chat:call:active', onChatCallActive);
+    this.socketHandlers.push({ event: 'chat:call:active', fn: onChatCallActive });
+
+    this.socket.on('chat:call:offer', onChatCallOffer);
+    this.socketHandlers.push({ event: 'chat:call:offer', fn: onChatCallOffer });
+
+    this.socket.on('chat:call:answer', onChatCallAnswer);
+    this.socketHandlers.push({ event: 'chat:call:answer', fn: onChatCallAnswer });
+
+    this.socket.on('chat:call:ice-candidate', onChatCallIceCandidate);
+    this.socketHandlers.push({ event: 'chat:call:ice-candidate', fn: onChatCallIceCandidate });
+
+    this.socket.on('chat:call:reject', onChatCallReject);
+    this.socketHandlers.push({ event: 'chat:call:reject', fn: onChatCallReject });
+
+    this.socket.on('chat:call:end', onChatCallEnd);
+    this.socketHandlers.push({ event: 'chat:call:end', fn: onChatCallEnd });
+
     const onUsersOnline = (...args: unknown[]) => {
       const raw = args[0];
       const ids =
@@ -281,7 +245,7 @@ export class ChatSocketService {
       const raw = args[0];
       const id =
         raw && typeof raw === 'object' && !Array.isArray(raw)
-          ? parseSocketUserId((raw as Record<string, unknown>)['userId'])
+          ? toSocketNumber((raw as Record<string, unknown>)['userId'])
           : null;
       if (id === null) return;
       this.onlineUserIds.update((prev: ReadonlySet<number>) => new Set([...prev, id]));
@@ -290,7 +254,7 @@ export class ChatSocketService {
       const raw = args[0];
       const id =
         raw && typeof raw === 'object' && !Array.isArray(raw)
-          ? parseSocketUserId((raw as Record<string, unknown>)['userId'])
+          ? toSocketNumber((raw as Record<string, unknown>)['userId'])
           : null;
       if (id === null) return;
       this.onlineUserIds.update((prev: ReadonlySet<number>) => {
@@ -375,6 +339,48 @@ export class ChatSocketService {
     if (!Number.isFinite(id)) return;
     if (!this.socket?.connected) this.connect();
     this.socket?.emit('chat:typing:stop', { boxId: id });
+  }
+
+  emitCallStart(boxId: number, callType: string): void {
+    const id = Number(boxId);
+    if (!Number.isFinite(id)) return;
+    if (!this.socket?.connected) this.connect();
+    this.socket?.emit('chat:call:start', { boxId: id, callType: normalizeCallType(callType) });
+  }
+
+  emitCallOffer(boxId: number, offer: unknown): void {
+    const id = Number(boxId);
+    if (!Number.isFinite(id)) return;
+    if (!this.socket?.connected) this.connect();
+    this.socket?.emit('chat:call:offer', { boxId: id, offer });
+  }
+
+  emitCallAnswer(boxId: number, answer: unknown): void {
+    const id = Number(boxId);
+    if (!Number.isFinite(id)) return;
+    if (!this.socket?.connected) this.connect();
+    this.socket?.emit('chat:call:answer', { boxId: id, answer });
+  }
+
+  emitCallIceCandidate(boxId: number, candidate: unknown): void {
+    const id = Number(boxId);
+    if (!Number.isFinite(id)) return;
+    if (!this.socket?.connected) this.connect();
+    this.socket?.emit('chat:call:ice-candidate', { boxId: id, candidate });
+  }
+
+  emitCallReject(boxId: number): void {
+    const id = Number(boxId);
+    if (!Number.isFinite(id)) return;
+    if (!this.socket?.connected) this.connect();
+    this.socket?.emit('chat:call:reject', { boxId: id });
+  }
+
+  emitCallEnd(boxId: number): void {
+    const id = Number(boxId);
+    if (!Number.isFinite(id)) return;
+    if (!this.socket?.connected) this.connect();
+    this.socket?.emit('chat:call:end', { boxId: id });
   }
 
   private teardownSocket(): void {

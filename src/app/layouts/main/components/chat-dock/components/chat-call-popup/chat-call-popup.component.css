@@ -1,0 +1,94 @@
+.call-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, rgba(2, 6, 23, 0.82), rgba(30, 41, 59, 0.74));
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.call-popup {
+  width: min(560px, calc(100vw - 24px));
+  border-radius: 16px;
+  background: #020617;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.call-action {
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.call-action--icon {
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 2px solid currentColor;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.28);
+}
+
+.call-action--accept {
+  color: #16a34a;
+}
+
+.call-action--reject,
+.call-action--end {
+  color: #dc2626;
+}
+
+.call-media {
+  position: relative;
+  width: 100%;
+  height: 360px;
+  background: radial-gradient(circle at top, #1e293b 0%, #0f172a 45%, #020617 100%);
+  overflow: hidden;
+}
+
+.call-status {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  max-width: calc(100% - 24px);
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.call-controls {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  z-index: 3;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.call-voice-avatar {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #e2e8f0;
+  font-size: 34px;
+  font-weight: 700;
+}

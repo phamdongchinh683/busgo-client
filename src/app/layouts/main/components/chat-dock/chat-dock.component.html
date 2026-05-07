@@ -26,6 +26,45 @@
           }
         </h2>
       </div>
+      @if (view() === 'thread') {
+        <div class="messenger__call-actions" aria-label="Tùy chọn cuộc gọi">
+          <button
+            type="button"
+            class="messenger__icon-btn messenger__call-btn"
+            (click)="toggleMessageSearch()"
+            aria-label="Tìm tin nhắn"
+            title="Tìm tin nhắn"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.3-4.3"></path>
+            </svg>
+          </button>
+          <button
+            type="button"
+            class="messenger__icon-btn messenger__call-btn"
+            (click)="startCall('voice')"
+            aria-label="Gọi thoại"
+            title="Gọi thoại"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 16.92v2a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 3.2 2 2 0 0 1 4.11 1h2a2 2 0 0 1 2 1.72c.12.9.33 1.79.62 2.64a2 2 0 0 1-.45 2.11L7.09 8.91a16 16 0 0 0 8 8l1.44-1.19a2 2 0 0 1 2.11-.45c.85.29 1.74.5 2.64.62A2 2 0 0 1 22 16.92z" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            class="messenger__icon-btn messenger__call-btn"
+            (click)="startCall('video')"
+            aria-label="Gọi video"
+            title="Gọi video"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="m22 8-6 4 6 4V8Z" />
+              <rect x="2" y="6" width="14" height="12" rx="2" ry="2" />
+            </svg>
+          </button>
+        </div>
+      }
       <button type="button" class="messenger__icon-btn" (click)="dock.closePanel()" aria-label="Đóng">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M18 6L6 18M6 6l12 12" />
@@ -172,22 +211,36 @@
         </div>
       } @else {
         <div class="messenger__chat-col">
-          <div class="messenger__msg-search">
-            <input
-              type="search"
-              class="messenger__msg-search-input"
-              placeholder="Gõ từ khóa, Enter để tìm trong cuộc trò chuyện…"
-              title="Enter để lọc tin đã tải · không gọi API"
-              [ngModel]="messageSearchDraft()"
-              (ngModelChange)="messageSearchDraft.set($event)"
-              (keydown.enter)="applyMessageSearch($event)"
-              autocomplete="off"
-              aria-label="Tìm trong cuộc trò chuyện, nhấn Enter để áp dụng"
-            />
-            @if (messageSearchApplied().trim()) {
-              <span class="messenger__msg-search-count">{{ visibleMessages().length }}/{{ messages().length }}</span>
-            }
-          </div>
+          @if (messageSearchOpen()) {
+            <div class="messenger__msg-search">
+              <input
+                type="search"
+                class="messenger__msg-search-input"
+                placeholder="Tìm tin nhắn…"
+                title="Enter để lọc tin đã tải"
+                [ngModel]="messageSearchDraft()"
+                (ngModelChange)="messageSearchDraft.set($event)"
+                (keydown.enter)="applyMessageSearch($event)"
+                autocomplete="off"
+                aria-label="Tìm trong cuộc trò chuyện, nhấn Enter để áp dụng"
+              />
+              @if (messageSearchApplied().trim()) {
+                <span class="messenger__msg-search-count">{{ visibleMessages().length }}/{{ messages().length }}</span>
+              }
+              <button
+                type="button"
+                class="messenger__msg-search-close"
+                (click)="toggleMessageSearch()"
+                aria-label="Đóng tìm kiếm"
+                title="Đóng"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M18 6 6 18"></path>
+                  <path d="m6 6 12 12"></path>
+                </svg>
+              </button>
+            </div>
+          }
           <div #messageScroll class="messenger__bubbles" (scroll)="onMessagesScroll($event)">
             @if (loadingMoreMessages()) {
               <p class="messenger__hint messenger__hint--sm">Tải tin cũ…</p>
@@ -272,4 +325,19 @@
       }
     </div>
   </div>
+  <app-chat-call-popup
+    [visible]="!!activeCallType() || !!callIncoming()"
+    [status]="callStatusText()"
+    [callType]="activeCallType()"
+    [incoming]="!!callIncoming()"
+    [ongoing]="!!callOutgoing() || inCall()"
+    [title]="selectedTitle()"
+    (accept)="acceptIncomingCall()"
+    (reject)="rejectIncomingCall()"
+    (end)="endCall()"
+  >
+    <video remoteVideo #callRemoteVideo class="messenger__call-remote-video" autoplay></video>
+    <video localVideo #callLocalVideo class="messenger__call-local-video" autoplay muted></video>
+    <audio remoteAudio #callRemoteAudio autoplay></audio>
+  </app-chat-call-popup>
 }

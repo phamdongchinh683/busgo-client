@@ -25,6 +25,10 @@ import {
   viewerUnreadCount,
 } from '@app/core/utils/chat-box-list';
 import {
+  ChatCallActivePayload,
+  ChatCallSignalPayload,
+  ChatCallStartPayload,
+  ChatCallType,
   ChatRealtimeMessage,
   ChatSocketService,
   ChatTypingPayload,
@@ -41,11 +45,12 @@ import {
   storedFullNameOrEmpty,
   storedUserFullName,
 } from './chat-dock.helpers';
+import { ChatCallPopupComponent } from './components/chat-call-popup/chat-call-popup.component';
 
 @Component({
   selector: 'app-chat-dock',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ChatCallPopupComponent],
   templateUrl: './chat-dock.component.html',
   styleUrl: './chat-dock.component.css',
 })
@@ -72,8 +77,14 @@ export class ChatDockComponent {
   readonly draft = signal('');
   readonly sendError = signal('');
   readonly peerTyping = signal(false);
+  readonly callStatus = signal('');
+  readonly callIncoming = signal<ChatCallStartPayload | null>(null);
+  readonly callOutgoing = signal<ChatCallType | null>(null);
+  readonly activeCallType = signal<ChatCallType | null>(null);
+  readonly inCall = signal(false);
   readonly messageSearchDraft = signal('');
   readonly messageSearchApplied = signal('');
+  readonly messageSearchOpen = signal(false);
 
   readonly visibleMessages = computed(() => {
     const list = this.messages();
@@ -101,9 +112,15 @@ export class ChatDockComponent {
   private threadCache = new Map<number, { messages: ChatMessage[]; next: number | null }>();
   private typingStopDebounce: ReturnType<typeof setTimeout> | null = null;
   private typingActiveBoxId: number | null = null;
+  private peerConnection: RTCPeerConnection | null = null;
+  private localStream: MediaStream | null = null;
+  private remoteStream: MediaStream | null = null;
+  private pendingIncomingOffer: RTCSessionDescriptionInit | null = null;
 
   @ViewChild('messageScroll') private messageScroll?: ElementRef<HTMLElement>;
-  @ViewChild('boxListScroll') private boxListScroll?: ElementRef<HTMLElement>;
+  @ViewChild('callLocalVideo') private callLocalVideo?: ElementRef<HTMLVideoElement>;
+  @ViewChild('callRemoteVideo') private callRemoteVideo?: ElementRef<HTMLVideoElement>;
+  @ViewChild('callRemoteAudio') private callRemoteAudio?: ElementRef<HTMLAudioElement>;
 
   constructor() {
     this.socket.connect();
@@ -125,10 +142,32 @@ export class ChatDockComponent {
     this.socket.onChatTypingStop$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((p: ChatTypingPayload) => this.handleTypingStop(p));
+    this.socket.onChatCallStart$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((p: ChatCallStartPayload) => this.handleCallStart(p));
+    this.socket.onChatCallActive$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((p: ChatCallActivePayload) => this.handleCallActive(p));
+    this.socket.onChatCallOffer$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((p: ChatCallSignalPayload) => this.handleCallOffer(p));
+    this.socket.onChatCallAnswer$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((p: ChatCallSignalPayload) => this.handleCallAnswer(p));
+    this.socket.onChatCallIceCandidate$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((p: ChatCallSignalPayload) => this.handleCallIceCandidate(p));
+    this.socket.onChatCallReject$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((p: ChatCallStartPayload) => this.handleCallRejected(p));
+    this.socket.onChatCallEnd$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((p: ChatCallStartPayload) => this.handleCallEnded(p));
 
     this.destroyRef.onDestroy(() => {
       this.stopTypingNow();
       this.socket.leaveJoinedRoom();
+      this.hangupLocal(false);
     });
 
     effect(() => {
@@ -143,6 +182,7 @@ export class ChatDockComponent {
             this.messageSearchApplied.set('');
             this.selectedBoxId.set(null);
             this.view.set('list');
+            this.resetCallState();
           }
         });
         return;
@@ -230,6 +270,15 @@ export class ChatDockComponent {
     this.messageSearchApplied.set(this.messageSearchDraft().trim());
   }
 
+  toggleMessageSearch(): void {
+    const next = !this.messageSearchOpen();
+    this.messageSearchOpen.set(next);
+    if (!next) {
+      this.messageSearchDraft.set('');
+      this.messageSearchApplied.set('');
+    }
+  }
+
   openThread(box: ChatBox, emitRead = false): void {
     const sameThread = this.view() === 'thread' && this.selectedBoxId() === box.id;
     if (sameThread) {
@@ -240,6 +289,7 @@ export class ChatDockComponent {
     this.messageSearchDraft.set('');
     this.messageSearchApplied.set('');
     this.stopTypingNow();
+    this.resetCallState();
     this.peerTyping.set(false);
     this.selectedBoxId.set(box.id);
     this.selectedTitle.set(box.displayName?.trim() || 'Chat');
@@ -365,6 +415,7 @@ export class ChatDockComponent {
   backToList(): void {
     this.stopTypingNow();
     this.peerTyping.set(false);
+    this.resetCallState();
     this.messageSearchDraft.set('');
     this.messageSearchApplied.set('');
     const id = this.selectedBoxId();
@@ -385,6 +436,7 @@ export class ChatDockComponent {
 
   startNewChat(): void {
     this.stopTypingNow();
+    this.resetCallState();
     this.peerTyping.set(false);
     if (this.view() === 'thread') {
       const id = this.selectedBoxId();
@@ -548,6 +600,86 @@ export class ChatDockComponent {
     if (id === null) return false;
     const box = this.boxes().find((b) => b.id === id);
     return box ? this.peerOnline(box) : false;
+  }
+
+  callStatusText(): string {
+    return this.callStatus().trim();
+  }
+
+  startCall(callType: ChatCallType): void {
+    void this.startCallInternal(callType);
+  }
+
+  private async startCallInternal(callType: ChatCallType): Promise<void> {
+    const boxId = this.selectedBoxId();
+    if (boxId === null) return;
+    try {
+      this.callIncoming.set(null);
+      this.callOutgoing.set(callType);
+      this.activeCallType.set(callType);
+      this.callStatus.set(callType === 'video' ? 'Đang gọi video…' : 'Đang gọi thoại…');
+      this.socket.emitCallStart(boxId, callType);
+      await this.ensureLocalStream(callType);
+      this.setLocalAudioEnabled(false);
+      const pc = this.createPeerConnection(boxId);
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      this.socket.emitCallOffer(boxId, offer);
+    } catch {
+      this.callStatus.set('Không thể bắt đầu cuộc gọi.');
+      this.hangupLocal(false);
+    }
+  }
+
+  rejectIncomingCall(): void {
+    const boxId = this.selectedBoxId();
+    if (boxId === null) return;
+    this.socket.emitCallReject(boxId);
+    this.hangupLocal(false);
+    this.callStatus.set('Đã từ chối cuộc gọi.');
+  }
+
+  acceptIncomingCall(): void {
+    void this.acceptIncomingCallInternal();
+  }
+
+  private async acceptIncomingCallInternal(): Promise<void> {
+    const incoming = this.callIncoming();
+    const boxId = this.selectedBoxId();
+    if (!incoming || boxId === null) return;
+    try {
+      this.callIncoming.set(null);
+      this.callOutgoing.set(incoming.callType);
+      this.activeCallType.set(incoming.callType);
+      this.callStatus.set(
+        incoming.callType === 'video' ? 'Đã nhận cuộc gọi video.' : 'Đã nhận cuộc gọi thoại.',
+      );
+      if (!this.pendingIncomingOffer) {
+        this.callStatus.set('Đang tham gia cuộc gọi đang hoạt động…');
+        await this.startCallInternal(incoming.callType);
+        return;
+      }
+      await this.ensureLocalStream(incoming.callType);
+      const pc = this.createPeerConnection(boxId);
+      await pc.setRemoteDescription(this.pendingIncomingOffer);
+      this.pendingIncomingOffer = null;
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      this.socket.emitCallAnswer(boxId, answer);
+      this.inCall.set(true);
+      this.setLocalAudioEnabled(true);
+    } catch {
+      this.callStatus.set('Không thể nhận cuộc gọi.');
+      this.hangupLocal(false);
+    }
+  }
+
+  endCall(): void {
+    const boxId = this.selectedBoxId();
+    if (boxId === null) return;
+    this.socket.emitCallEnd(boxId);
+    this.hangupLocal(false);
+    this.callStatus.set('Đã kết thúc cuộc gọi.');
   }
 
   userSearchHitOnline(u: User): boolean {
@@ -782,6 +914,217 @@ export class ChatDockComponent {
     const myId = getChatViewerUserId();
     if (myId !== null && p.userId === myId) return;
     this.peerTyping.set(false);
+  }
+
+  private resetCallState(): void {
+    this.hangupLocal(false);
+    this.callStatus.set('');
+  }
+
+  private shouldHandleCallPayload(boxIdRaw: number | string): boolean {
+    const boxId = Number(boxIdRaw);
+    return Number.isFinite(boxId) && this.inChatThread() && this.selectedBoxId() === boxId;
+  }
+
+  private isPayloadFromMe(userId: number): boolean {
+    const myId = getChatViewerUserId();
+    return myId !== null && myId === userId;
+  }
+
+  private handleCallStart(p: ChatCallStartPayload): void {
+    if (!this.shouldHandleCallPayload(p.boxId) || this.isPayloadFromMe(p.userId)) return;
+    this.activeCallType.set(p.callType);
+    this.callIncoming.set(p);
+    this.callOutgoing.set(null);
+    this.callStatus.set(p.callType === 'video' ? 'Cuộc gọi video đến…' : 'Cuộc gọi thoại đến…');
+  }
+
+  private handleCallActive(p: ChatCallActivePayload): void {
+    if (!this.shouldHandleCallPayload(p.boxId) || this.isPayloadFromMe(p.userId)) return;
+    this.activeCallType.set(p.callType);
+    this.callIncoming.set({
+      userId: p.userId,
+      boxId: p.boxId,
+      callType: p.callType,
+    });
+    this.callOutgoing.set(null);
+    this.callStatus.set(
+      p.callType === 'video'
+        ? 'Cuộc gọi video đang diễn ra. Nhấn Nhận để tham gia.'
+        : 'Cuộc gọi thoại đang diễn ra. Nhấn Nhận để tham gia.',
+    );
+  }
+
+  private async handleCallOffer(p: ChatCallSignalPayload): Promise<void> {
+    if (!this.shouldHandleCallPayload(p.boxId) || this.isPayloadFromMe(p.userId)) return;
+    if (!this.isSessionDescriptionInit(p.payload)) return;
+    this.pendingIncomingOffer = p.payload;
+    if (!this.callIncoming()) {
+      this.callIncoming.set({
+        userId: p.userId,
+        boxId: p.boxId,
+        callType: this.activeCallType() ?? 'voice',
+      });
+    }
+    if (this.inCall() || this.callOutgoing() !== null) {
+      this.callStatus.set('Đang đồng bộ cuộc gọi…');
+      await this.acceptIncomingCallInternal();
+      return;
+    }
+    this.callStatus.set('Có cuộc gọi đến.');
+  }
+
+  private async handleCallAnswer(p: ChatCallSignalPayload): Promise<void> {
+    if (!this.shouldHandleCallPayload(p.boxId) || this.isPayloadFromMe(p.userId)) return;
+    if (!this.peerConnection || !this.isSessionDescriptionInit(p.payload)) return;
+    try {
+      await this.peerConnection.setRemoteDescription(p.payload);
+      this.callIncoming.set(null);
+      this.callOutgoing.set(this.activeCallType());
+      this.inCall.set(true);
+      this.setLocalAudioEnabled(true);
+      this.callStatus.set('Đã kết nối cuộc gọi.');
+    } catch {
+      this.callStatus.set('Không thể thiết lập kết nối cuộc gọi.');
+    }
+  }
+
+  private async handleCallIceCandidate(p: ChatCallSignalPayload): Promise<void> {
+    if (!this.shouldHandleCallPayload(p.boxId) || this.isPayloadFromMe(p.userId)) return;
+    if (!this.peerConnection || !this.isIceCandidateInit(p.payload)) return;
+    try {
+      await this.peerConnection.addIceCandidate(new RTCIceCandidate(p.payload));
+    } catch {
+    }
+    this.callStatus.set('Đang đồng bộ kết nối cuộc gọi…');
+  }
+
+  private handleCallRejected(p: ChatCallStartPayload): void {
+    if (!this.shouldHandleCallPayload(p.boxId) || this.isPayloadFromMe(p.userId)) return;
+    this.hangupLocal(false);
+    this.callStatus.set('Đối phương đã từ chối cuộc gọi.');
+  }
+
+  private handleCallEnded(p: ChatCallStartPayload): void {
+    if (!this.shouldHandleCallPayload(p.boxId) || this.isPayloadFromMe(p.userId)) return;
+    this.hangupLocal(false);
+    this.callStatus.set('Đối phương đã kết thúc cuộc gọi.');
+  }
+
+  private createPeerConnection(boxId: number): RTCPeerConnection {
+    if (this.peerConnection) return this.peerConnection;
+    const pc = new RTCPeerConnection({
+      iceServers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }],
+    });
+    this.peerConnection = pc;
+
+    const remote = new MediaStream();
+    this.remoteStream = remote;
+    this.syncCallMediaElements();
+
+    if (this.localStream) {
+      for (const track of this.localStream.getTracks()) {
+        pc.addTrack(track, this.localStream);
+      }
+    }
+
+    pc.onicecandidate = (ev) => {
+      if (ev.candidate) this.socket.emitCallIceCandidate(boxId, ev.candidate.toJSON());
+    };
+    pc.ontrack = (ev) => {
+      const [incoming] = ev.streams;
+      if (incoming) {
+        this.remoteStream = incoming;
+      } else {
+        this.remoteStream?.addTrack(ev.track);
+      }
+      this.syncCallMediaElements();
+      this.inCall.set(true);
+      this.setLocalAudioEnabled(true);
+      this.callStatus.set('Đã kết nối cuộc gọi.');
+    };
+    pc.onconnectionstatechange = () => {
+      const s = pc.connectionState;
+      if (s === 'connected') {
+        this.inCall.set(true);
+        this.setLocalAudioEnabled(true);
+        this.callStatus.set('Đã kết nối cuộc gọi.');
+        return;
+      }
+      if (s === 'disconnected' || s === 'failed' || s === 'closed') {
+        this.hangupLocal(false);
+        if (s !== 'closed') this.callStatus.set('Kết nối cuộc gọi đã ngắt.');
+      }
+    };
+    return pc;
+  }
+
+  private async ensureLocalStream(callType: ChatCallType): Promise<void> {
+    if (this.localStream) return;
+    const media = await navigator.mediaDevices.getUserMedia({
+      audio: true,
+      video: callType === 'video',
+    });
+    this.localStream = media;
+    this.setLocalAudioEnabled(this.inCall());
+    this.syncCallMediaElements();
+  }
+
+  private setLocalAudioEnabled(enabled: boolean): void {
+    if (!this.localStream) return;
+    for (const track of this.localStream.getAudioTracks()) {
+      track.enabled = enabled;
+    }
+  }
+
+  private syncCallMediaElements(): void {
+    requestAnimationFrame(() => {
+      const local = this.callLocalVideo?.nativeElement;
+      if (local) local.srcObject = this.localStream;
+      const remoteVideo = this.callRemoteVideo?.nativeElement;
+      if (remoteVideo) remoteVideo.srcObject = this.remoteStream;
+      const remoteAudio = this.callRemoteAudio?.nativeElement;
+      if (remoteAudio) remoteAudio.srcObject = this.remoteStream;
+    });
+  }
+
+  private hangupLocal(clearStatus: boolean): void {
+    this.pendingIncomingOffer = null;
+    if (this.peerConnection) {
+      this.peerConnection.onicecandidate = null;
+      this.peerConnection.ontrack = null;
+      this.peerConnection.onconnectionstatechange = null;
+      this.peerConnection.close();
+      this.peerConnection = null;
+    }
+    if (this.localStream) {
+      for (const track of this.localStream.getTracks()) track.stop();
+      this.localStream = null;
+    }
+    if (this.remoteStream) {
+      for (const track of this.remoteStream.getTracks()) track.stop();
+      this.remoteStream = null;
+    }
+    this.callIncoming.set(null);
+    this.callOutgoing.set(null);
+    this.activeCallType.set(null);
+    this.inCall.set(false);
+    this.syncCallMediaElements();
+    if (clearStatus) this.callStatus.set('');
+  }
+
+  private isSessionDescriptionInit(v: unknown): v is RTCSessionDescriptionInit {
+    if (!v || typeof v !== 'object') return false;
+    const o = v as Record<string, unknown>;
+    const type = o['type'];
+    const sdp = o['sdp'];
+    return typeof type === 'string' && typeof sdp === 'string';
+  }
+
+  private isIceCandidateInit(v: unknown): v is RTCIceCandidateInit {
+    if (!v || typeof v !== 'object') return false;
+    const o = v as Record<string, unknown>;
+    return typeof o['candidate'] === 'string';
   }
 
   private handleSocketMessageNew(msg: ChatRealtimeMessage): void {
