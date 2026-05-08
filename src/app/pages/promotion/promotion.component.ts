@@ -20,6 +20,12 @@ import { SharedModule } from '@app/shared/shared.module';
   styleUrl: './promotion.component.css',
 })
 export class PromotionComponent implements OnInit {
+  private static readonly CACHE_TTL_MS = 2 * 60 * 1000;
+  private static listCache: {
+    items: PromotionItem[];
+    nextCursor: number | null;
+    expiredAt: number;
+  } | null = null;
   private readonly fb = inject(FormBuilder);
 
   promotions: PromotionItem[] = [];
@@ -76,7 +82,15 @@ export class PromotionComponent implements OnInit {
     this.notification = { show: true, message, type };
   }
 
-  fetch(): void {
+  fetch(force = false): void {
+    const cached = PromotionComponent.listCache;
+    if (!force && cached && cached.expiredAt > Date.now()) {
+      this.promotions = [...cached.items];
+      this.nextCursor = cached.nextCursor;
+      this.loading = false;
+      return;
+    }
+
     this.loading = true;
     this.promotions = [];
     this.nextCursor = null;
@@ -84,6 +98,7 @@ export class PromotionComponent implements OnInit {
       next: (res) => {
         this.promotions = res.items ?? [];
         this.nextCursor = res.next ?? null;
+        this.updateListCache(this.promotions, this.nextCursor);
         this.loading = false;
       },
       error: () => {
@@ -100,6 +115,7 @@ export class PromotionComponent implements OnInit {
       next: (res) => {
         this.promotions = [...this.promotions, ...(res.items ?? [])];
         this.nextCursor = res.next ?? null;
+        this.updateListCache(this.promotions, this.nextCursor);
         this.loadingMore = false;
       },
       error: () => {
@@ -220,6 +236,7 @@ export class PromotionComponent implements OnInit {
         next: (res) => {
           const updated = this.pickUpsertItem(res, editing, body);
           this.promotions = this.promotions.map((x) => (x.id === updated.id ? updated : x));
+          this.updateListCache(this.promotions, this.nextCursor);
           this.showNotification('Cập nhật khuyến mãi thành công.', 'success');
           this.closeModal();
         },
@@ -336,6 +353,7 @@ export class PromotionComponent implements OnInit {
       next: (res) => {
         const created = this.pickUpsertItem(res, null, body);
         this.promotions = [created, ...this.promotions];
+        this.updateListCache(this.promotions, this.nextCursor);
         const createdId = Number(created.id);
         if (
           pendingUploadTask &&
@@ -359,6 +377,7 @@ export class PromotionComponent implements OnInit {
                     updateBody,
                   );
                   this.promotions = this.promotions.map((x) => (x.id === createdId ? updated : x));
+                  this.updateListCache(this.promotions, this.nextCursor);
                 },
               });
             })
@@ -382,12 +401,10 @@ export class PromotionComponent implements OnInit {
     this.pendingCreateUploadedUrl = '';
     const uploadTask = this.uploadPromotionImage(Date.now(), file);
     this.pendingCreateUploadTask = uploadTask;
-    this.showNotification('Đang upload ảnh nền...', 'info');
     uploadTask
       .then((secureUrl) => {
         this.pendingCreateUploadedUrl = secureUrl;
         this.form.patchValue({ imageUrl: secureUrl });
-        this.showNotification('Ảnh đã sẵn sàng, bấm Lưu sẽ tạo rất nhanh.', 'success');
       })
       .catch(() => {
         this.pendingCreateUploadTask = null;
@@ -398,5 +415,13 @@ export class PromotionComponent implements OnInit {
       .finally(() => {
         this.uploading = false;
       });
+  }
+
+  private updateListCache(items: PromotionItem[], nextCursor: number | null): void {
+    PromotionComponent.listCache = {
+      items: [...items],
+      nextCursor,
+      expiredAt: Date.now() + PromotionComponent.CACHE_TTL_MS,
+    };
   }
 }

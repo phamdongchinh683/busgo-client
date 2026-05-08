@@ -9,7 +9,7 @@
   <div class="page-header">
     <h2>Tin khuyến mãi</h2>
     <div class="header-actions">
-      <button type="button" class="action-button action-button--ghost" (click)="fetch()">Làm mới</button>
+      <button type="button" class="action-button action-button--ghost" (click)="fetch(true)">Làm mới</button>
       <button type="button" class="action-button" (click)="openCreate()">Tạo tin mới</button>
     </div>
   </div>
@@ -23,7 +23,6 @@
     <table class="table">
       <thead>
         <tr>
-          <th>ID</th>
           <th>Tiêu đề</th>
           <th>Nội dung</th>
           <th>Ảnh</th>
@@ -36,7 +35,6 @@
       <tbody>
         @for (item of promotions; track item.id) {
           <tr>
-            <td>{{ item.id }}</td>
             <td class="col-title" [title]="item.title">{{ item.title }}</td>
             <td class="col-content" [title]="item.content">{{ item.content }}</td>
             <td>
@@ -56,7 +54,7 @@
           </tr>
         } @empty {
           <tr>
-            <td colspan="8" class="empty">Không có tin khuyến mãi.</td>
+            <td colspan="7" class="empty">Không có tin khuyến mãi.</td>
           </tr>
         }
       </tbody>
