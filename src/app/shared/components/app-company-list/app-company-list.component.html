@@ -7,6 +7,8 @@
           <th>Tên nhà xe</th>
           <th>Hotline</th>
           <th>Địa chỉ</th>
+          <th>Lượt review</th>
+          <th>Điểm ★</th>
           <th class="actions-col">Thao tác</th>
         </tr>
       </thead>
@@ -29,6 +31,25 @@
             <td class="company-name">{{ company.name }}</td>
             <td>{{ company.hotline || '-' }}</td>
             <td class="company-address" [title]="company.address || 'Chưa có địa chỉ'">{{ company.address || 'Chưa có địa chỉ' }}</td>
+            <td class="reviews-col">
+              <span class="review-chip review-chip--count" [title]="'Số lượt đánh giá: ' + displayReviewCount(company.reviewCount)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="M17 20h5V4H2v16h5" />
+                  <path d="M9 12h6" />
+                  <path d="M9 8h6" />
+                  <path d="M9 16h4" />
+                </svg>
+                <span>{{ displayReviewCount(company.reviewCount) }}</span>
+              </span>
+            </td>
+            <td class="reviews-col">
+              <span class="review-chip review-chip--stars" [title]="'Điểm trung bình: ' + displayReviewAvg(company.reviewAvgStars)">
+                <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true">
+                  <path d="m12 2.5 2.9 6 6.6 1-4.8 4.6 1.2 6.5L12 17.4 6.1 20.6l1.2-6.5L2.5 9.5l6.6-1z" />
+                </svg>
+                <span>{{ displayReviewAvg(company.reviewAvgStars) }}</span>
+              </span>
+            </td>
             <td>
               <div class="company-actions">
                 <button class="btn-icon btn-icon--edit" (click)="editCompany.emit(company)" title="Sửa">
@@ -64,7 +85,7 @@
           </tr>
         } @empty {
           <tr>
-            <td colspan="5">
+            <td colspan="7">
               <div class="empty-state">
                 <svg
                   viewBox="0 0 24 24"

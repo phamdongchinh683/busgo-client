@@ -11,3 +11,4 @@ export * as balance from './balance';
 export * as fxRate from './fx-rate';
 export * as vnLocation from './vn-location';
 export * as chat from './chat';
+export * as promotion from './promotion';

@@ -10,6 +10,60 @@
         <span class="field-label">Hotline</span>
         <input class="modal-input" formControlName="hotline" placeholder="vd: 0987654321" />
       </label>
+      <div class="field">
+        <span class="field-label">Logo</span>
+        <input type="hidden" formControlName="logoUrl" />
+        <div class="logo-upload">
+          <div class="logo-preview-frame" [class.logo-preview-frame--empty]="!logoPreviewUrl">
+            <img *ngIf="logoPreviewUrl" class="logo-preview" [src]="logoPreviewUrl" alt="" />
+            <span *ngIf="!logoPreviewUrl">Chưa có logo</span>
+            <button
+              class="logo-upload-trigger action-button action-button--icon"
+              type="button"
+              [disabled]="!canUploadLogo || uploadingLogo"
+              [attr.aria-label]="uploadingLogo ? 'Đang tải logo lên' : 'Tải logo lên'"
+              [title]="uploadingLogo ? 'Đang tải logo lên' : 'Tải logo lên'"
+              (click)="triggerLogoFileInput(logoFileInput)"
+            >
+              @if (uploadingLogo) {
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M12 3a9 9 0 1 0 9 9"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              } @else {
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.2l1-1.3A1.5 1.5 0 0 1 9.9 5h4.2a1.5 1.5 0 0 1 1.2.7l1 1.3h2.2A1.5 1.5 0 0 1 20 8.5v9A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5v-9Z"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <circle cx="12" cy="13" r="3.1" fill="none" stroke="currentColor" stroke-width="2" />
+                </svg>
+              }
+            </button>
+          </div>
+          <input
+            #logoFileInput
+            type="file"
+            class="sr-only"
+            accept="image/*"
+            title="Chọn file logo"
+            aria-label="Chọn file logo"
+            (change)="onLogoFileChange($event)"
+          />
+          <p *ngIf="!canUploadLogo" class="field-hint">
+            Vui lòng lưu nhà xe trước, sau đó chỉnh sửa để tải logo lên.
+          </p>
+        </div>
+      </div>
       <label class="field">
         <span class="field-label">Địa chỉ</span>
         <input type="hidden" formControlName="latitude" />
@@ -34,38 +88,9 @@
           ></iframe>
         </div>
       </label>
-      <div class="field">
-        <span class="field-label">Logo</span>
-        <input type="hidden" formControlName="logoUrl" />
-        <div class="logo-upload">
-          <img *ngIf="logoPreviewUrl" class="logo-preview" [src]="logoPreviewUrl" alt="" />
-          <div class="logo-upload-actions">
-            <button
-              class="btn-upload"
-              type="button"
-              [disabled]="!canUploadLogo || uploadingLogo"
-              (click)="triggerLogoFileInput(logoFileInput)"
-            >
-              {{ uploadingLogo ? 'Đang tải lên…' : 'Tải logo lên' }}
-            </button>
-            <input
-              #logoFileInput
-              type="file"
-              class="sr-only"
-              accept="image/*"
-              title="Chọn file logo"
-              aria-label="Chọn file logo"
-              (change)="onLogoFileChange($event)"
-            />
-          </div>
-          <p *ngIf="!canUploadLogo" class="field-hint">
-            Vui lòng lưu nhà xe trước, sau đó chỉnh sửa để tải logo lên.
-          </p>
-        </div>
-      </div>
       <div class="modal-footer">
-        <button class="btn-cancel" type="button" (click)="close()">Hủy</button>
-        <button class="btn-submit" type="submit" [disabled]="submitting || uploadingLogo">
+        <button class="action-button action-button--ghost" type="button" (click)="close()">Hủy</button>
+        <button class="action-button" type="submit" [disabled]="submitting || uploadingLogo">
           {{ submitting ? 'Đang lưu...' : uploadingLogo ? 'Đang tải logo...' : editingCompany ? 'Cập nhật' : 'Tạo mới' }}
         </button>
       </div>

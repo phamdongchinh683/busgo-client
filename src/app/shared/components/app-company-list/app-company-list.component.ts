@@ -13,4 +13,17 @@ export class AppCompanyListComponent {
   @Input() companies: Company[] = [];
   @Output() editCompany = new EventEmitter<Company>();
   @Output() deleteCompany = new EventEmitter<Company>();
+
+  displayReviewCount(v: number | string | undefined): string {
+    if (v === undefined || v === null || v === '') return '-';
+    if (typeof v === 'string') return v;
+    return Number.isFinite(v) ? new Intl.NumberFormat('vi-VN').format(v) : '-';
+  }
+
+  displayReviewAvg(v: number | string | undefined): string {
+    if (v === undefined || v === null || v === '') return '-';
+    if (typeof v === 'string') return v;
+    if (!Number.isFinite(v)) return '-';
+    return Number(v).toFixed(1);
+  }
 }

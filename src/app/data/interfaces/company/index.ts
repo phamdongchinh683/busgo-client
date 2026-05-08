@@ -6,6 +6,8 @@ export interface Company {
   address: string;
   latitude?: number;
   longitude?: number;
+  reviewCount?: number | string;
+  reviewAvgStars?: number | string;
 }
 
 export interface CompanyListResponse {

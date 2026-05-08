@@ -34,6 +34,7 @@ export class MainLayoutComponent implements OnInit {
     '/dashboard': 'Tổng quan',
     '/companies': 'Nhà xe',
     '/operators': 'Tài khoản nhà xe',
+    '/promotions': 'Tin khuyến mãi',
     '/users': 'Người dùng',
     '/devices': 'Thiết bị',
     '/balance': 'Số dư',

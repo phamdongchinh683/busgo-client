@@ -67,7 +67,15 @@
 
 .company-table th:nth-child(4),
 .company-table td:nth-child(4) {
-  width: auto;
+  width: 24%;
+}
+
+.company-table th:nth-child(5),
+.company-table td:nth-child(5),
+.company-table th:nth-child(6),
+.company-table td:nth-child(6) {
+  width: 12%;
+  text-align: center;
 }
 
 .company-logo {
@@ -106,6 +114,41 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.reviews-col {
+  text-align: center;
+}
+
+.review-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 74px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.review-chip svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+.review-chip--count {
+  background: #eef2ff;
+  color: #4338ca;
+  border: 1px solid #c7d2fe;
+}
+
+.review-chip--stars {
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
 }
 
 .company-actions {

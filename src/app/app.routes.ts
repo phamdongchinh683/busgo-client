@@ -31,6 +31,11 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/admin/admin.component').then((m) => m.AdminComponent),
       },
       {
+        path: 'promotions',
+        loadComponent: () =>
+          import('./pages/promotion/promotion.component').then((m) => m.PromotionComponent),
+      },
+      {
         path: 'users',
         loadComponent: () => import('./pages/user/user.component').then((m) => m.UserComponent),
       },

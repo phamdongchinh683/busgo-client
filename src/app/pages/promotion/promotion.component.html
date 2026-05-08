@@ -1,0 +1,159 @@
+<app-notification
+  *ngIf="notification.show"
+  [message]="notification.message"
+  [type]="notification.type"
+  (closed)="notification.show = false"
+></app-notification>
+
+<div class="page">
+  <div class="page-header">
+    <h2>Tin khuyến mãi</h2>
+    <div class="header-actions">
+      <button type="button" class="action-button action-button--ghost" (click)="fetch()">Làm mới</button>
+      <button type="button" class="action-button" (click)="openCreate()">Tạo tin mới</button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Đang tải...</p>
+  </div>
+
+  <div *ngIf="!loading" class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Tiêu đề</th>
+          <th>Nội dung</th>
+          <th>Ảnh</th>
+          <th>Trạng thái</th>
+          <th>Bắt đầu</th>
+          <th>Kết thúc</th>
+          <th>Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of promotions; track item.id) {
+          <tr>
+            <td>{{ item.id }}</td>
+            <td class="col-title" [title]="item.title">{{ item.title }}</td>
+            <td class="col-content" [title]="item.content">{{ item.content }}</td>
+            <td>
+              <img *ngIf="item.imageUrl" [src]="item.imageUrl" class="thumb" alt="promotion image" />
+              <span *ngIf="!item.imageUrl">-</span>
+            </td>
+            <td>
+              <span class="pill" [class.pill--active]="item.isActive" [class.pill--inactive]="!item.isActive">
+                {{ item.isActive ? 'Đang bật' : 'Đang tắt' }}
+              </span>
+            </td>
+            <td>{{ formatDate(item.startDate) }}</td>
+            <td>{{ formatDate(item.endDate) }}</td>
+            <td>
+              <button class="action-button action-button--ghost action-button--sm" type="button" (click)="openEdit(item)">Sửa</button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="8" class="empty">Không có tin khuyến mãi.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pagination" *ngIf="!loading && promotions.length > 0">
+    <button class="action-button action-button--ghost" type="button" [disabled]="nextCursor === null || loadingMore" (click)="loadMore()">
+      {{ nextCursor !== null ? (loadingMore ? 'Đang tải...' : 'Tiếp theo') : 'Không còn dữ liệu' }}
+    </button>
+  </div>
+</div>
+
+<div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <h3>{{ editingPromotion ? 'Cập nhật khuyến mãi' : 'Tạo tin khuyến mãi mới' }}</h3>
+
+    <label>Ảnh khuyến mãi</label>
+    <div class="promotion-image-row promotion-image-row--top">
+      <div class="promotion-image-preview" [class.promotion-image-preview--empty]="!currentImagePreview">
+        <img
+          *ngIf="currentImagePreview"
+          [src]="currentImagePreview || ''"
+          alt="promotion preview"
+        />
+        <div class="promotion-image-overlay" aria-hidden="true"></div>
+        <span *ngIf="!currentImagePreview">Chưa có ảnh</span>
+        <input #promotionImageFile type="file" accept="image/*" hidden (change)="onImageChange($event)" />
+        <button
+          type="button"
+          class="promotion-image-trigger action-button"
+          [disabled]="uploading"
+          [attr.aria-label]="uploading ? 'Đang upload ảnh' : 'Cập nhật ảnh'"
+          [title]="uploading ? 'Đang upload ảnh' : 'Cập nhật ảnh'"
+          (click)="onPickImage(promotionImageFile)"
+        >
+          @if (uploading) {
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M12 3a9 9 0 1 0 9 9"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+              />
+            </svg>
+          } @else {
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.2l1-1.3A1.5 1.5 0 0 1 9.9 5h4.2a1.5 1.5 0 0 1 1.2.7l1 1.3h2.2A1.5 1.5 0 0 1 20 8.5v9A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5v-9Z"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle cx="12" cy="13" r="3.1" fill="none" stroke="currentColor" stroke-width="2" />
+            </svg>
+          }
+          <span>{{ uploading ? 'Đang tải...' : 'Đổi ảnh' }}</span>
+        </button>
+      </div>
+    </div>
+    <input type="hidden" [formControl]="form.controls.imageUrl" />
+
+    <label>Tiêu đề</label>
+    <input type="text" [formControl]="form.controls.title" placeholder="Nhập tiêu đề" />
+
+    <label>Nội dung</label>
+    <textarea rows="3" [formControl]="form.controls.content" placeholder="Nhập nội dung"></textarea>
+
+    <div class="row">
+      <div class="field">
+        <label>Bắt đầu</label>
+        <input type="datetime-local" [formControl]="form.controls.startDate" title="Thời gian bắt đầu" />
+      </div>
+      <div class="field">
+        <label>Kết thúc</label>
+        <input
+          type="datetime-local"
+          [formControl]="form.controls.endDate"
+          [min]="minEndDateLocal"
+          title="Thời gian kết thúc"
+        />
+      </div>
+    </div>
+
+    <label class="check">
+      <input type="checkbox" [formControl]="form.controls.isActive" />
+      Hiển thị tin này trên trang chủ
+    </label>
+
+    <div class="modal-actions">
+      <button type="button" class="action-button action-button--ghost" (click)="closeModal()">Hủy</button>
+      <button type="button" class="action-button" [disabled]="submitting" (click)="submit()">
+        {{ submitting ? 'Đang lưu...' : 'Lưu' }}
+      </button>
+    </div>
+  </div>
+</div>

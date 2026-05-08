@@ -5,7 +5,7 @@
 *::before,
 *::after {
   box-sizing: border-box;
-  border-radius: 0 !important;
+  border-radius: 10px !important;
   -webkit-tap-highlight-color: transparent;
   box-shadow: none !important;
 }
@@ -121,7 +121,7 @@ textarea {
   font-family: var(--font-family-base);
 }
 
-button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back),
+button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):not(.promotion-action):not(.action-button),
 input[type='button'],
 input[type='submit'],
 input[type='reset'],
@@ -129,7 +129,7 @@ input[type='reset'],
 .app-btn,
 [class*='btn-']:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.btn-forgot-back):not(.notification-filter-btn) {
   color: var(--color-primary) !important;
-  border-radius: 0 !important;
+  border-radius: 10px !important;
   box-shadow: none !important;
   position: relative;
   overflow: hidden;
@@ -143,7 +143,7 @@ input[type='reset'],
     box-shadow var(--motion-base) var(--ease-standard);
 }
 
-button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back)::after,
+button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):not(.promotion-action):not(.action-button)::after,
 input[type='button']::after,
 input[type='submit']::after,
 input[type='reset']::after,
@@ -164,7 +164,7 @@ input[type='reset']::after,
   transform: translate3d(-140%, 0, 0);
 }
 
-button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):hover,
+button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):not(.promotion-action):not(.action-button):hover,
 .btn:hover,
 .app-btn:hover,
 [class*='btn-']:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.btn-forgot-back):not(.notification-filter-btn):hover {
@@ -174,7 +174,7 @@ button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent);
 }
 
-button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):hover::after,
+button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):not(.promotion-action):not(.action-button):hover::after,
 input[type='button']:hover::after,
 input[type='submit']:hover::after,
 input[type='reset']:hover::after,
@@ -184,7 +184,7 @@ input[type='reset']:hover::after,
   animation: app-energy-sweep var(--motion-slow) var(--ease-flow);
 }
 
-button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):disabled:hover,
+button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):not(.promotion-action):not(.action-button):disabled:hover,
 .btn:disabled:hover,
 .app-btn:disabled:hover,
 [class*='btn-']:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.btn-forgot-back):not(.notification-filter-btn):disabled:hover {
@@ -197,6 +197,80 @@ button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-
   background: transparent !important;
   color: var(--color-text-muted) !important;
   border-color: transparent !important;
+}
+
+.action-button {
+  --action-btn-bg: var(--color-primary);
+  --action-btn-bg-hover: var(--sidebar-text-hover);
+  --action-btn-border: var(--color-primary);
+  --action-btn-color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 8px 14px;
+  border: 1px solid var(--action-btn-border) !important;
+  border-radius: 10px !important;
+  background: var(--action-btn-bg) !important;
+  color: var(--action-btn-color) !important;
+  -webkit-text-fill-color: currentColor !important;
+  text-decoration: none !important;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  box-shadow: none !important;
+  transform: none !important;
+  position: static !important;
+  overflow: visible !important;
+}
+
+.action-button:hover:not(:disabled),
+.action-button:active:not(:disabled) {
+  background: var(--action-btn-bg-hover) !important;
+  border-color: var(--action-btn-bg-hover) !important;
+  color: var(--action-btn-color) !important;
+  -webkit-text-fill-color: currentColor !important;
+  transform: none !important;
+}
+
+.action-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--action-btn-border) 16%, transparent) !important;
+}
+
+.action-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.action-button::before,
+.action-button::after {
+  content: none !important;
+  display: none !important;
+}
+
+.action-button--ghost {
+  --action-btn-bg: #fff;
+  --action-btn-bg-hover: var(--color-primary-bg);
+  --action-btn-border: var(--color-border);
+  --action-btn-color: var(--color-text-dark);
+}
+
+.action-button--icon {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0 !important;
+  border-radius: 999px !important;
+}
+
+.action-button--sm {
+  min-height: 30px;
+  padding: 6px 10px;
+  font-size: 12px;
 }
 
 h1,
@@ -232,6 +306,7 @@ a:hover {
 input,
 select,
 textarea {
+  border-radius: 10px !important;
   transition:
     border-color var(--motion-fast) var(--ease-standard),
     box-shadow var(--motion-fast) var(--ease-standard),
@@ -245,7 +320,7 @@ button:focus-visible {
   outline-offset: 2px;
 }
 
-button:not(:disabled):not(.btn-chat):not(.btn-notification):not(.btn-logout):active,
+button:not(:disabled):not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.promotion-action):not(.action-button):active,
 .btn:not(:disabled):active,
 .app-btn:not(:disabled):active,
 [class*='btn-']:not(:disabled):not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.btn-forgot-back):not(.notification-filter-btn):active {
@@ -350,7 +425,7 @@ label:focus-within .field-label {
   background: var(--color-surface) !important;
   color: var(--color-primary) !important;
   border: 1px solid var(--color-border) !important;
-  border-radius: 0 !important;
+  border-radius: 10px !important;
   font-size: 13px !important;
   font-weight: 500 !important;
   cursor: pointer;
