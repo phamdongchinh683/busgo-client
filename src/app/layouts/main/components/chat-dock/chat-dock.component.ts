@@ -1062,7 +1062,12 @@ export class ChatDockComponent {
   private async ensureLocalStream(callType: ChatCallType): Promise<void> {
     if (this.localStream) return;
     const media = await navigator.mediaDevices.getUserMedia({
-      audio: true,
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+        channelCount: 1,
+      },
       video: callType === 'video',
     });
     this.localStream = media;
