@@ -20,6 +20,24 @@
   </div>
 
   <div *ngIf="!loading" class="table-wrap">
+    <div class="promotion-filters">
+      <div class="promotion-filters__left">
+        <label class="promotion-filter">
+          <select [(ngModel)]="filterStatus">
+            <option [ngValue]="null">Tất cả</option>
+            <option [ngValue]="true">Đang bật</option>
+            <option [ngValue]="false">Đang tắt</option>
+          </select>
+        </label>
+        <label class="promotion-filter">
+          <input type="date" [(ngModel)]="filterDate" />
+        </label>
+      </div>
+      <div class="promotion-filters__right">
+        <span class="promotion-filters__meta">{{ filteredPromotions.length }}/{{ promotions.length }} kết quả</span>
+        <button type="button" class="action-button action-button--ghost action-button--sm" (click)="resetFilters()">Xóa lọc</button>
+      </div>
+    </div>
     <table class="table">
       <thead>
         <tr>
@@ -33,7 +51,7 @@
         </tr>
       </thead>
       <tbody>
-        @for (item of promotions; track item.id) {
+        @for (item of filteredPromotions; track item.id) {
           <tr>
             <td class="col-title" [title]="item.title">{{ item.title }}</td>
             <td class="col-content" [title]="item.content">{{ item.content }}</td>
@@ -54,7 +72,7 @@
           </tr>
         } @empty {
           <tr>
-            <td colspan="7" class="empty">Không có tin khuyến mãi.</td>
+            <td colspan="7" class="empty">Không có dữ liệu phù hợp bộ lọc.</td>
           </tr>
         }
       </tbody>

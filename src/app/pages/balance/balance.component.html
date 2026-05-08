@@ -183,7 +183,6 @@
       <table class="payout-table" *ngIf="payouts.length; else payoutEmptyState">
         <thead>
           <tr>
-            <th>Mã giao dịch</th>
             <th>Số tiền</th>
             <th>Quy đổi VND</th>
             <th>Trạng thái</th>
@@ -193,7 +192,6 @@
         </thead>
         <tbody>
           <tr *ngFor="let p of payouts">
-            <td class="payout-id">{{ p.id }}</td>
             <td>{{ formatPayoutAmount(p) }}</td>
             <td>{{ formatPayoutVnd(p) }}</td>
             <td>

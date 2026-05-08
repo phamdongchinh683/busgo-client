@@ -29,14 +29,12 @@
       <table>
         <thead>
           <tr>
-            <th>ID</th>
             <th>FCM Token</th>
             <th class="actions-col">Thao tác</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let token of tokens">
-            <td>{{ token.id }}</td>
             <td>
               <code class="token" [title]="token.fcmToken">{{ token.fcmToken }}</code>
             </td>

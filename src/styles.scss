@@ -170,8 +170,8 @@ button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-
 [class*='btn-']:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.btn-forgot-back):not(.notification-filter-btn):hover {
   background: var(--color-primary-hover-bg) !important;
   border-color: var(--color-primary) !important;
-  transform: translate3d(0, -1px, 0) scale(1.03);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent);
+  transform: translate3d(0, 0, 0) scale(1.01);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
 
 button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):not(.promotion-action):not(.action-button):hover::after,
@@ -224,6 +224,12 @@ button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-
   transform: none !important;
   position: static !important;
   overflow: visible !important;
+  transition:
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
 }
 
 .action-button:hover:not(:disabled),
@@ -232,7 +238,8 @@ button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-
   border-color: var(--action-btn-bg-hover) !important;
   color: var(--action-btn-color) !important;
   -webkit-text-fill-color: currentColor !important;
-  transform: none !important;
+  transform: translate3d(0, 0, 0) scale(1.01) !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08) !important;
 }
 
 .action-button:focus-visible {
@@ -324,7 +331,7 @@ button:not(:disabled):not(.btn-chat):not(.btn-notification):not(.btn-logout):not
 .btn:not(:disabled):active,
 .app-btn:not(:disabled):active,
 [class*='btn-']:not(:disabled):not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.btn-forgot-back):not(.notification-filter-btn):active {
-  transform: translate3d(0, 0, 0) scale(0.98);
+  transform: translate3d(0, 0, 0) scale(0.995);
   box-shadow: none;
 }
 
@@ -360,11 +367,11 @@ table tbody tr {
     background-color var(--motion-fast) var(--ease-standard),
     transform var(--motion-fast) var(--ease-flow),
     opacity var(--motion-fast) var(--ease-standard);
-  animation: app-stagger-fade-in var(--motion-base) var(--ease-flow) both;
+  animation: app-fade-in 180ms ease both;
 }
 
 table tbody tr:hover {
-  transform: translate3d(0, -1px, 0);
+  transform: translate3d(0, 0, 0);
 }
 
 table tbody tr:nth-child(1) { animation-delay: 20ms; }
@@ -417,7 +424,7 @@ label:focus-within .field-label {
 }
 
 .card:hover {
-  transform: translateY(-1px);
+  transform: translateY(0);
 }
 
 .btn-load-more {
@@ -460,5 +467,28 @@ label:focus-within .field-label {
     transition-duration: 1ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Compact admin/page table layout across pages */
+.page :is(.table, .company-table, .payout-table) th,
+.page :is(.table, .company-table, .payout-table) td {
+  padding: 10px 12px !important;
+  font-size: 13px !important;
+}
+
+.page :is(.table, .company-table, .payout-table) th {
+  font-size: 12px !important;
+  letter-spacing: 0.2px;
+}
+
+.page :is(.table-wrap, .company-table-wrap, .payout-table-wrap) :is(input, select) {
+  min-height: 34px;
+  font-size: 13px;
+}
+
+.page :is(.table-wrap, .company-table-wrap, .payout-table-wrap) .action-button--sm {
+  min-height: 30px;
+  padding: 6px 10px;
+  font-size: 12px;
 }
 

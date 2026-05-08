@@ -9,7 +9,7 @@ import { buildCacheKey, CacheEntry, readCache, writeCache } from '../cache-utils
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly companiesCache = new Map<string, CacheEntry<CompanyListResponse>>();
-  private readonly COMPANIES_TTL_MS = 5 * 60 * 1000;
+  private readonly COMPANIES_TTL_MS = 15 * 1000;
 
   constructor(private http: HttpClient) {}
 

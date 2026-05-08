@@ -12,7 +12,7 @@ import { buildCacheKey, CacheEntry, readCache, writeCache } from '../cache-utils
 export class ApiService {
   private readonly dashboardOverviewCache = new Map<string, CacheEntry<DashboardResponse>>();
   private readonly dashboardStatsCache = new Map<string, CacheEntry<unknown>>();
-  private readonly DASHBOARD_TTL_MS = 1 * 60 * 1000;
+  private readonly DASHBOARD_TTL_MS = 15 * 1000;
 
   constructor(private http: HttpClient) {}
 

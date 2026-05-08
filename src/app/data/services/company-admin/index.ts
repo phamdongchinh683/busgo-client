@@ -20,7 +20,7 @@ export interface CompanyAdminFilters {
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly adminsCache = new Map<string, CacheEntry<CompanyAdminListResponse>>();
-  private readonly ADMINS_TTL_MS = 1 * 60 * 1000;
+  private readonly ADMINS_TTL_MS = 15 * 1000;
 
   constructor(private http: HttpClient) {}
 

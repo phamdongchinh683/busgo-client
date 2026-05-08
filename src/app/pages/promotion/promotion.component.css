@@ -36,11 +36,84 @@
   min-width: 980px;
 }
 
+.promotion-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--color-border);
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.promotion-filters__left {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 8px;
+}
+
+.promotion-filters__title {
+  margin: 0 8px 4px 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-dark);
+  letter-spacing: 0.2px;
+}
+
+.promotion-filters__right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.promotion-filters__meta {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: #fff;
+  border: 1px solid var(--color-border);
+  padding: 4px 8px;
+}
+
+.promotion-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 150px;
+}
+
+.promotion-filter span {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.25px;
+}
+
+.promotion-filter input,
+.promotion-filter select {
+  height: 30px;
+  border: 1px solid var(--color-border);
+  background: #fff;
+  color: var(--color-text-dark);
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+@media (max-width: 860px) {
+  .promotion-filters__right {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
 .table th,
 .table td {
   border-bottom: 1px solid var(--color-border);
-  padding: 11px 12px;
-  font-size: 13px;
+  padding: 8px 10px;
+  font-size: 12px;
   vertical-align: middle;
 }
 
@@ -48,6 +121,8 @@
   text-align: left;
   color: var(--color-text-muted);
   font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.2px;
   background: color-mix(in srgb, var(--color-primary-bg) 45%, #fff);
 }
 
@@ -72,8 +147,8 @@
 }
 
 .thumb {
-  width: 72px;
-  height: 46px;
+  width: 64px;
+  height: 40px;
   object-fit: cover;
   border-radius: 8px;
   border: 1px solid var(--color-border);
@@ -83,9 +158,9 @@
 
 .pill {
   display: inline-flex;
-  padding: 2px 8px;
+  padding: 2px 7px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
 }
 

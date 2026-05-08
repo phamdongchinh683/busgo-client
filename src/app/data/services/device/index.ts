@@ -9,7 +9,7 @@ import { CacheEntry, clearCacheByPrefix, readCache, writeCache } from '../cache-
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly deviceCache = new Map<string, CacheEntry<DeviceFcmToken[]>>();
-  private readonly DEVICE_TTL_MS = 3 * 60 * 1000;
+  private readonly DEVICE_TTL_MS = 15 * 1000;
 
   constructor(private readonly http: HttpClient) {}
 

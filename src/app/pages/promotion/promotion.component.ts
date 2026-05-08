@@ -1,6 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { promotion, upload } from '@app/data/services';
@@ -15,12 +15,12 @@ import { SharedModule } from '@app/shared/shared.module';
 @Component({
   selector: 'app-promotion',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, SharedModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, SharedModule],
   templateUrl: './promotion.component.html',
   styleUrl: './promotion.component.css',
 })
 export class PromotionComponent implements OnInit {
-  private static readonly CACHE_TTL_MS = 2 * 60 * 1000;
+  private static readonly CACHE_TTL_MS = 15 * 1000;
   private static listCache: {
     items: PromotionItem[];
     nextCursor: number | null;
@@ -32,6 +32,8 @@ export class PromotionComponent implements OnInit {
   nextCursor: number | null = null;
   loading = true;
   loadingMore = false;
+  filterStatus: boolean | null = null;
+  filterDate = '';
 
   showModal = false;
   submitting = false;
@@ -78,8 +80,29 @@ export class PromotionComponent implements OnInit {
     return this.toDateTimeLocal(new Date().toISOString());
   }
 
+  get filteredPromotions(): PromotionItem[] {
+    const fromTime = this.parseFilterDate(this.filterDate);
+    const toTime = this.parseFilterDate(this.filterDate, true);
+
+    return this.promotions.filter((item) => {
+      if (this.filterStatus !== null && item.isActive !== this.filterStatus) return false;
+
+      const startTime = Date.parse(item.startDate);
+      if (!Number.isFinite(startTime)) return false;
+
+      if (fromTime !== null && startTime < fromTime) return false;
+      if (toTime !== null && startTime > toTime) return false;
+      return true;
+    });
+  }
+
   showNotification(message: string, type: 'success' | 'error' | 'warning' | 'info'): void {
     this.notification = { show: true, message, type };
+  }
+
+  resetFilters(): void {
+    this.filterStatus = null;
+    this.filterDate = '';
   }
 
   fetch(force = false): void {
@@ -423,5 +446,12 @@ export class PromotionComponent implements OnInit {
       nextCursor,
       expiredAt: Date.now() + PromotionComponent.CACHE_TTL_MS,
     };
+  }
+
+  private parseFilterDate(value: string, endOfDay = false): number | null {
+    if (!value) return null;
+    const dateValue = endOfDay ? `${value}T23:59:59.999` : `${value}T00:00:00.000`;
+    const parsed = Date.parse(dateValue);
+    return Number.isFinite(parsed) ? parsed : null;
   }
 }
