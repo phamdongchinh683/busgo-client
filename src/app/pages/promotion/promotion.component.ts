@@ -29,6 +29,7 @@ export class PromotionComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
 
   promotions: PromotionItem[] = [];
+  filteredPromotionsView: PromotionItem[] = [];
   nextCursor: number | null = null;
   loading = true;
   loadingMore = false;
@@ -80,7 +81,7 @@ export class PromotionComponent implements OnInit {
     return this.toDateTimeLocal(new Date().toISOString());
   }
 
-  get filteredPromotions(): PromotionItem[] {
+  private buildFilteredPromotions(): PromotionItem[] {
     const fromTime = this.parseFilterDate(this.filterDate);
     const toTime = this.parseFilterDate(this.filterDate, true);
 
@@ -103,6 +104,11 @@ export class PromotionComponent implements OnInit {
   resetFilters(): void {
     this.filterStatus = null;
     this.filterDate = '';
+    this.applyPromotionFilters();
+  }
+
+  applyPromotionFilters(): void {
+    this.filteredPromotionsView = this.buildFilteredPromotions();
   }
 
   fetch(force = false): void {
@@ -110,6 +116,7 @@ export class PromotionComponent implements OnInit {
     if (!force && cached && cached.expiredAt > Date.now()) {
       this.promotions = [...cached.items];
       this.nextCursor = cached.nextCursor;
+      this.applyPromotionFilters();
       this.loading = false;
       return;
     }
@@ -122,6 +129,7 @@ export class PromotionComponent implements OnInit {
         this.promotions = res.items ?? [];
         this.nextCursor = res.next ?? null;
         this.updateListCache(this.promotions, this.nextCursor);
+        this.applyPromotionFilters();
         this.loading = false;
       },
       error: () => {
@@ -139,6 +147,7 @@ export class PromotionComponent implements OnInit {
         this.promotions = [...this.promotions, ...(res.items ?? [])];
         this.nextCursor = res.next ?? null;
         this.updateListCache(this.promotions, this.nextCursor);
+        this.applyPromotionFilters();
         this.loadingMore = false;
       },
       error: () => {
@@ -260,6 +269,7 @@ export class PromotionComponent implements OnInit {
           const updated = this.pickUpsertItem(res, editing, body);
           this.promotions = this.promotions.map((x) => (x.id === updated.id ? updated : x));
           this.updateListCache(this.promotions, this.nextCursor);
+          this.applyPromotionFilters();
           this.showNotification('Cập nhật khuyến mãi thành công.', 'success');
           this.closeModal();
         },
@@ -377,6 +387,7 @@ export class PromotionComponent implements OnInit {
         const created = this.pickUpsertItem(res, null, body);
         this.promotions = [created, ...this.promotions];
         this.updateListCache(this.promotions, this.nextCursor);
+        this.applyPromotionFilters();
         const createdId = Number(created.id);
         if (
           pendingUploadTask &&
@@ -401,6 +412,7 @@ export class PromotionComponent implements OnInit {
                   );
                   this.promotions = this.promotions.map((x) => (x.id === createdId ? updated : x));
                   this.updateListCache(this.promotions, this.nextCursor);
+                  this.applyPromotionFilters();
                 },
               });
             })

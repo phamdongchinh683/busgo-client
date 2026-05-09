@@ -5,6 +5,7 @@ import { auth, companyAdmin, publicApi } from '../../data/services';
 import { Company } from '../../data/interfaces/company';
 import { CompanyAdmin, CreateCompanyAdminBody, UpdateCompanyAdminBody } from '../../data/interfaces/company-admin';
 import { normalizeCompanyAdminList } from './utils/company-admin.mapper';
+import { getApiErrorMessage } from '@app/shared/utils/api-error.util';
 import { DEFAULT_PAGE_LIMIT, PAGE_LIMITS, type PageLimit } from '../../data/constants';
 import { CompanyAdminToolbarComponent } from './components/company-admin-toolbar/company-admin-toolbar.component';
 import { CompanyAdminTableComponent } from './components/company-admin-table/company-admin-table.component';
@@ -96,15 +97,13 @@ export class AdminComponent implements OnInit {
   onCreateSubmit(body: CreateCompanyAdminBody) {
     this.createSubmitting = true;
     this.api.createCompanyAdmin(body).subscribe({
-      next: (res) => {
+      next: () => {
         this.showNotification('Thành công.', 'success');
-        this.showCreate = false;
-        this.createSubmitting = false;
+        this.onCreateOpenChange(false);
         this.fetch();
       },
       error: (err: unknown) => {
-        const e = err as { error?: { message?: string } };
-        this.showNotification(e.error?.message || 'Thất bại.', 'error');
+        this.showNotification(getApiErrorMessage(err, 'Thất bại.'), 'error');
         this.createSubmitting = false;
       },
     });
@@ -147,13 +146,10 @@ export class AdminComponent implements OnInit {
             ? { ...a, fullName: body.fullName, email: body.email, phone: body.phone, status: body.status }
             : a,
         );
-        this.showEdit = false;
-        this.editingAdmin = null;
-        this.editSubmitting = false;
+        this.onEditOpenChange(false);
       },
       error: (err: unknown) => {
-        const e = err as { error?: { message?: string } };
-        this.showNotification(e.error?.message || 'Thất bại.', 'error');
+        this.showNotification(getApiErrorMessage(err, 'Thất bại.'), 'error');
         this.editSubmitting = false;
       },
     });
@@ -162,46 +158,36 @@ export class AdminComponent implements OnInit {
   loadMore() {
     if (this.nextCursor === null || this.loadingMore) return;
     this.loadingMore = true;
-    this.api
-      .getCompanyAdmins({
-        limit: this.limit,
-        next: this.nextCursor,
-        companyId: this.selectedCompanyId ?? undefined,
-      })
-      .subscribe({
-        next: (res) => {
-          const batch = normalizeCompanyAdminList(res);
-          this.admins = [...this.admins, ...batch];
-          this.nextCursor = res.next ?? null;
-          this.loadingMore = false;
-        },
-        error: (err: unknown) => {
-          const e = err as { error?: { message?: string } };
-          this.showNotification(e.error?.message || 'Tải thêm thất bại.', 'error');
-          this.loadingMore = false;
-        },
-      });
+    this.fetchAdmins(this.nextCursor, false);
   }
 
   private fetch() {
     this.loading = true;
     this.admins = [];
     this.nextCursor = null;
+    this.fetchAdmins(undefined, true);
+  }
+
+  private fetchAdmins(next: number | undefined, replace: boolean): void {
     this.api
       .getCompanyAdmins({
         limit: this.limit,
+        next,
         companyId: this.selectedCompanyId ?? undefined,
       })
       .subscribe({
         next: (res) => {
-          this.admins = normalizeCompanyAdminList(res);
+          const normalized = normalizeCompanyAdminList(res);
+          this.admins = replace ? normalized : [...this.admins, ...normalized];
           this.nextCursor = res.next ?? null;
           this.loading = false;
+          this.loadingMore = false;
         },
         error: (err: unknown) => {
-          const e = err as { error?: { message?: string } };
-          this.showNotification(e.error?.message || 'Tải danh sách tài khoản Nhà Xe thất bại.', 'error');
+          const fallback = replace ? 'Tải danh sách tài khoản Nhà Xe thất bại.' : 'Tải thêm thất bại.';
+          this.showNotification(getApiErrorMessage(err, fallback), 'error');
           this.loading = false;
+          this.loadingMore = false;
         },
       });
   }
@@ -223,8 +209,7 @@ export class AdminComponent implements OnInit {
           this.closeNotificationModal();
         },
         error: (err: unknown) => {
-          const e = err as { error?: { message?: string } };
-          this.showNotification(e.error?.message || 'Gửi thông báo thất bại.', 'error');
+          this.showNotification(getApiErrorMessage(err, 'Gửi thông báo thất bại.'), 'error');
           this.notificationSubmitting = false;
         },
       });

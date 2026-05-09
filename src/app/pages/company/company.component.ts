@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { company } from '../../data/services/index';
 import { Company } from '../../data/interfaces/company';
 import { SharedModule } from '@app/shared/shared.module';
+import { getApiErrorMessage } from '@app/shared/utils/api-error.util';
 import { PAGE_LIMITS, DEFAULT_PAGE_LIMIT, type PageLimit } from '../../data/constants/index';
 import { CompanyToolbarComponent } from './components/company-toolbar/company-toolbar.component';
 import { CompanyFormModalComponent } from './components/company-form-modal/company-form-modal.component';
@@ -218,8 +219,8 @@ export class CompanyComponent implements OnInit {
           this.closeModal();
           this.submitting = false;
         },
-        error: (err) => {
-          this.showNotification(err.error?.message || 'Cập nhật thất bại.', 'error');
+        error: (err: unknown) => {
+          this.showNotification(getApiErrorMessage(err, 'Cập nhật thất bại.'), 'error');
           this.submitting = false;
         },
       });
@@ -231,8 +232,8 @@ export class CompanyComponent implements OnInit {
           this.closeModal();
           this.submitting = false;
         },
-        error: (err) => {
-          this.showNotification(err.error?.message || 'Tạo mới thất bại.', 'error');
+        error: (err: unknown) => {
+          this.showNotification(getApiErrorMessage(err, 'Tạo mới thất bại.'), 'error');
           this.submitting = false;
         },
       });
@@ -269,8 +270,8 @@ export class CompanyComponent implements OnInit {
         this.cancelDelete();
         this.submitting = false;
       },
-      error: (err) => {
-        this.showNotification(err.error?.message || 'Xóa thất bại.', 'error');
+      error: (err: unknown) => {
+        this.showNotification(getApiErrorMessage(err, 'Xóa thất bại.'), 'error');
         this.submitting = false;
       },
     });

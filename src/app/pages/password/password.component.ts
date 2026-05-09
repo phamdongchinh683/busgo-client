@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { SharedModule } from '@app/shared/shared.module';
 import { auth } from '../../data/services';
+import { getApiErrorMessage } from '@app/shared/utils/api-error.util';
 import { isValidPassword, PASSWORD_MESSAGE } from '@app/shared/utils/validators';
 
 @Component({
@@ -86,8 +87,8 @@ export class PasswordComponent {
         this.showNotification(res.message || 'Cập nhật mật khẩu thành công.', 'success');
         this.form.reset();
       },
-      error: (err: { error?: { message?: string } }) => {
-        this.showNotification(err.error?.message || 'Cập nhật mật khẩu thất bại.', 'error');
+      error: (err: unknown) => {
+        this.showNotification(getApiErrorMessage(err, 'Cập nhật mật khẩu thất bại.'), 'error');
         this.submitting = false;
       },
       complete: () => {

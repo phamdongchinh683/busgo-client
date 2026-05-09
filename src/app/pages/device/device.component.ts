@@ -7,6 +7,7 @@ import { SharedModule } from '../../shared/shared.module';
 import { Messaging } from '@angular/fire/messaging';
 import { firebaseVapidKey, firebaseWebConfig } from '../../data/constants';
 import { getToken, isSupported } from 'firebase/messaging';
+import { getApiErrorMessage } from '@app/shared/utils/api-error.util';
 
 @Component({
   selector: 'app-device',
@@ -45,8 +46,8 @@ export class DeviceComponent implements OnInit {
           this.tokens = res ? res : [];
           this.loading = false;
         },
-        error: (err: { error?: { message?: string } }) =>
-          this.showNotification(err.error?.message || 'Tải danh sách FCM token thất bại.', 'error'),
+        error: (err: unknown) =>
+          this.showNotification(getApiErrorMessage(err, 'Tải danh sách FCM token thất bại.'), 'error'),
       });
   }
 
@@ -62,8 +63,8 @@ export class DeviceComponent implements OnInit {
           this.deletingId = null;
           this.showNotification('Đã xóa', 'success');
         },
-        error: (err: { error?: { message?: string } }) =>
-          this.showNotification(err.error?.message || 'Xóa FCM token thất bại.', 'error'),
+        error: (err: unknown) =>
+          this.showNotification(getApiErrorMessage(err, 'Xóa FCM token thất bại.'), 'error'),
       });
   }
 
@@ -153,9 +154,9 @@ export class DeviceComponent implements OnInit {
           this.tokens = [res, ...this.tokens];
           this.showNotification('Đã lưu', 'success');
         },
-        error: (err: { error?: { message?: string } }) => {
+        error: (err: unknown) => {
           this.registering = false;
-          this.showNotification(err.error?.message || 'Lưu FCM token thất bại.', 'error');
+          this.showNotification(getApiErrorMessage(err, 'Lưu FCM token thất bại.'), 'error');
         },
       });
   }

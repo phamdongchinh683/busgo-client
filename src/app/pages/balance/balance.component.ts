@@ -10,6 +10,7 @@ import type { RevenueExportMethod, RevenueExportQuery, RevenueExportTimeType } f
 import { BalanceMoneyItem, BalanceResponse } from '../../data/interfaces/balance';
 import { SharedModule } from '../../shared/shared.module';
 import { BalanceStatusCardComponent } from './components/balance-status-card/balance-status-card.component';
+import { getApiErrorMessage } from '@app/shared/utils/api-error.util';
 
 @Component({
   selector: 'app-balance',
@@ -87,8 +88,8 @@ export class BalanceComponent implements OnInit {
         next: (res) => {
           this.data = res;
         },
-        error: (err: { error?: { message?: string } }) =>
-          this.showNotification(err.error?.message || 'Tải số dư thất bại.', 'error'),
+        error: (err: unknown) =>
+          this.showNotification(getApiErrorMessage(err, 'Tải số dư thất bại.'), 'error'),
       });
   }
 
@@ -294,8 +295,8 @@ export class BalanceComponent implements OnInit {
         this.closeWithdrawModal();
         this.load();
       },
-      error: (err: { error?: { message?: string } }) => {
-        this.showNotification(err.error?.message || 'Rút tiền thất bại.', 'error');
+      error: (err: unknown) => {
+        this.showNotification(getApiErrorMessage(err, 'Rút tiền thất bại.'), 'error');
         this.withdrawing = false;
       },
       complete: () => {
@@ -354,9 +355,9 @@ export class BalanceComponent implements OnInit {
           const nextCursor = typeof res.next === 'string' ? res.next.trim() : '';
           this.payoutNext = nextCursor && nextCursor.toLowerCase() !== 'null' ? nextCursor : null;
         },
-        error: (err: { error?: { message?: string } }) => {
+        error: (err: unknown) => {
           if (requestSeq !== this.payoutRequestSeq) return;
-          this.showNotification(err.error?.message || 'Không tải được lịch sử giao dịch.', 'error');
+          this.showNotification(getApiErrorMessage(err, 'Không tải được lịch sử giao dịch.'), 'error');
         },
         complete: () => {
           if (requestSeq !== this.payoutRequestSeq) return;

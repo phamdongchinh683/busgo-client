@@ -12,6 +12,7 @@ import type {
   DashboardTrendChartKind,
 } from '../../data/interfaces/dashboard/stats';
 import { SharedModule } from '@app/shared/shared.module';
+import { getApiErrorMessage } from '@app/shared/utils/api-error.util';
 import { DashboardStatsGridComponent } from './components/dashboard-stats-grid/dashboard-stats-grid.component';
 import { DashboardChartsToolbarComponent } from './components/dashboard-charts-toolbar/dashboard-charts-toolbar.component';
 import { DashboardTrendChartPanelComponent } from './components/dashboard-trend-chart-panel/dashboard-trend-chart-panel.component';
@@ -97,8 +98,8 @@ export class DashboardComponent implements OnInit {
         this.overview = res.overview;
         this.loading = false;
       },
-      error: (err: { error?: { message?: string } }) => {
-        this.showNotification(err.error?.message || 'Tải tổng quan thất bại.', 'error');
+      error: (err: unknown) => {
+        this.showNotification(getApiErrorMessage(err, 'Tải tổng quan thất bại.'), 'error');
         this.loading = false;
       },
     });
@@ -148,8 +149,8 @@ export class DashboardComponent implements OnInit {
         next: (data) => {
           this.userChart = this.localizeDatasetLabels(data);
         },
-        error: (err: { error?: { message?: string } }) => {
-          this.showNotification(err.error?.message || 'Tải biểu đồ người dùng thất bại.', 'error');
+        error: (err: unknown) => {
+          this.showNotification(getApiErrorMessage(err, 'Tải biểu đồ người dùng thất bại.'), 'error');
         },
       });
   }
@@ -162,8 +163,8 @@ export class DashboardComponent implements OnInit {
         next: (data) => {
           this.bookingChart = this.localizeDatasetLabels(data);
         },
-        error: (err: { error?: { message?: string } }) => {
-          this.showNotification(err.error?.message || 'Tải biểu đồ đặt vé thất bại.', 'error');
+        error: (err: unknown) => {
+          this.showNotification(getApiErrorMessage(err, 'Tải biểu đồ đặt vé thất bại.'), 'error');
         },
       });
   }
@@ -176,8 +177,8 @@ export class DashboardComponent implements OnInit {
         next: (data) => {
           this.revenueChart = this.localizeDatasetLabels(data);
         },
-        error: (err: { error?: { message?: string } }) => {
-          this.showNotification(err.error?.message || 'Tải biểu đồ doanh thu thất bại.', 'error');
+        error: (err: unknown) => {
+          this.showNotification(getApiErrorMessage(err, 'Tải biểu đồ doanh thu thất bại.'), 'error');
         },
       });
   }

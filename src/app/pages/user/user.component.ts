@@ -24,6 +24,7 @@ import {
   phone10DigitsValidator,
 } from '@app/shared/utils/validators';
 import { SharedModule } from '@app/shared/shared.module';
+import { getApiErrorMessage } from '@app/shared/utils/api-error.util';
 import { UserFiltersPanelComponent } from './components/user-filters-panel/user-filters-panel.component';
 import { UserListPanelComponent } from './components/user-list-panel/user-list-panel.component';
 import { UserCreateModalComponent } from './components/user-create-modal/user-create-modal.component';
@@ -302,8 +303,8 @@ export class UserComponent implements OnInit {
           this.closeCreateModal();
           this.applyFilters();
         },
-        error: (err: { error?: { message?: string } }) => {
-          this.showNotification(err.error?.message || 'Tạo người dùng thất bại.', 'error');
+        error: (err: unknown) => {
+          this.showNotification(getApiErrorMessage(err, 'Tạo người dùng thất bại.'), 'error');
           this.creatingUser = false;
         },
       });
@@ -350,8 +351,8 @@ export class UserComponent implements OnInit {
           this.showNotification('Cập nhật thành công.', 'success');
           this.closeEditModal();
         },
-        error: (err: { error?: { message?: string } }) => {
-          this.showNotification(err.error?.message || 'Cập nhật người dùng thất bại.', 'error');
+        error: (err: unknown) => {
+          this.showNotification(getApiErrorMessage(err, 'Cập nhật người dùng thất bại.'), 'error');
           this.editingUserLoading = false;
         },
       });
@@ -388,8 +389,8 @@ export class UserComponent implements OnInit {
         this.showNotification(`Đã cập nhật mật khẩu: ${res.password}`, 'success');
         this.closePasswordModal();
       },
-      error: (err: { error?: { message?: string } }) => {
-        this.showNotification(err.error?.message || 'Cập nhật mật khẩu thất bại.', 'error');
+      error: (err: unknown) => {
+        this.showNotification(getApiErrorMessage(err, 'Cập nhật mật khẩu thất bại.'), 'error');
         this.updatingPasswordLoading = false;
       },
     });
@@ -404,7 +405,7 @@ export class UserComponent implements OnInit {
         this.showNotification('Đã xóa.', 'success');
         this.closeDeleteModal();
       },
-      error: (err: { error?: { message?: string } }) => {
+      error: () => {
         this.showNotification('Không thể xóa người dùng này.', 'error');
         this.deletingUserLoading = false;
       },
@@ -428,8 +429,7 @@ export class UserComponent implements OnInit {
           this.closeNotificationModal();
         },
         error: (err: unknown) => {
-          const e = err as { error?: { message?: string } };
-          this.showNotification(e.error?.message || 'Gửi thông báo thất bại.', 'error');
+          this.showNotification(getApiErrorMessage(err, 'Gửi thông báo thất bại.'), 'error');
           this.notificationSubmitting = false;
         },
       });
@@ -462,8 +462,8 @@ export class UserComponent implements OnInit {
           this.nextCursor = res.next ?? null;
           this.loading = false;
         },
-        error: (err: { error?: { message?: string } }) => {
-          this.showNotification(err.error?.message || 'Tải danh sách người dùng thất bại.', 'error');
+        error: (err: unknown) => {
+          this.showNotification(getApiErrorMessage(err, 'Tải danh sách người dùng thất bại.'), 'error');
           this.loading = false;
         },
       });
@@ -491,8 +491,8 @@ export class UserComponent implements OnInit {
           this.nextCursor = res.next ?? null;
           this.loadingMore = false;
         },
-        error: (err: { error?: { message?: string } }) => {
-          this.showNotification(err.error?.message || 'Tải thêm người dùng thất bại.', 'error');
+        error: (err: unknown) => {
+          this.showNotification(getApiErrorMessage(err, 'Tải thêm người dùng thất bại.'), 'error');
           this.loadingMore = false;
         },
       });

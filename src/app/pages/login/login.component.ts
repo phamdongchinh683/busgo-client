@@ -4,6 +4,7 @@ import { FormArray, FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { auth } from '../../data/services/index';
 import { SharedModule } from '@app/shared/shared.module';
+import { getApiErrorMessage } from '@app/shared/utils/api-error.util';
 import {
   isDigitsOnly,
   isEmail,
@@ -212,7 +213,7 @@ export class LoginComponent implements OnDestroy {
         setTimeout(() => this.focusOtpBox(0), 50);
       },
       error: (err: { error?: { message?: string } }) => {
-        this.showNotification(err.error?.message || 'Gửi OTP thất bại.', 'error');
+        this.showNotification(getApiErrorMessage(err, 'Gửi OTP thất bại.'), 'error');
         this.sendingOtp = false;
       },
       complete: () => {
@@ -326,7 +327,7 @@ export class LoginComponent implements OnDestroy {
         this.loading = false;
       },
       error: (err: { error?: { message?: string } }) => {
-        this.showNotification(err.error?.message || 'Đăng nhập thất bại.', 'error');
+        this.showNotification(getApiErrorMessage(err, 'Đăng nhập thất bại.'), 'error');
         this.loading = false;
       },
     });
