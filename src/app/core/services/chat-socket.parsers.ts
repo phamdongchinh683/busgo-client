@@ -7,6 +7,7 @@ import {
   ChatCallActivePayload,
   ChatCallSignalPayload,
   ChatCallStartPayload,
+  ChatMessageRecalledPayload,
   ChatCallType,
   ChatRealtimeMessage,
   ChatTypingPayload,
@@ -62,6 +63,28 @@ export function coerceTypingPayload(raw: unknown): ChatTypingPayload | null {
   const userId = toSocketNumber(o['userId']);
   if (boxId === undefined || boxId === null || userId === null) return null;
   return { boxId: boxId as number | string, userId };
+}
+
+export function coerceMessageRecalledPayload(raw: unknown): ChatMessageRecalledPayload | null {
+  const o = raw as Record<string, unknown>;
+  if (!o) return null;
+  const boxId = o['boxId'];
+  const messageId = o['messageId'];
+  const senderId = toSocketNumber(o['senderId']);
+  if (boxId === undefined || boxId === null || messageId === undefined || messageId === null || senderId === null) {
+    return null;
+  }
+  const body = pickStr(o, 'body') ?? 'Tin nhắn này đã bị thu hồi';
+  const receiverId = toSocketNumber(o['receiverId']);
+  const updatedAt = pickStr(o, 'updatedAt');
+  return {
+    boxId: boxId as number | string,
+    messageId: messageId as number | string,
+    body,
+    senderId,
+    ...(receiverId !== null ? { receiverId } : {}),
+    ...(updatedAt ? { updatedAt } : {}),
+  };
 }
 
 export function coerceUnreadPayload(raw: unknown): ChatUnreadCountPayload | null {

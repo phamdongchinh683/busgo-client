@@ -39,6 +39,7 @@ export class PromotionComponent implements OnInit {
   showModal = false;
   submitting = false;
   uploading = false;
+  uploadProgress = 0;
   editingPromotion: PromotionItem | null = null;
   pendingCreateImageFile: File | null = null;
   pendingCreateImagePreviewUrl = '';
@@ -168,6 +169,7 @@ export class PromotionComponent implements OnInit {
       endDate: '',
     });
     this.pendingCreateImageFile = null;
+    this.uploadProgress = 0;
     this.pendingCreateUploadedUrl = '';
     this.pendingCreateUploadTask = null;
     this.revokePendingPreview();
@@ -184,6 +186,7 @@ export class PromotionComponent implements OnInit {
       startDate: this.toDateTimeLocal(item.startDate),
       endDate: this.toDateTimeLocal(item.endDate),
     });
+    this.uploadProgress = 0;
     this.showModal = true;
   }
 
@@ -191,6 +194,7 @@ export class PromotionComponent implements OnInit {
     this.showModal = false;
     this.submitting = false;
     this.uploading = false;
+    this.uploadProgress = 0;
     this.editingPromotion = null;
     this.pendingCreateImageFile = null;
     this.pendingCreateUploadedUrl = '';
@@ -215,6 +219,7 @@ export class PromotionComponent implements OnInit {
     }
 
     this.uploading = true;
+    this.uploadProgress = 0;
     try {
       const secureUrl = await this.uploadPromotionImage(this.editingPromotion.id, file);
       this.form.patchValue({ imageUrl: secureUrl });
@@ -230,6 +235,7 @@ export class PromotionComponent implements OnInit {
       this.showNotification(message, 'error');
     } finally {
       this.uploading = false;
+      this.uploadProgress = 0;
     }
   }
 
@@ -327,27 +333,17 @@ export class PromotionComponent implements OnInit {
 
   private async uploadPromotionImage(id: number, file: File): Promise<string> {
     const presigned = await this.getPresignedForPromotion(id);
-    let uploadFile = file;
-    if (file.size >= 300 * 1024 && file.type.startsWith('image/')) {
-      const prefersWebp = presigned.acceptedMimeTypes?.includes('image/webp');
-      const outputType = prefersWebp ? 'image/webp' : 'image/jpeg';
-      const quality = prefersWebp ? 0.76 : 0.82;
-      uploadFile = await this.uploadApi.resizeImageFile(file, {
-        maxDimension: 720,
-        outputType,
-        quality,
-        minFileSize: 300 * 1024,
-      });
-    }
-
-    if (
-      presigned.acceptedMimeTypes?.length &&
-      !presigned.acceptedMimeTypes.includes(uploadFile.type)
-    ) {
-      throw new Error('Định dạng ảnh không được hỗ trợ.');
-    }
-
-    return await this.uploadApi.uploadImageToCloudinary(uploadFile, presigned);
+    const prefersWebp = presigned.acceptedMimeTypes?.includes('image/webp');
+    const uploadFile = await this.uploadApi.prepareImageForUpload(file, presigned, {
+      maxBytes: 10 * 1024 * 1024,
+      minResizeBytes: 300 * 1024,
+      maxDimension: 720,
+      preferredOutputType: prefersWebp ? 'image/webp' : 'image/jpeg',
+      quality: prefersWebp ? 0.76 : 0.82,
+    });
+    return await this.uploadApi.uploadImageToCloudinaryWithProgress(uploadFile, presigned, (percent) => {
+      this.uploadProgress = percent;
+    });
   }
 
   private setPendingPreview(file: File): void {
@@ -433,6 +429,7 @@ export class PromotionComponent implements OnInit {
 
   private startPendingCreateImageUpload(file: File): void {
     this.uploading = true;
+    this.uploadProgress = 0;
     this.pendingCreateUploadedUrl = '';
     const uploadTask = this.uploadPromotionImage(Date.now(), file);
     this.pendingCreateUploadTask = uploadTask;
@@ -449,6 +446,7 @@ export class PromotionComponent implements OnInit {
       })
       .finally(() => {
         this.uploading = false;
+        this.uploadProgress = 0;
       });
   }
 

@@ -16,6 +16,8 @@ export class ChatCallPopupComponent {
   readonly incoming = input(false);
   readonly ongoing = input(false);
   readonly title = input('');
+  /** Ảnh đại diện người gọi (nếu có); không có thì hiển thị chữ cái đầu. */
+  readonly avatarUrl = input('');
 
   readonly accept = output<void>();
   readonly reject = output<void>();

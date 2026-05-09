@@ -6,9 +6,8 @@ export function getChatViewerUserId(): number | null {
   if (!raw) return null;
   try {
     const u = JSON.parse(raw) as { id?: number | string };
-    if (u.id === undefined || u.id === null) return null;
-    const n = typeof u.id === 'string' ? parseInt(u.id, 10) : Number(u.id);
-    return Number.isFinite(n) ? n : null;
+    const n = +(u.id ?? 0);
+    return n > 0 ? n : null;
   } catch {
     return null;
   }
@@ -16,17 +15,14 @@ export function getChatViewerUserId(): number | null {
 
 function normUnread(n: unknown): number {
   const x = Number(n);
-  if (!Number.isFinite(x)) return 0;
-  return Math.max(0, Math.floor(x));
+  return x === x && x >= 0 ? Math.max(0, Math.floor(x)) : 0;
 }
 
 export function viewerUnreadCount(box: ChatBox, viewerId: number | null): number {
   if (viewerId === null) return 0;
   const vid = viewerId;
-  const knowsR =
-    box.receiverId !== undefined && box.receiverId !== null && Number.isFinite(Number(box.receiverId));
-  const knowsS =
-    box.senderId !== undefined && box.senderId !== null && Number.isFinite(Number(box.senderId));
+  const knowsR = box.receiverId != null;
+  const knowsS = box.senderId != null;
 
   if (knowsR && Number(box.receiverId) === vid) return normUnread(box.unreadReceiverCount);
   if (knowsS && Number(box.senderId) === vid) return normUnread(box.unreadSenderCount);

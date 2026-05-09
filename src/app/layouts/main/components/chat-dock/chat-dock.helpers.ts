@@ -67,19 +67,18 @@ export function storedUserFullName(): string {
 export function listRowPreview(box: ChatBox, myUserId: number | null): string {
   const text = box.lastMessage?.trim();
   if (!text) return '';
-  const lastSid = Number(box.lastMessageSenderId);
-  const labeled =
-    myUserId !== null && Number.isFinite(lastSid) ? lastSid === myUserId : false;
-  const who = labeled ? storedUserFullName() : box.displayName?.trim()
+  const lastSid = +box.lastMessageSenderId!;
+  const labeled = myUserId !== null && lastSid === myUserId;
+  const who = labeled ? storedUserFullName() : box.displayName?.trim();
   return who ? `${who}: ${text}` : text;
 }
 
 export function msgSenderId(m: ChatMessage): number {
-  const n = Number(m.senderId);
-  return Number.isFinite(n) ? n : -1;
+  const n = +m.senderId;
+  return n || -1;
 }
 
 export function positiveSenderId(id: unknown): number | undefined {
-  const n = Number(id);
-  return Number.isFinite(n) && n > 0 ? Math.floor(n) : undefined;
+  const n = +(id as string | number);
+  return n > 0 ? (n | 0) : undefined;
 }

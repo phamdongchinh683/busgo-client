@@ -139,6 +139,14 @@ export class MainTopbarComponent implements OnInit {
     }
   }
 
+  onChatButtonClick(button: HTMLElement): void {
+    const rect = button.getBoundingClientRect();
+    this.chatDock.togglePanel({
+      top: Math.round(rect.bottom + 10),
+      right: Math.max(8, Math.round(window.innerWidth - rect.right)),
+    });
+  }
+
   onNotificationScroll(event: Event) {
     if (this.nextCursor === null) return;
     const target = (event.currentTarget ?? event.target) as HTMLElement | null;

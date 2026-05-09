@@ -6,11 +6,13 @@ import { viewerUnreadCount } from '@app/core/utils/chat-box-list';
 export class ChatDockService {
   readonly panelOpen = signal(false);
   readonly unreadCount = signal(0);
+  readonly panelAnchor = signal<{ top: number; right: number } | null>(null);
 
   private readonly _panelOpenedViaHeaderToggle = signal(false);
   private lastUnreadByBox = new Map<number, number>();
 
-  togglePanel(): void {
+  togglePanel(anchor?: { top: number; right: number }): void {
+    if (anchor) this.panelAnchor.set(anchor);
     if (this.panelOpen()) {
       this.panelOpen.set(false);
       this.recomputeUnreadBadgeFromMap();
@@ -38,8 +40,7 @@ export class ChatDockService {
     else if (activeBoxId === null || activeBoxId !== eventBoxId) should = true;
     if (!should) return;
 
-    const id = Number(eventBoxId);
-    if (!Number.isFinite(id)) return;
+    const id = +eventBoxId;
 
     const cur = this.lastUnreadByBox.get(id) ?? 0;
     this.lastUnreadByBox.set(id, cur + 1);
@@ -63,8 +64,7 @@ export class ChatDockService {
   }
 
   applySocketUnreadCount(boxId: number, count: number): void {
-    const id = Number(boxId);
-    if (!Number.isFinite(id)) return;
+    const id = +boxId;
     const next = Math.max(0, Math.floor(Number(count)));
     const prev = this.lastUnreadByBox.get(id) ?? 0;
     this.lastUnreadByBox.set(id, next);

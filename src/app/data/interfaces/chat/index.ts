@@ -27,9 +27,11 @@ export interface ChatMessage {
   senderId: number;
   fullName: string;
   createdAt: string;
+  phone?: string;
+  email?: string;
 }
 
-export interface ChatMessageListResponse {
+export interface ChatMessagesListResponse {
   messages: ChatMessage[];
   next: number | null;
 }

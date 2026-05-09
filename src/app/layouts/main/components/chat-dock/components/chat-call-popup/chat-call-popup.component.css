@@ -1,3 +1,5 @@
+/* Palette: src/styles/call-theme.css — app-chat-call-popup overrides ở cuối file đó */
+
 .call-overlay {
   position: fixed;
   inset: 0;
@@ -5,54 +7,48 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(160deg, rgba(2, 6, 23, 0.82), rgba(30, 41, 59, 0.74));
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
+  padding: 20px;
+  background: linear-gradient(165deg, var(--call-overlay-grad-a), var(--call-overlay-grad-b));
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
 }
 
 .call-popup {
-  width: min(560px, calc(100vw - 24px));
-  border-radius: 16px;
-  background: #020617;
-  border: 1px solid rgba(148, 163, 184, 0.22);
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+  width: min(380px, calc(100vw - 32px));
+  border-radius: 24px;
+  background: linear-gradient(180deg, var(--call-surface-pop) 0%, var(--call-surface-pop-end) 100%);
+  border: 1px solid var(--call-line);
+  box-shadow: var(--call-shadow-popup), var(--call-shadow-popup-inset);
   overflow: hidden;
-}
-
-.call-action {
-  border: none;
-  color: #ffffff;
-  cursor: pointer;
-}
-
-.call-action--icon {
-  width: 52px;
-  height: 52px;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  border: 2px solid currentColor;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.28);
-}
-
-.call-action--accept {
-  color: #16a34a;
-}
-
-.call-action--reject,
-.call-action--end {
-  color: #dc2626;
 }
 
 .call-media {
   position: relative;
   width: 100%;
-  height: 360px;
-  background: radial-gradient(circle at top, #1e293b 0%, #0f172a 45%, #020617 100%);
+  height: 420px;
+  min-height: 420px;
+  background:
+    radial-gradient(120% 80% at 50% -10%, var(--call-media-radial-top), transparent 55%),
+    radial-gradient(ellipse at 50% 100%, var(--call-media-radial-bottom), var(--call-surface-media));
   overflow: hidden;
+}
+
+.call-media--video {
+  background: var(--call-video-bg);
+}
+
+.call-video-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.call-media audio {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .call-status {
@@ -60,35 +56,214 @@
   top: 14px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 3;
-  max-width: calc(100% - 24px);
-  padding: 6px 12px;
+  z-index: 8;
+  max-width: calc(100% - 32px);
+  padding: 8px 14px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.9);
-  color: #0f172a;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--call-text);
   font-size: 12px;
   font-weight: 600;
+  letter-spacing: 0.02em;
   text-align: center;
+  border: 1px solid var(--call-line);
+  box-shadow: var(--call-shadow-status);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
 }
 
-.call-controls {
+.call-status--on-dark {
+  background: var(--call-status-on-dark-bg);
+  color: #f8fafc;
+  border: 1px solid var(--call-status-on-dark-border);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+}
+
+.call-voice-hero {
   position: absolute;
-  left: 50%;
-  bottom: 18px;
-  z-index: 3;
-  transform: translateX(-50%);
-  display: inline-flex;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 14px;
+  justify-content: center;
+  padding: 64px 20px 120px;
+  text-align: center;
+  pointer-events: none;
 }
 
-.call-voice-avatar {
-  width: 100%;
-  height: 100%;
+.call-voice-hero * {
+  pointer-events: auto;
+}
+
+.call-avatar-stage {
+  position: relative;
+  width: 132px;
+  height: 132px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #e2e8f0;
-  font-size: 34px;
+}
+
+.call-avatar-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: linear-gradient(140deg, var(--call-accent-soft), var(--call-accent), var(--call-line));
+  opacity: 0.95;
+  box-shadow: var(--call-ring-outer), 0 0 0 1px rgba(255, 255, 255, 0.35) inset;
+}
+
+.call-avatar-stage--incoming .call-avatar-ring {
+  animation: call-ring-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes call-ring-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.04);
+    filter: brightness(1.08);
+  }
+}
+
+.call-avatar-core {
+  position: relative;
+  z-index: 2;
+  width: 118px;
+  height: 118px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 4px solid #ffffff;
+  box-shadow: var(--call-avatar-inner-shadow), var(--call-avatar-ring-line);
+  background: linear-gradient(145deg, var(--call-accent-soft), var(--call-accent));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.call-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.call-avatar-initials {
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--call-icon-on-accent);
+  line-height: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.call-peer-name {
+  margin: 18px 0 0;
+  padding: 0 8px;
+  font-size: 20px;
   font-weight: 700;
+  color: var(--call-text);
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  max-width: 100%;
+}
+
+.call-kind {
+  margin: 6px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--call-text-muted);
+  letter-spacing: 0.02em;
+}
+
+/* Thanh dưới kiểu Messenger */
+.call-bottom-chrome {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  padding: 28px 20px 22px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  background: var(--call-chrome-voice-grad);
+  pointer-events: none;
+}
+
+.call-bottom-chrome > * {
+  pointer-events: auto;
+}
+
+.call-bottom-chrome--video {
+  background: var(--call-chrome-video-grad);
+  padding-top: 56px;
+}
+
+.call-controls--bar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--call-btn-gap);
+  left: auto;
+  bottom: auto;
+  transform: none;
+}
+
+.call-action {
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.call-action--solid {
+  width: var(--call-btn-size);
+  height: var(--call-btn-size);
+  min-width: var(--call-btn-size);
+  min-height: var(--call-btn-size);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px !important;
+  transition:
+    transform 0.15s ease,
+    filter 0.15s ease;
+}
+
+.call-action--solid:hover:not(:disabled) {
+  transform: scale(1.04);
+}
+
+.call-action--solid:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.call-action__icon {
+  display: block;
+  width: var(--call-btn-icon);
+  height: var(--call-btn-icon);
+  flex: 0 0 var(--call-btn-icon);
+  overflow: visible;
+}
+
+.call-action:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+@media (hover: none) {
+  .call-action--solid:hover:not(:disabled) {
+    transform: none;
+  }
+
+  .call-avatar-stage--incoming .call-avatar-ring {
+    animation: none;
+  }
 }

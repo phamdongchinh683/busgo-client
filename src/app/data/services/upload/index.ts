@@ -4,6 +4,14 @@ import { Observable } from 'rxjs';
 import { constant } from '../../constants';
 import { UploadPresignedResponse } from '../../interfaces/upload';
 
+type PrepareUploadOptions = {
+  maxBytes?: number;
+  minResizeBytes?: number;
+  maxDimension?: number;
+  preferredOutputType?: string;
+  quality?: number;
+};
+
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   constructor(private readonly http: HttpClient) { }
@@ -16,25 +24,57 @@ export class ApiService {
   }
 
   uploadImageToCloudinary(file: File, config: UploadPresignedResponse): Promise<string> {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('api_key', config.apiKey);
-    formData.append('timestamp', String(config.timestamp));
-    formData.append('signature', config.signature);
-    formData.append('folder', config.folder);
+    return this.uploadImageToCloudinaryWithProgress(file, config);
+  }
 
-    return fetch(`https://api.cloudinary.com/v1_1/${config.cloudName}/image/upload`, {
-      method: 'POST',
-      body: formData,
-    }).then(async (res) => {
-      if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as { error?: { message?: string } };
-        const message = body.error?.message ?? `Tải tệp thất bại (${res.status})`;
-        throw new Error(message);
-      }
-      const data = (await res.json()) as { secure_url: string };
-      return data.secure_url;
+  uploadImageToCloudinaryWithProgress(
+    file: File,
+    config: UploadPresignedResponse,
+    onProgress?: (percent: number) => void,
+  ): Promise<string> {
+    const attemptUpload = () =>
+      this.uploadOnceByXhr(file, config, onProgress);
+
+    return attemptUpload().catch(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      return await attemptUpload();
     });
+  }
+
+  async prepareImageForUpload(
+    file: File,
+    config: UploadPresignedResponse,
+    options?: PrepareUploadOptions,
+  ): Promise<File> {
+    if (!file.type.startsWith('image/')) {
+      throw new Error('Chỉ hỗ trợ tệp ảnh.');
+    }
+
+    const maxBytes = options?.maxBytes ?? 12 * 1024 * 1024;
+    if (file.size > maxBytes) {
+      throw new Error(`Ảnh vượt quá giới hạn ${Math.round(maxBytes / (1024 * 1024))}MB.`);
+    }
+
+    const accepted = config.acceptedMimeTypes ?? [];
+    const fallbackType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+    const preferred = options?.preferredOutputType ?? fallbackType;
+    const outputType = this.pickAllowedOutputType(preferred, file.type, accepted);
+
+    let uploadFile = file;
+    const minResizeBytes = options?.minResizeBytes ?? 400 * 1024;
+    if (file.size >= minResizeBytes) {
+      uploadFile = await this.resizeImageFile(file, {
+        maxDimension: options?.maxDimension ?? 1024,
+        outputType,
+        quality: options?.quality ?? 0.84,
+        minFileSize: minResizeBytes,
+      });
+    }
+
+    if (accepted.length && !accepted.includes(uploadFile.type)) {
+      throw new Error('Định dạng ảnh không được hỗ trợ.');
+    }
+    return uploadFile;
   }
 
   async resizeImageFile(
@@ -109,6 +149,70 @@ export class ApiService {
         resolve({ source: img, width: 0, height: 0 });
       };
       img.src = url;
+    });
+  }
+
+  private pickAllowedOutputType(preferred: string, sourceType: string, accepted: string[]): string {
+    if (!accepted.length) return preferred;
+    if (accepted.includes(preferred)) return preferred;
+    if (accepted.includes(sourceType)) return sourceType;
+    const candidates = ['image/webp', 'image/jpeg', 'image/png'];
+    for (const type of candidates) {
+      if (accepted.includes(type)) return type;
+    }
+    return preferred;
+  }
+
+  private uploadOnceByXhr(
+    file: File,
+    config: UploadPresignedResponse,
+    onProgress?: (percent: number) => void,
+  ): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      const url = `https://api.cloudinary.com/v1_1/${config.cloudName}/image/upload`;
+      xhr.open('POST', url, true);
+      xhr.timeout = 20000;
+
+      xhr.upload.onprogress = (event) => {
+        if (!event.lengthComputable || !onProgress) return;
+        const percent = Math.max(0, Math.min(100, Math.round((event.loaded / event.total) * 100)));
+        onProgress(percent);
+      };
+
+      xhr.onerror = () => reject(new Error('Tải tệp thất bại.'));
+      xhr.ontimeout = () => reject(new Error('Tải tệp quá thời gian cho phép.'));
+      xhr.onreadystatechange = () => {
+        if (xhr.readyState !== XMLHttpRequest.DONE) return;
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const data = JSON.parse(xhr.responseText) as { secure_url?: string };
+            if (!data.secure_url) {
+              reject(new Error('Không nhận được URL ảnh sau khi tải lên.'));
+              return;
+            }
+            onProgress?.(100);
+            resolve(data.secure_url);
+          } catch {
+            reject(new Error('Không đọc được phản hồi tải ảnh.'));
+          }
+          return;
+        }
+        try {
+          const body = JSON.parse(xhr.responseText) as { error?: { message?: string } };
+          reject(new Error(body.error?.message ?? `Tải tệp thất bại (${xhr.status})`));
+        } catch {
+          reject(new Error(`Tải tệp thất bại (${xhr.status})`));
+        }
+      };
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('api_key', config.apiKey);
+      formData.append('timestamp', String(config.timestamp));
+      formData.append('signature', config.signature);
+      formData.append('folder', config.folder);
+      xhr.send(formData);
     });
   }
 }

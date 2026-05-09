@@ -1,4 +1,5 @@
 @import './styles/theme.css';
+@import './styles/call-theme.css';
 @import './styles/custom-dropdown.css';
 
 *,
@@ -7,13 +8,18 @@
   box-sizing: border-box;
   border-radius: 10px !important;
   -webkit-tap-highlight-color: transparent;
-  box-shadow: none !important;
+}
+
+/* Keep rounded UI globally, but never curve vector icons */
+svg,
+svg * {
+  border-radius: 0 !important;
 }
 
 body {
   font-family: var(--font-family-base);
   margin: 0;
-  background: var(--color-bg);
+  background: linear-gradient(180deg, var(--color-bg) 0%, #f8fafc 100%);
   color: var(--color-text);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -121,7 +127,8 @@ textarea {
   font-family: var(--font-family-base);
 }
 
-button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):not(.promotion-action):not(.action-button),
+/* Nút popup cuộc gọi: thêm class .call-ui-btn + palette trong styles/call-theme.css (tránh !important global ghi đè gradient). */
+button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):not(.promotion-action):not(.action-button):not(.call-ui-btn),
 input[type='button'],
 input[type='submit'],
 input[type='reset'],
@@ -132,8 +139,6 @@ input[type='reset'],
   border-radius: 10px !important;
   box-shadow: none !important;
   position: relative;
-  overflow: hidden;
-  will-change: transform, opacity;
   transition:
     background-color var(--motion-fast) var(--ease-standard),
     border-color var(--motion-fast) var(--ease-standard),
@@ -143,14 +148,14 @@ input[type='reset'],
     box-shadow var(--motion-base) var(--ease-standard);
 }
 
-button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):not(.promotion-action):not(.action-button)::after,
+button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):not(.promotion-action):not(.action-button):not(.call-ui-btn)::after,
 input[type='button']::after,
 input[type='submit']::after,
 input[type='reset']::after,
 .btn::after,
 .app-btn::after,
 [class*='btn-']:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.btn-forgot-back):not(.notification-filter-btn)::after {
-  content: '';
+  content: none;
   position: absolute;
   inset: 0;
   pointer-events: none;
@@ -164,7 +169,7 @@ input[type='reset']::after,
   transform: translate3d(-140%, 0, 0);
 }
 
-button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):not(.promotion-action):not(.action-button):hover,
+button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):not(.promotion-action):not(.action-button):not(.call-ui-btn):hover,
 .btn:hover,
 .app-btn:hover,
 [class*='btn-']:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.btn-forgot-back):not(.notification-filter-btn):hover {
@@ -174,17 +179,17 @@ button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
 
-button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):not(.promotion-action):not(.action-button):hover::after,
+button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):not(.promotion-action):not(.action-button):not(.call-ui-btn):hover::after,
 input[type='button']:hover::after,
 input[type='submit']:hover::after,
 input[type='reset']:hover::after,
 .btn:hover::after,
 .app-btn:hover::after,
 [class*='btn-']:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.btn-forgot-back):not(.notification-filter-btn):hover::after {
-  animation: app-energy-sweep var(--motion-slow) var(--ease-flow);
+  animation: none;
 }
 
-button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):not(.promotion-action):not(.action-button):disabled:hover,
+button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):not(.promotion-action):not(.action-button):not(.call-ui-btn):disabled:hover,
 .btn:disabled:hover,
 .app-btn:disabled:hover,
 [class*='btn-']:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.btn-forgot-back):not(.notification-filter-btn):disabled:hover {
@@ -327,7 +332,7 @@ button:focus-visible {
   outline-offset: 2px;
 }
 
-button:not(:disabled):not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.promotion-action):not(.action-button):active,
+button:not(:disabled):not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.promotion-action):not(.action-button):not(.call-ui-btn):active,
 .btn:not(:disabled):active,
 .app-btn:not(:disabled):active,
 [class*='btn-']:not(:disabled):not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.btn-forgot-back):not(.notification-filter-btn):active {

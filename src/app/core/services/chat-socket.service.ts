@@ -4,12 +4,14 @@ import { Subject } from 'rxjs';
 import { io, Socket } from 'socket.io-client';
 import { socketUrl } from '@app/data/constants';
 import { clearStoredCredentials, textIndicatesExpiredSession } from '@app/core/utils/auth-expiry';
+import { getChatViewerUserId } from '@app/core/utils/chat-box-list';
 import { viewerFullNameFromStorage } from '@app/core/utils/chat-record-coerce';
 import {
   coerceCallActivePayload,
   coerceCallSignalPayload,
   coerceCallStartPayload,
   coerceChatRealtimePayload,
+  coerceMessageRecalledPayload,
   coerceOnlineUserIds,
   coerceTypingPayload,
   coerceUnreadPayload,
@@ -20,6 +22,7 @@ export type {
   ChatCallActivePayload,
   ChatCallSignalPayload,
   ChatCallStartPayload,
+  ChatMessageRecalledPayload,
   ChatCallType,
   ChatRealtimeMessage,
   ChatTypingPayload,
@@ -29,6 +32,7 @@ import {
   ChatCallActivePayload,
   ChatCallSignalPayload,
   ChatCallStartPayload,
+  ChatMessageRecalledPayload,
   ChatRealtimeMessage,
   ChatTypingPayload,
   ChatUnreadCountPayload,
@@ -52,6 +56,7 @@ export class ChatSocketService {
   private readonly chatUnreadCount$ = new Subject<ChatUnreadCountPayload>();
   private readonly chatTypingStart$ = new Subject<ChatTypingPayload>();
   private readonly chatTypingStop$ = new Subject<ChatTypingPayload>();
+  private readonly messageRecalled$ = new Subject<ChatMessageRecalledPayload>();
   private readonly chatCallStart$ = new Subject<ChatCallStartPayload>();
   private readonly chatCallActive$ = new Subject<ChatCallActivePayload>();
   private readonly chatCallOffer$ = new Subject<ChatCallSignalPayload>();
@@ -66,6 +71,7 @@ export class ChatSocketService {
   readonly onChatUnreadCount$ = this.chatUnreadCount$.asObservable();
   readonly onChatTypingStart$ = this.chatTypingStart$.asObservable();
   readonly onChatTypingStop$ = this.chatTypingStop$.asObservable();
+  readonly onMessageRecalled$ = this.messageRecalled$.asObservable();
   readonly onChatCallStart$ = this.chatCallStart$.asObservable();
   readonly onChatCallActive$ = this.chatCallActive$.asObservable();
   readonly onChatCallOffer$ = this.chatCallOffer$.asObservable();
@@ -168,6 +174,10 @@ export class ChatSocketService {
       const normalized = coerceTypingPayload(args[0]);
       if (normalized) this.chatTypingStop$.next(normalized);
     };
+    const onMessageRecalled = (...args: unknown[]) => {
+      const normalized = coerceMessageRecalledPayload(args[0]);
+      if (normalized) this.messageRecalled$.next(normalized);
+    };
     const onChatCallStart = (...args: unknown[]) => {
       const normalized = coerceCallStartPayload(args[0]);
       if (normalized) this.chatCallStart$.next(normalized);
@@ -211,6 +221,8 @@ export class ChatSocketService {
 
     this.socket.on('chat:typing:stop', onChatTypingStop);
     this.socketHandlers.push({ event: 'chat:typing:stop', fn: onChatTypingStop });
+    this.socket.on('message:recalled', onMessageRecalled);
+    this.socketHandlers.push({ event: 'message:recalled', fn: onMessageRecalled });
 
     this.socket.on('chat:call:start', onChatCallStart);
     this.socketHandlers.push({ event: 'chat:call:start', fn: onChatCallStart });
@@ -280,9 +292,7 @@ export class ChatSocketService {
   }
 
   joinBox(boxId: number): void {
-    const id = Number(boxId);
-    if (!Number.isFinite(id)) return;
-
+    const id = +boxId;
     if (!this.socket?.connected) this.connect();
     const sock = this.socket;
     if (!sock) return;
@@ -297,8 +307,7 @@ export class ChatSocketService {
   }
 
   leaveBox(boxId: number): void {
-    const id = Number(boxId);
-    if (!Number.isFinite(id)) return;
+    const id = +boxId;
     this.socket?.emit('chat:leave', { boxId: id });
     if (this.joinedBoxId === id) this.joinedBoxId = null;
   }
@@ -309,76 +318,69 @@ export class ChatSocketService {
   }
 
   emitMessageSend(boxId: number, body: string): void {
-    const id = Number(boxId);
-    if (!Number.isFinite(id)) return;
+    const id = +boxId;
     if (!this.socket?.connected) this.connect();
+    const senderId = getChatViewerUserId();
     this.socket?.emit('chat:message:send', {
       body,
+      message: body,
       boxId: id,
+      ...(senderId !== null ? { senderId } : {}),
       createdAt: new Date().toISOString(),
       senderName: viewerFullNameFromStorage(),
     });
   }
 
   emitChatRead(boxId: number): void {
-    const id = Number(boxId);
-    if (!Number.isFinite(id)) return;
+    const id = +boxId;
     if (!this.socket?.connected) this.connect();
     this.socket?.emit('chat:read', { boxId: id });
   }
 
   emitTypingStart(boxId: number): void {
-    const id = Number(boxId);
-    if (!Number.isFinite(id)) return;
+    const id = +boxId;
     if (!this.socket?.connected) this.connect();
     this.socket?.emit('chat:typing:start', { boxId: id });
   }
 
   emitTypingStop(boxId: number): void {
-    const id = Number(boxId);
-    if (!Number.isFinite(id)) return;
+    const id = +boxId;
     if (!this.socket?.connected) this.connect();
     this.socket?.emit('chat:typing:stop', { boxId: id });
   }
 
   emitCallStart(boxId: number, callType: string): void {
-    const id = Number(boxId);
-    if (!Number.isFinite(id)) return;
+    const id = +boxId;
     if (!this.socket?.connected) this.connect();
     this.socket?.emit('chat:call:start', { boxId: id, callType: normalizeCallType(callType) });
   }
 
   emitCallOffer(boxId: number, offer: unknown): void {
-    const id = Number(boxId);
-    if (!Number.isFinite(id)) return;
+    const id = +boxId;
     if (!this.socket?.connected) this.connect();
     this.socket?.emit('chat:call:offer', { boxId: id, offer });
   }
 
   emitCallAnswer(boxId: number, answer: unknown): void {
-    const id = Number(boxId);
-    if (!Number.isFinite(id)) return;
+    const id = +boxId;
     if (!this.socket?.connected) this.connect();
     this.socket?.emit('chat:call:answer', { boxId: id, answer });
   }
 
   emitCallIceCandidate(boxId: number, candidate: unknown): void {
-    const id = Number(boxId);
-    if (!Number.isFinite(id)) return;
+    const id = +boxId;
     if (!this.socket?.connected) this.connect();
     this.socket?.emit('chat:call:ice-candidate', { boxId: id, candidate });
   }
 
   emitCallReject(boxId: number): void {
-    const id = Number(boxId);
-    if (!Number.isFinite(id)) return;
+    const id = +boxId;
     if (!this.socket?.connected) this.connect();
     this.socket?.emit('chat:call:reject', { boxId: id });
   }
 
   emitCallEnd(boxId: number): void {
-    const id = Number(boxId);
-    if (!Number.isFinite(id)) return;
+    const id = +boxId;
     if (!this.socket?.connected) this.connect();
     this.socket?.emit('chat:call:end', { boxId: id });
   }

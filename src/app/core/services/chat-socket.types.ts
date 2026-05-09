@@ -21,6 +21,15 @@ export interface ChatTypingPayload {
   boxId: number | string;
 }
 
+export interface ChatMessageRecalledPayload {
+  boxId: number | string;
+  messageId: number | string;
+  body: string;
+  senderId: number;
+  receiverId?: number;
+  updatedAt?: string;
+}
+
 export type ChatCallType = 'voice' | 'video';
 
 export interface ChatCallStartPayload {

@@ -26,6 +26,7 @@ export class CompanyFormModalComponent implements OnChanges {
   @Output() logoUploadError = new EventEmitter<string>();
 
   uploadingLogo = false;
+  uploadLogoProgress = 0;
   resolvingFromAddress = false;
 
   constructor(
@@ -121,27 +122,23 @@ export class CompanyFormModalComponent implements OnChanges {
     if (!file || !this.editingCompany) return;
 
     this.uploadingLogo = true;
+    this.uploadLogoProgress = 0;
     this.cdr.markForCheck();
 
     try {
       const presigned = await firstValueFrom(this.uploadApi.getPresigned('company', this.editingCompany.id));
-      let uploadFile = file;
-      if (file.size >= 300 * 1024 && file.type.startsWith('image/')) {
-        const prefersWebp = presigned.acceptedMimeTypes?.includes('image/webp');
-        const outputType = prefersWebp ? 'image/webp' : 'image/jpeg';
-        const quality = prefersWebp ? 0.76 : 0.8;
-        uploadFile = await this.uploadApi.resizeImageFile(file, {
-          maxDimension: 420,
-          outputType,
-          quality,
-          minFileSize: 300 * 1024,
-        });
-      }
-
-      if (presigned.acceptedMimeTypes?.length && !presigned.acceptedMimeTypes.includes(uploadFile.type)) {
-        throw new Error('This file type is not allowed.');
-      }
-      const secureUrl = await this.uploadApi.uploadImageToCloudinary(uploadFile, presigned);
+      const prefersWebp = presigned.acceptedMimeTypes?.includes('image/webp');
+      const uploadFile = await this.uploadApi.prepareImageForUpload(file, presigned, {
+        maxBytes: 8 * 1024 * 1024,
+        minResizeBytes: 300 * 1024,
+        maxDimension: 420,
+        preferredOutputType: prefersWebp ? 'image/webp' : 'image/jpeg',
+        quality: prefersWebp ? 0.76 : 0.8,
+      });
+      const secureUrl = await this.uploadApi.uploadImageToCloudinaryWithProgress(uploadFile, presigned, (percent) => {
+        this.uploadLogoProgress = percent;
+        this.cdr.markForCheck();
+      });
       this.form.patchValue({ logoUrl: secureUrl });
     } catch (e: unknown) {
       let message = 'Logo upload failed.';
@@ -153,6 +150,7 @@ export class CompanyFormModalComponent implements OnChanges {
       this.logoUploadError.emit(message);
     } finally {
       this.uploadingLogo = false;
+      this.uploadLogoProgress = 0;
       this.cdr.markForCheck();
     }
   }

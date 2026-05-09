@@ -1,56 +1,103 @@
 @if (visible()) {
   <div class="call-overlay">
     <div class="call-popup" role="dialog" aria-label="Cuộc gọi">
-      <div class="call-media">
-        <div class="call-status" aria-live="polite">{{ status() || 'Đang xử lý cuộc gọi…' }}</div>
+      <div class="call-media" [class.call-media--video]="callType() === 'video'">
+        <div
+          class="call-status"
+          [class.call-status--on-dark]="callType() === 'video'"
+          aria-live="polite"
+        >
+          {{ status() || 'Đang xử lý cuộc gọi…' }}
+        </div>
+
         @if (callType() === 'video') {
-          <ng-content select="[remoteVideo]"></ng-content>
-          <ng-content select="[localVideo]"></ng-content>
+          <div class="call-video-stage">
+            <ng-content select="[remoteVideo]"></ng-content>
+            <ng-content select="[localVideo]"></ng-content>
+          </div>
         } @else {
-          <div class="call-voice-avatar">
-            <span>{{ initials(title() || 'Voice') }}</span>
+          <div class="call-voice-hero">
+            <div class="call-avatar-stage" [class.call-avatar-stage--incoming]="incoming()">
+              <div class="call-avatar-ring" aria-hidden="true"></div>
+              <div class="call-avatar-core">
+                @if (avatarUrl().trim()) {
+                  <img
+                    class="call-avatar-img"
+                    [src]="avatarUrl().trim()"
+                    [alt]="title() || 'Ảnh đại diện người gọi'"
+                    title="Ảnh đại diện"
+                    loading="eager"
+                    decoding="async"
+                  />
+                } @else {
+                  <span class="call-avatar-initials">{{ initials(title() || 'Voice') }}</span>
+                }
+              </div>
+            </div>
+            <p class="call-peer-name">{{ title() || 'Cuộc gọi đến' }}</p>
+            <p class="call-kind">Cuộc gọi thoại</p>
           </div>
           <ng-content select="[remoteAudio]"></ng-content>
         }
-        <div class="call-controls">
-          @if (incoming()) {
-            <button
-              type="button"
-              class="call-action call-action--icon call-action--reject"
-              (click)="onReject()"
-              aria-label="Từ chối cuộc gọi"
-              title="Từ chối"
-            >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M18 6 6 18" />
-                <path d="m6 6 12 12" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              class="call-action call-action--icon call-action--accept"
-              (click)="onAccept()"
-              aria-label="Nhận cuộc gọi"
-              title="Nhận"
-            >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 16.92v2a2 2 0 0 1-2.18 2 19.86 19.86 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.86 19.86 0 0 1 2.12 3.2 2 2 0 0 1 4.11 1h2a2 2 0 0 1 2 1.72c.12.9.33 1.79.62 2.64a2 2 0 0 1-.45 2.11L7.09 8.91a16 16 0 0 0 8 8l1.44-1.19a2 2 0 0 1 2.11-.45c.85.29 1.74.5 2.64.62A2 2 0 0 1 22 16.92z" />
-              </svg>
-            </button>
-          } @else if (ongoing()) {
-            <button
-              type="button"
-              class="call-action call-action--icon call-action--end"
-              (click)="onEnd()"
-              aria-label="Kết thúc cuộc gọi"
-              title="Kết thúc"
-            >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M18 6 6 18" />
-                <path d="m6 6 12 12" />
-              </svg>
-            </button>
-          }
+
+        <!-- Thanh điều khiển kiểu Messenger / iMessage: nền gradient, nút tròn tách biệt -->
+        <div class="call-bottom-chrome" [class.call-bottom-chrome--video]="callType() === 'video'">
+          <div class="call-controls call-controls--bar">
+            @if (incoming()) {
+              <button
+                type="button"
+                class="call-ui-btn call-action call-action--solid call-action--reject"
+                (click)="onReject()"
+                aria-label="Từ chối cuộc gọi"
+                title="Từ chối"
+              >
+                <svg class="call-action__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M18 6 6 18M6 6l12 12"
+                    stroke="#ffffff"
+                    stroke-width="2.4"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="call-ui-btn call-action call-action--solid call-action--accept"
+                (click)="onAccept()"
+                aria-label="Nhận cuộc gọi"
+                title="Nhận"
+              >
+                <svg class="call-action__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.78.62 2.6a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.82.29 1.7.5 2.6.62A2 2 0 0 1 22 16.92z"
+                    stroke="#ffffff"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+            } @else if (ongoing()) {
+              <button
+                type="button"
+                class="call-ui-btn call-action call-action--solid call-action--end"
+                (click)="onEnd()"
+                aria-label="Kết thúc cuộc gọi"
+                title="Kết thúc"
+              >
+                <svg class="call-action__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M18 6 6 18M6 6l12 12"
+                    stroke="#ffffff"
+                    stroke-width="2.4"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+            }
+          </div>
         </div>
       </div>
     </div>

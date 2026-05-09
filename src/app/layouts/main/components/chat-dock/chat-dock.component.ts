@@ -13,10 +13,11 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { firstValueFrom } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
-import { chat, user as userApi } from '@app/data/services';
+import { chat, upload, user as userApi } from '@app/data/services';
 import { User } from '@app/data/interfaces/user';
-import { ChatBox, ChatMessage } from '@app/data/interfaces/chat';
+import { ChatBox, ChatMessage, ChatMessagesListResponse } from '@app/data/interfaces/chat';
 import { ChatDockService } from '@app/core/services/chat-dock.service';
 import {
   getChatViewerUserId,
@@ -28,6 +29,7 @@ import {
   ChatCallActivePayload,
   ChatCallSignalPayload,
   ChatCallStartPayload,
+  ChatMessageRecalledPayload,
   ChatCallType,
   ChatRealtimeMessage,
   ChatSocketService,
@@ -56,6 +58,7 @@ import { ChatCallPopupComponent } from './components/chat-call-popup/chat-call-p
 })
 export class ChatDockComponent {
   private readonly chatService = inject(chat.ApiService);
+  private readonly uploadService = inject(upload.ApiService);
   private readonly userService = inject(userApi.ApiService);
   private readonly socket = inject(ChatSocketService);
   readonly dock = inject(ChatDockService);
@@ -69,35 +72,47 @@ export class ChatDockComponent {
 
   readonly messages = signal<ChatMessage[]>([]);
   readonly messagesNext = signal<number | null>(null);
-  readonly loadingMessages = signal(false);
-  readonly loadingMoreMessages = signal(false);
+  readonly loadingThreadMessages = signal(false);
+  readonly loadingOlderMessages = signal(false);
+  readonly threadMessagesError = signal<string | null>(null);
 
   readonly selectedBoxId = signal<number | null>(null);
   readonly selectedTitle = signal('');
   readonly draft = signal('');
   readonly sendError = signal('');
+  readonly sendingImage = signal(false);
   readonly peerTyping = signal(false);
   readonly callStatus = signal('');
   readonly callIncoming = signal<ChatCallStartPayload | null>(null);
   readonly callOutgoing = signal<ChatCallType | null>(null);
   readonly activeCallType = signal<ChatCallType | null>(null);
   readonly inCall = signal(false);
+  /** Hiện PiP camera local chỉ khi đã có track video (tránh ô viền trống kiểu Messenger). */
+  readonly callLocalPipVisible = signal(false);
+
+  /** voice/video cho UI popup — ưu tiên payload cuộc gọi đến (activeCallType có lúc chưa sync). */
+  readonly callPopupMediaType = computed<ChatCallType | null>(() => {
+    const incoming = this.callIncoming();
+    if (incoming) return incoming.callType;
+    return this.activeCallType();
+  });
   readonly messageSearchDraft = signal('');
   readonly messageSearchApplied = signal('');
   readonly messageSearchOpen = signal(false);
+  readonly imagePreviewUrl = signal<string | null>(null);
+  readonly chatDragOver = signal(false);
+  readonly recallingMessageIds = signal<ReadonlySet<number>>(new Set());
 
-  readonly visibleMessages = computed(() => {
-    const list = this.messages();
-    const q = this.messageSearchApplied().trim().toLowerCase();
-    if (!q) return list;
-    return list.filter((m) => {
-      const body = (m.message ?? '').toLowerCase();
-      const name = (m.fullName ?? '').toLowerCase();
-      return (
-        body.includes(q) ||
-        name.includes(q)
-      );
-    });
+  readonly panelStyle = computed<Record<string, string> | null>(() => {
+    const view = this.view();
+    if (view === 'thread') return null;
+    const anchor = this.dock.panelAnchor();
+    if (!anchor) return null;
+    return {
+      top: `${anchor.top}px`,
+      right: `${anchor.right}px`,
+      bottom: 'auto',
+    };
   });
 
   readonly newMessage = signal('');
@@ -107,17 +122,22 @@ export class ChatDockComponent {
   readonly searchingUsers = signal(false);
   readonly creating = signal(false);
   readonly createError = signal('');
+  readonly newChatPopupOpen = signal(false);
 
   private boxesLoadInFlight = false;
-  private threadCache = new Map<number, { messages: ChatMessage[]; next: number | null }>();
+  private messagesHistoryLoadInFlight = false;
+  /** Đổi thread / reload → bỏ response HTTP cũ (race), không liên quan tới `next`. */
+  private threadMessagesEpoch = 0;
   private typingStopDebounce: ReturnType<typeof setTimeout> | null = null;
   private typingActiveBoxId: number | null = null;
   private peerConnection: RTCPeerConnection | null = null;
   private localStream: MediaStream | null = null;
   private remoteStream: MediaStream | null = null;
   private pendingIncomingOffer: RTCSessionDescriptionInit | null = null;
+  private pendingImageObjectUrls = new Map<number, string>();
 
   @ViewChild('messageScroll') private messageScroll?: ElementRef<HTMLElement>;
+  @ViewChild('chatImageInput') private chatImageInput?: ElementRef<HTMLInputElement>;
   @ViewChild('callLocalVideo') private callLocalVideo?: ElementRef<HTMLVideoElement>;
   @ViewChild('callRemoteVideo') private callRemoteVideo?: ElementRef<HTMLVideoElement>;
   @ViewChild('callRemoteAudio') private callRemoteAudio?: ElementRef<HTMLAudioElement>;
@@ -142,6 +162,9 @@ export class ChatDockComponent {
     this.socket.onChatTypingStop$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((p: ChatTypingPayload) => this.handleTypingStop(p));
+    this.socket.onMessageRecalled$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((p: ChatMessageRecalledPayload) => this.handleMessageRecalled(p));
     this.socket.onChatCallStart$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((p: ChatCallStartPayload) => this.handleCallStart(p));
@@ -168,6 +191,8 @@ export class ChatDockComponent {
       this.stopTypingNow();
       this.socket.leaveJoinedRoom();
       this.hangupLocal(false);
+      for (const url of this.pendingImageObjectUrls.values()) URL.revokeObjectURL(url);
+      this.pendingImageObjectUrls.clear();
     });
 
     effect(() => {
@@ -176,6 +201,7 @@ export class ChatDockComponent {
         untracked(() => {
           this.stopTypingNow();
           this.peerTyping.set(false);
+          this.newChatPopupOpen.set(false);
           this.socket.leaveJoinedRoom();
           if (this.view() === 'thread') {
             this.messageSearchDraft.set('');
@@ -206,14 +232,19 @@ export class ChatDockComponent {
   @HostListener('document:keydown', ['$event'])
   onDocumentKeydown(ev: KeyboardEvent) {
     if (ev.key !== 'Escape' || !this.dock.panelOpen()) return;
+    if (this.imagePreviewUrl()) {
+      ev.preventDefault();
+      this.closeImagePreview();
+      return;
+    }
     if (this.view() === 'thread') {
       ev.preventDefault();
       this.backToList();
       return;
     }
-    if (this.view() === 'new') {
+    if (this.newChatPopupOpen()) {
       ev.preventDefault();
-      this.view.set('list');
+      this.closeNewChatPopup();
       return;
     }
     ev.preventDefault();
@@ -268,14 +299,21 @@ export class ChatDockComponent {
   applyMessageSearch(event?: Event): void {
     event?.preventDefault();
     this.messageSearchApplied.set(this.messageSearchDraft().trim());
+    if (this.view() === 'thread' && this.selectedBoxId() !== null) {
+      this.reloadThreadMessages();
+    }
   }
 
   toggleMessageSearch(): void {
     const next = !this.messageSearchOpen();
     this.messageSearchOpen.set(next);
     if (!next) {
+      const hadApplied = this.messageSearchApplied().trim().length > 0;
       this.messageSearchDraft.set('');
       this.messageSearchApplied.set('');
+      if (hadApplied && this.view() === 'thread' && this.selectedBoxId() !== null) {
+        this.reloadThreadMessages();
+      }
     }
   }
 
@@ -286,6 +324,7 @@ export class ChatDockComponent {
       return;
     }
 
+    this.threadMessagesEpoch++;
     this.messageSearchDraft.set('');
     this.messageSearchApplied.set('');
     this.stopTypingNow();
@@ -294,15 +333,11 @@ export class ChatDockComponent {
     this.selectedBoxId.set(box.id);
     this.selectedTitle.set(box.displayName?.trim() || 'Chat');
     this.view.set('thread');
-    const cached = this.threadCache.get(box.id);
-    if (cached) {
-      this.messages.set(cached.messages);
-      this.messagesNext.set(cached.next);
-    } else {
-      this.messages.set([]);
-      this.messagesNext.set(null);
-    }
+    this.messages.set([]);
+    this.messagesNext.set(null);
+    this.threadMessagesError.set(null);
     this.socket.joinBox(box.id);
+    this.loadThreadMessagesInitial();
     if (emitRead) {
       const vid = getChatViewerUserId();
       this.boxes.update((list) =>
@@ -314,7 +349,6 @@ export class ChatDockComponent {
       this.socket.emitChatRead(box.id);
       this.refreshBoxStateOnOpen(box.id);
     }
-    this.loadMessages(box.id);
   }
 
   private refreshBoxStateOnOpen(boxId: number): void {
@@ -333,16 +367,11 @@ export class ChatDockComponent {
   }
 
   private handleChatUnreadCount(p: ChatUnreadCountPayload): void {
-    const rawId = p.boxId;
-    const boxId =
-      typeof rawId === 'string'
-        ? parseInt(rawId, 10)
-        : typeof rawId === 'number'
-          ? rawId
-          : NaN;
-    if (!Number.isFinite(boxId)) return;
-    if (typeof p.lastMessage === 'string' && p.lastMessage.trim()) {
-      this.patchBoxPreview(boxId, p.lastMessage, undefined, { clearLastMessageSenderWhenNoId: true });
+    const boxId = +p.boxId!;
+    if (!(boxId >= 1)) return;
+    const lm = p.lastMessage;
+    if (typeof lm === 'string' && lm.trim()) {
+      this.patchBoxPreview(boxId, lm, undefined, { clearLastMessageSenderWhenNoId: true });
     }
     const vid = getChatViewerUserId();
     const isActiveThreadBox =
@@ -350,18 +379,16 @@ export class ChatDockComponent {
       this.view() === 'thread' &&
       this.selectedBoxId() === boxId;
 
-    const hasTotals =
-      (typeof p.unreadReceiverCount === 'number' && Number.isFinite(p.unreadReceiverCount)) ||
-      (typeof p.unreadSenderCount === 'number' && Number.isFinite(p.unreadSenderCount));
-    const legacyCount = ((): number | null => {
-      if (typeof p.unreadCount === 'number' && Number.isFinite(p.unreadCount)) {
-        return Math.max(0, Math.floor(p.unreadCount));
-      }
-      if (typeof p.count === 'number' && Number.isFinite(p.count)) {
-        return Math.max(0, Math.floor(p.count));
-      }
-      return null;
-    })();
+    const ur =
+      p.unreadReceiverCount != null ? Math.max(0, Math.floor(+p.unreadReceiverCount)) : null;
+    const us = p.unreadSenderCount != null ? Math.max(0, Math.floor(+p.unreadSenderCount)) : null;
+    const hasTotals = ur !== null || us !== null;
+    const legacyCount =
+      p.unreadCount != null
+        ? Math.max(0, Math.floor(+p.unreadCount))
+        : p.count != null
+          ? Math.max(0, Math.floor(+p.count))
+          : null;
 
     let viewerUnreadNext: number | null = null;
 
@@ -371,15 +398,7 @@ export class ChatDockComponent {
         if (isActiveThreadBox) viewerUnreadNext = 0;
         else if (legacyCount !== null) viewerUnreadNext = legacyCount;
         else if (hasTotals) {
-          const ur =
-            typeof p.unreadReceiverCount === 'number' && Number.isFinite(p.unreadReceiverCount)
-              ? Math.max(0, Math.floor(p.unreadReceiverCount))
-              : 0;
-          const us =
-            typeof p.unreadSenderCount === 'number' && Number.isFinite(p.unreadSenderCount)
-              ? Math.max(0, Math.floor(p.unreadSenderCount))
-              : 0;
-          viewerUnreadNext = Math.max(ur, us);
+          viewerUnreadNext = Math.max(ur ?? 0, us ?? 0);
         }
         return list;
       }
@@ -390,12 +409,8 @@ export class ChatDockComponent {
       if (isActiveThreadBox && vid !== null) {
         next = patchBoxViewerUnread(b, 0, vid);
       } else if (hasTotals) {
-        if (typeof p.unreadReceiverCount === 'number' && Number.isFinite(p.unreadReceiverCount)) {
-          next.unreadReceiverCount = Math.max(0, Math.floor(p.unreadReceiverCount));
-        }
-        if (typeof p.unreadSenderCount === 'number' && Number.isFinite(p.unreadSenderCount)) {
-          next.unreadSenderCount = Math.max(0, Math.floor(p.unreadSenderCount));
-        }
+        if (ur !== null) next.unreadReceiverCount = ur;
+        if (us !== null) next.unreadSenderCount = us;
       } else if (legacyCount !== null) {
         next = patchBoxViewerUnread(b, legacyCount, vid);
       }
@@ -448,7 +463,12 @@ export class ChatDockComponent {
     this.searchQuery.set('');
     this.searchResults.set([]);
     this.createError.set('');
-    this.view.set('new');
+    this.newChatPopupOpen.set(true);
+  }
+
+  closeNewChatPopup(): void {
+    if (this.creating()) return;
+    this.newChatPopupOpen.set(false);
   }
 
   submitNewChat(): void {
@@ -481,7 +501,7 @@ export class ChatDockComponent {
       .pipe(finalize(() => this.creating.set(false)), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
-          this.view.set('list');
+          this.newChatPopupOpen.set(false);
           this.loadBoxesInitial();
         },
         error: () => this.createError.set('Không tạo được cuộc trò chuyện.'),
@@ -519,13 +539,88 @@ export class ChatDockComponent {
       });
   }
 
-  onMessagesScroll(event: Event): void {
-    const el = event.target as HTMLElement;
-    if (el.scrollTop > 80 || this.loadingMoreMessages()) return;
-    const next = this.messagesNext();
+  canRecallMessage(msg: ChatMessage): boolean {
+    if (!this.isMine(msg)) return false;
+    if (this.isPendingUpload(msg)) return false;
+    const id = +msg.id;
+    if (!(id >= 1 && id <= 2147483647)) return false;
+    if (this.isRecalledMessageBody(msg.message)) return false;
+    return true;
+  }
+
+  recallMessage(msg: ChatMessage): void {
+    if (!this.canRecallMessage(msg)) return;
     const boxId = this.selectedBoxId();
-    if (next === null || boxId === null) return;
-    this.loadOlder(boxId, next);
+    const messageId = +msg.id;
+    if (boxId === null) return;
+    this.recallingMessageIds.update((prev) => {
+      const next = new Set(prev);
+      next.add(messageId);
+      return next;
+    });
+    this.chatService
+      .recallMessage(boxId, messageId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.applyRecalledMessage(boxId, messageId, 'Tin nhắn này đã bị thu hồi');
+          this.recallingMessageIds.update((prev) => {
+            const next = new Set(prev);
+            next.delete(messageId);
+            return next;
+          });
+        },
+        error: () => {
+          this.sendError.set('Thu hồi tin nhắn thất bại.');
+          this.recallingMessageIds.update((prev) => {
+            const next = new Set(prev);
+            next.delete(messageId);
+            return next;
+          });
+        },
+      });
+  }
+
+  triggerImagePicker(): void {
+    this.chatImageInput?.nativeElement?.click();
+  }
+
+  onImagePicked(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files ?? []);
+    input.value = '';
+    if (!files.length) return;
+    void this.sendImageFiles(files);
+  }
+
+  onChatDragOver(event: DragEvent): void {
+    if (!this.hasImageDrag(event)) return;
+    event.preventDefault();
+    this.chatDragOver.set(true);
+  }
+
+  onChatDragLeave(event: DragEvent): void {
+    const related = event.relatedTarget as Node | null;
+    const current = event.currentTarget as Node | null;
+    if (related && current?.contains(related)) return;
+    this.chatDragOver.set(false);
+  }
+
+  onChatDrop(event: DragEvent): void {
+    if (!this.hasImageDrag(event)) return;
+    event.preventDefault();
+    this.chatDragOver.set(false);
+    const files = Array.from(event.dataTransfer?.files ?? []).filter((f) => f.type.startsWith('image/'));
+    if (!files.length) return;
+    void this.sendImageFiles(files);
+  }
+
+  openImagePreview(url: string): void {
+    this.imagePreviewUrl.set(url);
+  }
+
+  closeImagePreview(): void {
+    this.imagePreviewUrl.set(null);
   }
 
   onBoxListScroll(event: Event): void {
@@ -560,6 +655,132 @@ export class ChatDockComponent {
     this.loadBoxesInitial();
   }
 
+  onMessageScroll(event: Event): void {
+    if (this.view() !== 'thread') return;
+    const el = event.target as HTMLElement;
+    if (el.scrollTop > 80) return;
+    const cursor = this.messagesNext();
+    if (cursor === null || this.loadingOlderMessages() || this.loadingThreadMessages()) return;
+    if (this.messagesHistoryLoadInFlight) return;
+    this.loadMoreThreadMessages(cursor);
+  }
+
+  retryLoadThreadMessages(): void {
+    this.reloadThreadMessages();
+  }
+
+  private loadThreadMessagesInitial(): void {
+    const boxId = this.selectedBoxId();
+    if (boxId === null) return;
+    const epoch = this.threadMessagesEpoch;
+    this.threadMessagesError.set(null);
+    this.loadingThreadMessages.set(true);
+    this.messagesNext.set(null);
+    this.chatService
+      .listMessages(boxId, {
+        limit: 10,
+        message: this.messageSearchApplied().trim() || undefined,
+      })
+      .pipe(
+        finalize(() => this.loadingThreadMessages.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (res) => {
+          if (epoch !== this.threadMessagesEpoch || this.selectedBoxId() !== boxId) {
+            return;
+          }
+          const raw = res.messages ?? [];
+          this.messages.set(
+            this.coalesceSenderNamesInThread(this.sortMessages(raw)),
+          );
+          this.messagesNext.set(this.readNextPageCursor(res));
+          this.scrollToBottom();
+        },
+        error: (err: unknown) => {
+          if (epoch !== this.threadMessagesEpoch || this.selectedBoxId() !== boxId) {
+            return;
+          }
+          this.threadMessagesError.set(
+            httpErrMessage(err) || 'Không tải được tin nhắn.',
+          );
+        },
+      });
+  }
+
+  private reloadThreadMessages(): void {
+    const boxId = this.selectedBoxId();
+    if (boxId === null) return;
+    this.threadMessagesEpoch++;
+    this.messages.set([]);
+    this.messagesNext.set(null);
+    this.threadMessagesError.set(null);
+    this.loadThreadMessagesInitial();
+  }
+
+  private loadMoreThreadMessages(nextCursor: number): void {
+    const boxId = this.selectedBoxId();
+    if (boxId === null) return;
+    const epoch = this.threadMessagesEpoch;
+    this.messagesHistoryLoadInFlight = true;
+    this.loadingOlderMessages.set(true);
+    this.chatService
+      .listMessages(boxId, {
+        limit: 10,
+        next: nextCursor,
+        message: this.messageSearchApplied().trim() || undefined,
+      })
+      .pipe(
+        finalize(() => {
+          this.messagesHistoryLoadInFlight = false;
+          this.loadingOlderMessages.set(false);
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (res) => {
+          if (epoch !== this.threadMessagesEpoch || this.selectedBoxId() !== boxId) {
+            return;
+          }
+          const raw = res.messages ?? [];
+          const have = new Set(this.messages().map((m) => +m.id));
+          const fresh = raw.filter((m) => !have.has(+m.id));
+          if (!fresh.length) {
+            this.messagesNext.set(null);
+            return;
+          }
+          this.prependOlderChunk(
+            this.coalesceSenderNamesInThread(this.sortMessages(fresh)),
+          );
+          this.messagesNext.set(this.readNextPageCursor(res));
+        },
+        error: () => {
+          /* giữ scroll; có thể thử lại bằng cuộn lại */
+        },
+      });
+  }
+
+  /** API `next` hoặc min(id) trong trang khi `next` null. */
+  private readNextPageCursor(res: ChatMessagesListResponse): number | null {
+    if (res.next != null) return +res.next;
+    const ids = (res.messages ?? []).map((m) => +m.id).filter((id) => id > 0);
+    return ids.length ? Math.min(...ids) : null;
+  }
+
+  private prependOlderChunk(olderSorted: ChatMessage[]): void {
+    const el = this.messageScroll?.nativeElement;
+    const prevScrollHeight = el?.scrollHeight ?? 0;
+    const prevScrollTop = el?.scrollTop ?? 0;
+    this.messages.update((list) =>
+      this.coalesceSenderNamesInThread(this.sortMessages([...olderSorted, ...list])),
+    );
+    requestAnimationFrame(() => {
+      const box = this.messageScroll?.nativeElement;
+      if (!box) return;
+      box.scrollTop = box.scrollHeight - prevScrollHeight + prevScrollTop;
+    });
+  }
+
   trackBox = (_: number, b: ChatBox) => b.id;
   trackMsg = (_: number, m: ChatMessage) => m.id;
 
@@ -579,13 +800,13 @@ export class ChatDockComponent {
 
   peerUserId(box: ChatBox): number | null {
     const me = getChatViewerUserId();
-    const n = (v: number | undefined): number | null =>
-      v !== undefined && Number.isFinite(Number(v)) ? Number(v) : null;
-    const s = n(box.senderId);
-    const r = n(box.receiverId);
-    if (s !== null && r !== null && me !== null) return s === me ? r : r === me ? s : s;
-    if (s !== null && (me === null || s !== me)) return s;
-    if (r !== null && (me === null || r !== me)) return r;
+    const s = box.senderId != null ? +box.senderId : NaN;
+    const r = box.receiverId != null ? +box.receiverId : NaN;
+    if (!Number.isNaN(s) && !Number.isNaN(r) && me !== null) {
+      return s === me ? r : r === me ? s : s;
+    }
+    if (!Number.isNaN(s) && (me === null || s !== me)) return s;
+    if (!Number.isNaN(r) && (me === null || r !== me)) return r;
     return null;
   }
 
@@ -732,27 +953,6 @@ export class ChatDockComponent {
       });
   }
 
-  private loadMessages(boxId: number): void {
-    this.loadingMessages.set(true);
-    this.chatService
-      .listMessages(boxId, 10)
-      .pipe(finalize(() => this.loadingMessages.set(false)), takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (res) => {
-          const sorted = this.sortMessages(res.messages);
-          const coalesced = this.coalesceSenderNamesInThread(sorted);
-          this.messages.set(coalesced);
-          this.messagesNext.set(res.next ?? null);
-          this.threadCache.set(boxId, { messages: coalesced, next: res.next ?? null });
-          const last = coalesced[coalesced.length - 1];
-          if (last?.message?.trim()) {
-            this.patchBoxPreview(boxId, last.message, positiveSenderId(last.senderId));
-          }
-          this.scrollToBottom();
-        },
-      });
-  }
-
   private patchBoxPreview(
     boxId: number,
     text: string,
@@ -775,30 +975,6 @@ export class ChatDockComponent {
         return next;
       }),
     );
-  }
-
-  private loadOlder(boxId: number, next: number): void {
-    this.loadingMoreMessages.set(true);
-    this.chatService
-      .listMessages(boxId, 10, next)
-      .pipe(finalize(() => this.loadingMoreMessages.set(false)), takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (res) => {
-          const prior = this.messageScroll?.nativeElement?.scrollHeight ?? 0;
-          const sorted = this.sortMessages(res.messages);
-          const merged = this.coalesceSenderNamesInThread(
-            this.sortMessages([...sorted, ...this.messages()]),
-          );
-          const nextCursor = res.next ?? null;
-          this.messages.set(merged);
-          this.messagesNext.set(nextCursor);
-          this.threadCache.set(boxId, { messages: merged, next: nextCursor });
-          requestAnimationFrame(() => {
-            const sc = this.messageScroll?.nativeElement;
-            if (sc) sc.scrollTop = sc.scrollHeight - prior;
-          });
-        },
-      });
   }
 
   private coalesceSenderNamesInThread(messages: ChatMessage[]): ChatMessage[] {
@@ -833,8 +1009,8 @@ export class ChatDockComponent {
     const seenIds = new Set<number>();
     const out: ChatMessage[] = [];
     for (const m of sorted) {
-      const id = Number(m.id);
-      if (Number.isFinite(id)) {
+      const id = +m.id;
+      if (id > 0) {
         if (seenIds.has(id)) continue;
         seenIds.add(id);
       }
@@ -863,8 +1039,127 @@ export class ChatDockComponent {
     this.messages.update((list) =>
       this.coalesceSenderNamesInThread(this.sortMessages([...list, optimistic])),
     );
-    this.threadCache.set(_boxId, { messages: this.messages(), next: this.messagesNext() });
     this.scrollToBottom();
+  }
+
+  private appendLocalImagePending(boxId: number, localUrl: string): number {
+    const uid = getChatViewerUserId();
+    const tempId = Date.now();
+    const optimistic: ChatMessage & { pendingUpload?: boolean } = {
+      id: tempId,
+      message: localUrl,
+      senderId: uid ?? -1,
+      fullName: storedUserFullName(),
+      createdAt: new Date().toISOString(),
+      pendingUpload: true,
+    };
+    this.messages.update((list) =>
+      this.coalesceSenderNamesInThread(this.sortMessages([...list, optimistic])),
+    );
+    this.patchBoxPreview(boxId, '[Ảnh]', positiveSenderId(uid));
+    this.scrollToBottom();
+    return tempId;
+  }
+
+  private markPendingImageUploaded(boxId: number, tempId: number, remoteUrl: string): void {
+    this.messages.update((list) =>
+      list.map((m) =>
+        m.id === tempId
+          ? ({ ...m, message: remoteUrl, pendingUpload: false } as ChatMessage & {
+            pendingUpload?: boolean;
+          })
+          : m,
+      ),
+    );
+    this.patchBoxPreview(boxId, '[Ảnh]', positiveSenderId(getChatViewerUserId()));
+    this.cleanupPendingObjectUrl(tempId);
+  }
+
+  private removePendingImage(boxId: number, tempId: number): void {
+    this.messages.update((list) => list.filter((m) => m.id !== tempId));
+    this.cleanupPendingObjectUrl(tempId);
+  }
+
+  isPendingUpload(msg: ChatMessage): boolean {
+    return Boolean((msg as ChatMessage & { pendingUpload?: boolean }).pendingUpload);
+  }
+
+  private cleanupPendingObjectUrl(tempId: number): void {
+    const objectUrl = this.pendingImageObjectUrls.get(tempId);
+    if (!objectUrl) return;
+    URL.revokeObjectURL(objectUrl);
+    this.pendingImageObjectUrls.delete(tempId);
+  }
+
+  extractImageUrl(value: string | null | undefined): string | null {
+    const text = (value ?? '').trim();
+    if (!text) return null;
+    if (/^blob:/i.test(text)) return text;
+    if (/^data:image\//i.test(text)) return text;
+    if (!/^https?:\/\//i.test(text)) return null;
+    if (/\.(png|jpe?g|gif|webp|bmp|svg)(\?.*)?$/i.test(text)) return text;
+    if (text.includes('/image/upload/')) return text;
+    return null;
+  }
+
+  private async sendImageFiles(files: File[]): Promise<void> {
+    if (!files.length) return;
+    this.sendingImage.set(true);
+    try {
+      for (const file of files) {
+        await this.sendSingleImageFile(file);
+      }
+    } finally {
+      this.sendingImage.set(false);
+    }
+  }
+
+  private async sendSingleImageFile(file: File): Promise<void> {
+    const boxId = this.selectedBoxId();
+    if (boxId === null) return;
+    if (!file.type.startsWith('image/')) {
+      this.sendError.set('Chỉ hỗ trợ tệp ảnh.');
+      return;
+    }
+    const localUrl = URL.createObjectURL(file);
+    const tempId = this.appendLocalImagePending(boxId, localUrl);
+    this.pendingImageObjectUrls.set(tempId, localUrl);
+    this.sendError.set('');
+
+    try {
+      const presigned = await firstValueFrom(this.uploadService.getPresigned('chat', Date.now()));
+      const uploadFile = await this.uploadService.prepareImageForUpload(file, presigned, {
+        maxBytes: 12 * 1024 * 1024,
+        minResizeBytes: 2 * 1024 * 1024,
+        maxDimension: 1440,
+        preferredOutputType: file.type === 'image/png' ? 'image/png' : 'image/jpeg',
+        quality: 0.86,
+      });
+      const imageUrl = await this.uploadService.uploadImageToCloudinary(uploadFile, presigned);
+      await firstValueFrom(this.chatService.sendMessage(boxId, { message: imageUrl }));
+      this.socket.emitMessageSend(boxId, imageUrl);
+      this.markPendingImageUploaded(boxId, tempId, imageUrl);
+    } catch (err: unknown) {
+      this.removePendingImage(boxId, tempId);
+      const msg = err instanceof Error ? err.message : httpErrMessage(err) || 'Gửi ảnh thất bại.';
+      this.sendError.set(msg);
+    }
+  }
+
+  private hasImageDrag(event: DragEvent): boolean {
+    const types = event.dataTransfer?.types;
+    if (!types) return false;
+    return Array.from(types).includes('Files');
+  }
+
+  private isRecalledMessageBody(value: string | null | undefined): boolean {
+    const text = (value ?? '').trim().toLowerCase();
+    if (!text) return false;
+    const normalized = text
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .replace(/\s+/g, ' ');
+    return normalized.includes('thu hoi') && normalized.includes('tin nhan');
   }
 
   private inChatThread(): boolean {
@@ -914,6 +1209,38 @@ export class ChatDockComponent {
     const myId = getChatViewerUserId();
     if (myId !== null && p.userId === myId) return;
     this.peerTyping.set(false);
+  }
+
+  private handleMessageRecalled(p: ChatMessageRecalledPayload): void {
+    const boxId = Number(p.boxId);
+    const messageId = Number(p.messageId);
+    if (!Number.isFinite(boxId) || !Number.isFinite(messageId)) return;
+    this.applyRecalledMessage(boxId, messageId, p.body);
+  }
+
+  private applyRecalledMessage(boxId: number, messageId: number, body: string): void {
+    let changed = false;
+    this.messages.update((list) =>
+      list.map((m) => {
+        if (Number(m.id) !== messageId) return m;
+        changed = true;
+        return { ...m, message: body };
+      }),
+    );
+    if (!changed) return;
+    this.recallingMessageIds.update((prev) => {
+      if (!prev.has(messageId)) return prev;
+      const next = new Set(prev);
+      next.delete(messageId);
+      return next;
+    });
+    if (this.selectedBoxId() === boxId) {
+      const list = this.messages();
+      const last = list[list.length - 1];
+      if (last?.message?.trim()) {
+        this.patchBoxPreview(boxId, last.message, positiveSenderId(last.senderId));
+      }
+    }
   }
 
   private resetCallState(): void {
@@ -1090,7 +1417,15 @@ export class ChatDockComponent {
       if (remoteVideo) remoteVideo.srcObject = this.remoteStream;
       const remoteAudio = this.callRemoteAudio?.nativeElement;
       if (remoteAudio) remoteAudio.srcObject = this.remoteStream;
+      this.refreshCallLocalPipVisible();
     });
+  }
+
+  private refreshCallLocalPipVisible(): void {
+    const show =
+      this.activeCallType() === 'video' &&
+      !!this.localStream?.getVideoTracks().some((t) => t.readyState !== 'ended');
+    this.callLocalPipVisible.set(show);
   }
 
   private hangupLocal(clearStatus: boolean): void {
@@ -1115,6 +1450,7 @@ export class ChatDockComponent {
     this.activeCallType.set(null);
     this.inCall.set(false);
     this.syncCallMediaElements();
+    this.refreshCallLocalPipVisible();
     if (clearStatus) this.callStatus.set('');
   }
 
@@ -1177,7 +1513,6 @@ export class ChatDockComponent {
       };
       return this.coalesceSenderNamesInThread(this.sortMessages([...list, row]));
     });
-    this.threadCache.set(boxId, { messages: this.messages(), next: this.messagesNext() });
 
     this.scrollToBottom();
   }

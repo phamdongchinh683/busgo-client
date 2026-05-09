@@ -1,0 +1,119 @@
+/**
+ * Palette & token giao diện cuộc gọi (popup voice/video).
+ * Đổi màu / bóng tại đây — component đọc qua var(--call-*).
+ */
+:root {
+  --call-accent: #00a884;
+  --call-accent-soft: #00c389;
+  --call-line: #d8f2eb;
+  --call-text: #0f172a;
+  --call-text-muted: #64748b;
+  --call-icon-on-accent: #ffffff;
+
+  --call-danger: #ef4444;
+  --call-danger-soft: #f87171;
+  --call-danger-deep: #dc2626;
+
+  --call-surface-pop: #ffffff;
+  --call-surface-pop-end: #f8fafc;
+  --call-surface-media: #f1f5f9;
+
+  --call-overlay-grad-a: rgba(15, 23, 42, 0.35);
+  --call-overlay-grad-b: rgba(0, 72, 58, 0.45);
+  --call-media-radial-top: rgba(0, 196, 137, 0.14);
+  --call-media-radial-bottom: rgba(216, 242, 235, 0.65);
+  --call-video-bg: #020617;
+
+  --call-shadow-popup: 0 28px 60px rgba(15, 23, 42, 0.28);
+  --call-shadow-popup-inset: 0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+  --call-shadow-status: 0 4px 16px rgba(15, 23, 42, 0.08);
+  --call-shadow-btn-base: 0 8px 24px rgba(15, 23, 42, 0.18);
+  --call-shadow-accept: 0 10px 28px rgba(0, 168, 132, 0.45);
+  --call-shadow-reject: 0 10px 28px rgba(239, 68, 68, 0.45);
+  --call-shadow-end: 0 10px 28px rgba(220, 38, 38, 0.42);
+  --call-ring-outer: 0 12px 40px rgba(0, 168, 132, 0.28);
+  --call-avatar-inner-shadow: 0 4px 16px rgba(15, 23, 42, 0.12);
+  --call-avatar-ring-line: 0 0 0 1px rgba(0, 168, 132, 0.2);
+
+  --call-btn-size: 68px;
+  --call-btn-icon: 28px;
+  --call-btn-gap: 52px;
+  --call-chrome-video-grad: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.38) 42%,
+    rgba(0, 0, 0, 0.82) 100%
+  );
+  --call-chrome-voice-grad: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(248, 250, 252, 0.97) 50%,
+    rgba(241, 245, 249, 1) 100%
+  );
+  --call-status-on-dark-bg: rgba(15, 23, 42, 0.58);
+  --call-status-on-dark-border: rgba(255, 255, 255, 0.14);
+  --call-pip-border: rgba(255, 255, 255, 0.35);
+}
+
+/*
+  Ghi đè styles.scss (màu nút primary + box-shadow) — giữ popup cuộc gọi độc lập.
+*/
+app-chat-call-popup button.call-ui-btn.call-action--solid {
+  border-radius: 999px !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  box-shadow: var(--call-shadow-btn-base), 0 0 0 1px rgba(255, 255, 255, 0.22) inset !important;
+}
+
+app-chat-call-popup button.call-ui-btn.call-action--accept {
+  background: linear-gradient(165deg, var(--call-accent-soft), var(--call-accent)) !important;
+  box-shadow: var(--call-shadow-accept), 0 0 0 1px rgba(255, 255, 255, 0.25) inset !important;
+}
+
+app-chat-call-popup button.call-ui-btn.call-action--reject {
+  background: linear-gradient(165deg, #fb7185, var(--call-danger)) !important;
+  box-shadow: var(--call-shadow-reject), 0 0 0 1px rgba(255, 255, 255, 0.2) inset !important;
+}
+
+app-chat-call-popup button.call-ui-btn.call-action--end {
+  background: linear-gradient(165deg, var(--call-danger-soft), var(--call-danger-deep)) !important;
+  box-shadow: var(--call-shadow-end), 0 0 0 1px rgba(255, 255, 255, 0.2) inset !important;
+}
+
+app-chat-call-popup button.call-ui-btn.call-action--solid:hover:not(:disabled) {
+  filter: brightness(1.07);
+}
+
+/*
+  Video / PiP: nội dung project từ chat-dock — phải để global (encapsulation không bọc projected nodes).
+*/
+app-chat-call-popup .call-media--video .messenger__call-remote-video {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 1;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block;
+  background: var(--call-video-bg);
+}
+
+app-chat-call-popup .call-media--video .messenger__call-local-video {
+  position: absolute !important;
+  top: 52px !important;
+  right: 12px !important;
+  bottom: auto !important;
+  left: auto !important;
+  width: 108px !important;
+  height: 144px !important;
+  z-index: 4;
+  border-radius: 18px !important;
+  object-fit: cover !important;
+  border: 2px solid var(--call-pip-border) !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45) !important;
+  background: #111827 !important;
+}
+
+app-chat-call-popup .call-media--video .messenger__call-local-video.messenger__call-local-video--off {
+  display: none !important;
+}

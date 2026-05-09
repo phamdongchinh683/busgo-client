@@ -134,6 +134,7 @@
           }
           <span>{{ uploading ? 'Đang tải...' : 'Đổi ảnh' }}</span>
         </button>
+        <span *ngIf="uploading" class="promotion-image-progress">{{ uploadProgress }}%</span>
       </div>
     </div>
     <input type="hidden" [formControl]="form.controls.imageUrl" />
