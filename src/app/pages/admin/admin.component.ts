@@ -200,7 +200,7 @@ export class AdminComponent implements OnInit {
         },
         error: (err: unknown) => {
           const e = err as { error?: { message?: string } };
-          this.showNotification(e.error?.message || 'Tải danh sách tài khoản công ty thất bại.', 'error');
+          this.showNotification(e.error?.message || 'Tải danh sách tài khoản Nhà Xe thất bại.', 'error');
           this.loading = false;
         },
       });
