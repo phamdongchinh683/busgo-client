@@ -337,14 +337,18 @@
                 [ngModel]="draft()"
                 (ngModelChange)="onComposerInput($event)"
                 (keydown)="onComposerKeydown($event)"
+                [readonly]="sendingMessage() || sendingImage()"
+                [attr.aria-busy]="sendingMessage() || sendingImage()"
               ></textarea>
               <button
                 type="button"
                 class="messenger__send-btn"
                 (click)="sendDraft()"
-                [disabled]="!draft().trim()"
-                aria-label="Gửi tin nhắn"
+                [disabled]="!draft().trim() || sendingMessage() || sendingImage()"
+                [attr.aria-label]="sendingMessage() ? 'Đang gửi tin nhắn' : 'Gửi tin nhắn'"
+                title="Gửi tin nhắn"
               >
+                <span class="sr-only">{{ sendingMessage() ? 'Đang gửi' : 'Gửi' }}</span>
                 <svg
                   class="messenger__send-icon"
                   width="20"

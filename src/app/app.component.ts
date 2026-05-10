@@ -47,7 +47,6 @@ export class AppComponent {
     const key = event.key.toLowerCase();
     const isCopy = (event.ctrlKey || event.metaKey) && key === 'c';
     const isCut = (event.ctrlKey || event.metaKey) && key === 'x';
-
     if (isCopy || isCut) {
       event.preventDefault();
     }

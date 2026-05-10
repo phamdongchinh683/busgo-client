@@ -10,6 +10,7 @@ import {
   PromotionUpsertBody,
 } from '@app/data/interfaces/promotion';
 import { UploadPresignedResponse } from '@app/data/interfaces/upload';
+import { imageUploadPresets } from '@app/data/services/upload/image-upload-presets';
 import { SharedModule } from '@app/shared/shared.module';
 
 @Component({
@@ -324,22 +325,19 @@ export class PromotionComponent implements OnInit {
   }
 
   private async getPresignedForPromotion(id: number): Promise<UploadPresignedResponse> {
-    try {
-      return await firstValueFrom(this.uploadApi.getPresigned('promtion-new', id));
-    } catch {
       return await firstValueFrom(this.uploadApi.getPresigned('promotion-new', id));
-    }
   }
 
   private async uploadPromotionImage(id: number, file: File): Promise<string> {
     const presigned = await this.getPresignedForPromotion(id);
     const prefersWebp = presigned.acceptedMimeTypes?.includes('image/webp');
+    const p = imageUploadPresets.promotion;
     const uploadFile = await this.uploadApi.prepareImageForUpload(file, presigned, {
-      maxBytes: 10 * 1024 * 1024,
-      minResizeBytes: 300 * 1024,
-      maxDimension: 720,
+      maxBytes: p.maxBytes,
+      minResizeBytes: p.minResizeBytes,
+      maxDimension: p.maxDimension,
       preferredOutputType: prefersWebp ? 'image/webp' : 'image/jpeg',
-      quality: prefersWebp ? 0.76 : 0.82,
+      quality: prefersWebp ? p.qualityWebp : p.qualityJpeg,
     });
     return await this.uploadApi.uploadImageToCloudinaryWithProgress(uploadFile, presigned, (percent) => {
       this.uploadProgress = percent;

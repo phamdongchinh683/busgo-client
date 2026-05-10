@@ -132,6 +132,10 @@ export class MainTopbarComponent implements OnInit {
   }
 
   toggleNotifications() {
+    const opening = !this.isNotificationOpen;
+    if (opening && this.chatDock.panelOpen()) {
+      this.chatDock.closePanel();
+    }
     this.isNotificationOpen = !this.isNotificationOpen;
     this.cdr.markForCheck();
     if (this.isNotificationOpen && this.notifications.length === 0 && !this.isLoadingNotifications) {
@@ -140,6 +144,11 @@ export class MainTopbarComponent implements OnInit {
   }
 
   onChatButtonClick(button: HTMLElement): void {
+    const chatWasOpen = this.chatDock.panelOpen();
+    if (!chatWasOpen && this.isNotificationOpen) {
+      this.isNotificationOpen = false;
+      this.cdr.markForCheck();
+    }
     const rect = button.getBoundingClientRect();
     this.chatDock.togglePanel({
       top: Math.round(rect.bottom + 10),

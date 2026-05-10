@@ -6,6 +6,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { firstValueFrom } from 'rxjs';
 import { Company } from '../../../../data/interfaces/company';
 import { upload, vnLocation } from '../../../../data/services';
+import { imageUploadPresets } from '../../../../data/services/upload/image-upload-presets';
 
 @Component({
   selector: 'app-company-form-modal',
@@ -128,12 +129,13 @@ export class CompanyFormModalComponent implements OnChanges {
     try {
       const presigned = await firstValueFrom(this.uploadApi.getPresigned('company', this.editingCompany.id));
       const prefersWebp = presigned.acceptedMimeTypes?.includes('image/webp');
+      const p = imageUploadPresets.companyLogo;
       const uploadFile = await this.uploadApi.prepareImageForUpload(file, presigned, {
-        maxBytes: 8 * 1024 * 1024,
-        minResizeBytes: 300 * 1024,
-        maxDimension: 420,
+        maxBytes: p.maxBytes,
+        minResizeBytes: p.minResizeBytes,
+        maxDimension: p.maxDimension,
         preferredOutputType: prefersWebp ? 'image/webp' : 'image/jpeg',
-        quality: prefersWebp ? 0.76 : 0.8,
+        quality: prefersWebp ? p.qualityWebp : p.qualityJpeg,
       });
       const secureUrl = await this.uploadApi.uploadImageToCloudinaryWithProgress(uploadFile, presigned, (percent) => {
         this.uploadLogoProgress = percent;

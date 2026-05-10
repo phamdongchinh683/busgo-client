@@ -48,6 +48,7 @@ import {
   storedUserFullName,
 } from './chat-dock.helpers';
 import { ChatCallPopupComponent } from './components/chat-call-popup/chat-call-popup.component';
+import { imageUploadPresets } from '@app/data/services/upload/image-upload-presets';
 
 @Component({
   selector: 'app-chat-dock',
@@ -80,6 +81,7 @@ export class ChatDockComponent {
   readonly selectedTitle = signal('');
   readonly draft = signal('');
   readonly sendError = signal('');
+  readonly sendingMessage = signal(false);
   readonly sendingImage = signal(false);
   readonly peerTyping = signal(false);
   readonly callStatus = signal('');
@@ -237,18 +239,31 @@ export class ChatDockComponent {
       this.closeImagePreview();
       return;
     }
+    if (this.newChatPopupOpen()) {
+      if (!this.creating()) {
+        ev.preventDefault();
+        this.closeNewChatPopup();
+      }
+      return;
+    }
+    const inTextField = this.isWritableField(ev.target);
     if (this.view() === 'thread') {
+      if (inTextField) return;
       ev.preventDefault();
       this.backToList();
       return;
     }
-    if (this.newChatPopupOpen()) {
-      ev.preventDefault();
-      this.closeNewChatPopup();
-      return;
-    }
+    if (inTextField) return;
     ev.preventDefault();
     this.dock.closePanel();
+  }
+
+  /** Không dùng Escape để đóng panel / thoát thread khi đang focus ô nhập (tránh UX “mất chỗ gõ”). */
+  private isWritableField(target: EventTarget | null): boolean {
+    if (!(target instanceof HTMLElement)) return false;
+    const tag = target.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
+    return target.isContentEditable;
   }
 
   onRecipientSearchInput(event: Event): void {
@@ -472,6 +487,7 @@ export class ChatDockComponent {
   }
 
   submitNewChat(): void {
+    if (this.creating()) return;
     const message = this.newMessage().trim();
     const myId = getChatViewerUserId();
     const peer = this.selectedReceiver();
@@ -511,12 +527,14 @@ export class ChatDockComponent {
   onComposerKeydown(event: KeyboardEvent): void {
     if (event.key !== 'Enter') return;
     if (event.shiftKey || event.isComposing) return;
+    if (this.sendingMessage() || this.sendingImage()) return;
     event.preventDefault();
     this.sendDraft();
   }
 
   onComposerInput(v: string): void {
     this.draft.set(v);
+    if (this.sendError()) this.sendError.set('');
     this.scheduleTypingSignal();
   }
 
@@ -524,11 +542,13 @@ export class ChatDockComponent {
     const boxId = this.selectedBoxId();
     const text = this.draft().trim();
     if (boxId === null || !text) return;
+    if (this.sendingMessage()) return;
     this.stopTypingNow();
     this.sendError.set('');
+    this.sendingMessage.set(true);
     this.chatService
       .sendMessage(boxId, { message: text })
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(finalize(() => this.sendingMessage.set(false)), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
           this.socket.emitMessageSend(boxId, text);
@@ -1106,8 +1126,9 @@ export class ChatDockComponent {
     if (!files.length) return;
     this.sendingImage.set(true);
     try {
-      for (const file of files) {
-        await this.sendSingleImageFile(file);
+      const { parallelBatch } = imageUploadPresets.chat;
+      for (let i = 0; i < files.length; i += parallelBatch) {
+        await Promise.all(files.slice(i, i + parallelBatch).map((f) => this.sendSingleImageFile(f)));
       }
     } finally {
       this.sendingImage.set(false);
@@ -1127,13 +1148,15 @@ export class ChatDockComponent {
     this.sendError.set('');
 
     try {
-      const presigned = await firstValueFrom(this.uploadService.getPresigned('chat', Date.now()));
+      const presigned = await firstValueFrom(this.uploadService.getChatBoxPresigned(boxId));
+      const useWebp = presigned.acceptedMimeTypes?.includes('image/webp') && file.type !== 'image/png';
+      const p = imageUploadPresets.chat;
       const uploadFile = await this.uploadService.prepareImageForUpload(file, presigned, {
-        maxBytes: 12 * 1024 * 1024,
-        minResizeBytes: 2 * 1024 * 1024,
-        maxDimension: 1440,
-        preferredOutputType: file.type === 'image/png' ? 'image/png' : 'image/jpeg',
-        quality: 0.86,
+        maxBytes: p.maxBytes,
+        minResizeBytes: p.minResizeBytes,
+        maxDimension: p.maxDimension,
+        preferredOutputType: file.type === 'image/png' ? 'image/png' : useWebp ? 'image/webp' : 'image/jpeg',
+        quality: file.type === 'image/png' ? p.qualityPng : useWebp ? p.qualityWebp : p.qualityJpeg,
       });
       const imageUrl = await this.uploadService.uploadImageToCloudinary(uploadFile, presigned);
       await firstValueFrom(this.chatService.sendMessage(boxId, { message: imageUrl }));

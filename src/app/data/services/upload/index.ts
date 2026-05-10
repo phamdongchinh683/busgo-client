@@ -4,6 +4,8 @@ import { Observable } from 'rxjs';
 import { constant } from '../../constants';
 import { UploadPresignedResponse } from '../../interfaces/upload';
 
+export { imageUploadPresets } from './image-upload-presets';
+
 type PrepareUploadOptions = {
   maxBytes?: number;
   minResizeBytes?: number;
@@ -14,13 +16,17 @@ type PrepareUploadOptions = {
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-  constructor(private readonly http: HttpClient) { }
+  constructor(private readonly http: HttpClient) {}
 
   getPresigned(folder: string, id: number): Observable<UploadPresignedResponse> {
     return this.http.get<UploadPresignedResponse>(`${constant.baseUrl}/file/upload/super-admin/presigned`, {
       params: { folder, id: String(id) },
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
     });
+  }
+
+  getChatBoxPresigned(boxId: number): Observable<UploadPresignedResponse> {
+    return this.getPresigned('chat', boxId);
   }
 
   uploadImageToCloudinary(file: File, config: UploadPresignedResponse): Promise<string> {
@@ -32,12 +38,10 @@ export class ApiService {
     config: UploadPresignedResponse,
     onProgress?: (percent: number) => void,
   ): Promise<string> {
-    const attemptUpload = () =>
-      this.uploadOnceByXhr(file, config, onProgress);
-
-    return attemptUpload().catch(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      return await attemptUpload();
+    const run = () => this.uploadOnceByXhr(file, config, onProgress);
+    return run().catch(async () => {
+      await new Promise((r) => setTimeout(r, 100));
+      return await run();
     });
   }
 
@@ -60,16 +64,13 @@ export class ApiService {
     const preferred = options?.preferredOutputType ?? fallbackType;
     const outputType = this.pickAllowedOutputType(preferred, file.type, accepted);
 
-    let uploadFile = file;
     const minResizeBytes = options?.minResizeBytes ?? 400 * 1024;
-    if (file.size >= minResizeBytes) {
-      uploadFile = await this.resizeImageFile(file, {
-        maxDimension: options?.maxDimension ?? 1024,
-        outputType,
-        quality: options?.quality ?? 0.84,
-        minFileSize: minResizeBytes,
-      });
-    }
+    const uploadFile = await this.resizeImageFile(file, {
+      maxDimension: options?.maxDimension ?? 1024,
+      outputType,
+      quality: options?.quality ?? 0.84,
+      minBytesForLossyReencode: minResizeBytes,
+    });
 
     if (accepted.length && !accepted.includes(uploadFile.type)) {
       throw new Error('Định dạng ảnh không được hỗ trợ.');
@@ -79,44 +80,178 @@ export class ApiService {
 
   async resizeImageFile(
     file: File,
-    options?: { maxDimension?: number; outputType?: string; quality?: number; minFileSize?: number },
+    options?: {
+      maxDimension?: number;
+      outputType?: string;
+      quality?: number;
+      minBytesForLossyReencode?: number;
+    },
   ): Promise<File> {
     const maxDimension = options?.maxDimension ?? 512;
     const outputType = options?.outputType ?? 'image/jpeg';
     const quality = options?.quality ?? 0.85;
-    const minFileSize = options?.minFileSize ?? 600 * 1024;
+    const minBytesForLossyReencode = options?.minBytesForLossyReencode ?? 600 * 1024;
 
     if (!file.type.startsWith('image/')) return file;
-    if (file.size < minFileSize) return file;
 
-    const image = await this.loadImageSource(file);
-    const { width, height } = image;
-    if (!width || !height) return file;
+    const probe = await this.loadImageSource(file);
+    const width = probe.width;
+    const height = probe.height;
+    if (!width || !height) {
+      probe.close?.();
+      return file;
+    }
+
+    const needsDownscale = width > maxDimension || height > maxDimension;
+    const mayReencodeLossy =
+      outputType !== 'image/png' && file.size >= minBytesForLossyReencode;
+    if (!needsDownscale && !mayReencodeLossy) {
+      probe.close?.();
+      return file;
+    }
 
     const scale = Math.min(maxDimension / width, maxDimension / height, 1);
     const nextWidth = Math.max(1, Math.round(width * scale));
     const nextHeight = Math.max(1, Math.round(height * scale));
     const shouldResize = nextWidth < width || nextHeight < height;
 
+    probe.close?.();
+
+    if (shouldResize) {
+      const fast = await this.tryEncodeResizedWithBitmapResize(
+        file,
+        nextWidth,
+        nextHeight,
+        outputType,
+        quality,
+      );
+      if (fast && fast.size < file.size) return fast;
+      const fallback = await this.encodeViaCanvasScale(file, nextWidth, nextHeight, outputType, quality);
+      if (fallback && fallback.size < file.size) return fallback;
+      return file;
+    }
+
+    if (mayReencodeLossy) {
+      const encoded = await this.encodeViaCanvasFull(file, width, height, outputType, quality);
+      if (encoded && encoded.size < file.size) return encoded;
+    }
+
+    return file;
+  }
+
+  /** Resize trong một bước decode (nhanh hơn decode full + vẽ scale trên canvas). */
+  private async tryEncodeResizedWithBitmapResize(
+    file: File,
+    nextWidth: number,
+    nextHeight: number,
+    outputType: string,
+    quality: number,
+  ): Promise<File | null> {
+    if (typeof createImageBitmap !== 'function') return null;
+    try {
+      const resized = await createImageBitmap(file, {
+        resizeWidth: nextWidth,
+        resizeHeight: nextHeight,
+        resizeQuality: 'medium',
+      });
+      const blob = await this.imageSourceToBlob(resized, nextWidth, nextHeight, outputType, quality);
+      resized.close();
+      if (!blob) return null;
+      return this.blobToOutputFile(blob, file.name, outputType);
+    } catch {
+      return null;
+    }
+  }
+
+  private async encodeViaCanvasScale(
+    file: File,
+    nextWidth: number,
+    nextHeight: number,
+    outputType: string,
+    quality: number,
+  ): Promise<File | null> {
+    const image = await this.loadImageSource(file);
+    if (!image.width || !image.height) {
+      image.close?.();
+      return null;
+    }
     const canvas = document.createElement('canvas');
     canvas.width = nextWidth;
     canvas.height = nextHeight;
-
     const ctx = canvas.getContext('2d');
-    if (!ctx) return file;
-
+    if (!ctx) {
+      image.close?.();
+      return null;
+    }
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'medium';
     try {
-      ctx.drawImage(image.source, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(image.source, 0, 0, nextWidth, nextHeight);
     } finally {
       image.close?.();
     }
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob((b) => resolve(b), outputType, quality),
+    );
+    if (!blob) return null;
+    return this.blobToOutputFile(blob, file.name, outputType);
+  }
 
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob((b) => resolve(b), outputType, quality));
-    if (!blob) return file;
-    if (!shouldResize && blob.size >= file.size) return file;
+  private async encodeViaCanvasFull(
+    file: File,
+    width: number,
+    height: number,
+    outputType: string,
+    quality: number,
+  ): Promise<File | null> {
+    const image = await this.loadImageSource(file);
+    if (!image.width || !image.height) {
+      image.close?.();
+      return null;
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      image.close?.();
+      return null;
+    }
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'medium';
+    try {
+      ctx.drawImage(image.source, 0, 0);
+    } finally {
+      image.close?.();
+    }
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob((b) => resolve(b), outputType, quality),
+    );
+    if (!blob) return null;
+    return this.blobToOutputFile(blob, file.name, outputType);
+  }
 
+  private async imageSourceToBlob(
+    source: CanvasImageSource,
+    w: number,
+    h: number,
+    outputType: string,
+    quality: number,
+  ): Promise<Blob | null> {
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    ctx.drawImage(source, 0, 0, w, h);
+    return await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob((b) => resolve(b), outputType, quality),
+    );
+  }
+
+  private blobToOutputFile(blob: Blob, originalName: string, outputType: string): File {
     const newExt = outputType === 'image/png' ? 'png' : outputType === 'image/webp' ? 'webp' : 'jpg';
-    const baseName = file.name.replace(/\.[^/.]+$/, '');
+    const baseName = originalName.replace(/\.[^/.]+$/, '');
     return new File([blob], `${baseName}.${newExt}`, { type: outputType });
   }
 
@@ -172,7 +307,7 @@ export class ApiService {
       const xhr = new XMLHttpRequest();
       const url = `https://api.cloudinary.com/v1_1/${config.cloudName}/image/upload`;
       xhr.open('POST', url, true);
-      xhr.timeout = 20000;
+      xhr.timeout = 120000;
 
       xhr.upload.onprogress = (event) => {
         if (!event.lengthComputable || !onProgress) return;
