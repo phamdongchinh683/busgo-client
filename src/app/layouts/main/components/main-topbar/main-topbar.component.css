@@ -2,7 +2,7 @@
   min-height: 64px;
   background: color-mix(in srgb, #ffffff 95%, transparent);
   position: relative;
-  z-index: 120;
+  z-index: var(--layer-topbar);
   display: flex;
   align-items: center;
   justify-content: end;
@@ -10,10 +10,6 @@
   border-bottom: 1px solid var(--topbar-border);
   box-shadow: none;
   flex-shrink: 0;
-}
-
-.topbar--menu-open {
-  z-index: 2400;
 }
 
 .topbar__title {
@@ -173,7 +169,7 @@
   box-shadow:
     0 22px 48px rgba(15, 23, 42, 0.16),
     0 6px 16px rgba(15, 23, 42, 0.08);
-  z-index: 9998;
+  z-index: var(--layer-notification-menu);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;

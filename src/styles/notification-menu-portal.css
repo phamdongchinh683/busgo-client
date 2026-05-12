@@ -1,0 +1,8 @@
+body > .notification-menu {
+  z-index: var(--layer-notification-menu);
+  isolation: isolate;
+}
+
+body.notification-menu-open > .notification-menu {
+  pointer-events: auto;
+}

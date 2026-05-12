@@ -7,10 +7,12 @@ import {
   ElementRef,
   EventEmitter,
   HostListener,
+  Injector,
   Input,
   OnInit,
   Output,
   ViewChild,
+  afterNextRender,
   effect,
   inject,
 } from '@angular/core';
@@ -68,6 +70,7 @@ export class MainTopbarComponent implements OnInit {
   private readonly host = inject(ElementRef<HTMLElement>);
   private readonly messaging = inject(Messaging);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly injector = inject(Injector);
   readonly chatDock = inject(ChatDockService);
 
   constructor() {
@@ -91,7 +94,19 @@ export class MainTopbarComponent implements OnInit {
     navigator.serviceWorker?.addEventListener('message', swMessageHandler);
     this.destroyRef.onDestroy(() => navigator.serviceWorker?.removeEventListener('message', swMessageHandler));
 
-    this.destroyRef.onDestroy(() => this.unmountNotificationMenu());
+    this.destroyRef.onDestroy(() => {
+      document.body.classList.remove('notification-menu-open');
+      this.unmountNotificationMenu();
+    });
+
+    const onScrollReposition = () => {
+      if (!this.isNotificationOpen) return;
+      this.syncNotificationMenuPosition();
+    };
+    document.addEventListener('scroll', onScrollReposition, { capture: true, passive: true });
+    this.destroyRef.onDestroy(() =>
+      document.removeEventListener('scroll', onScrollReposition, { capture: true }),
+    );
 
     this.prefetchNotifications();
   }
@@ -145,11 +160,16 @@ export class MainTopbarComponent implements OnInit {
     }
 
     this.isNotificationOpen = true;
+    document.body.classList.add('notification-menu-open');
     this.ensureNotificationsLoaded();
-    queueMicrotask(() => {
-      this.mountNotificationMenu();
-      this.syncNotificationMenuPosition();
-    });
+    afterNextRender(
+      () => {
+        this.mountNotificationMenu();
+        this.syncNotificationMenuPosition();
+        this.cdr.markForCheck();
+      },
+      { injector: this.injector },
+    );
     this.cdr.markForCheck();
   }
 
@@ -215,6 +235,7 @@ export class MainTopbarComponent implements OnInit {
   private closeNotificationMenu(): void {
     if (!this.isNotificationOpen) return;
     this.isNotificationOpen = false;
+    document.body.classList.remove('notification-menu-open');
     this.unmountNotificationMenu();
     this.cdr.markForCheck();
   }
@@ -384,7 +405,10 @@ export class MainTopbarComponent implements OnInit {
           this.loadedNotificationStatus = status;
           this.cdr.markForCheck();
           if (this.isNotificationOpen) {
-            queueMicrotask(() => this.syncNotificationMenuPosition());
+            queueMicrotask(() => {
+              this.mountNotificationMenu();
+              this.syncNotificationMenuPosition();
+            });
           }
         },
         error: () => {
