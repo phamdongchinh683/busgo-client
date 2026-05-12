@@ -14,6 +14,7 @@ import { imageUploadPresets } from '@app/data/services/upload/image-upload-prese
 import { PageToastHostComponent } from '@app/shared/components/page-toast-host/page-toast-host.component';
 import { PageHeaderIntroComponent } from '@app/shared/components/page-header-intro/page-header-intro.component';
 import { PageToastService } from '@app/shared/services/page-toast.service';
+import { SHORT_READ_CACHE_TTL_MS } from '@app/data/services/cache-utils';
 
 @Component({
   selector: 'app-promotion',
@@ -23,7 +24,6 @@ import { PageToastService } from '@app/shared/services/page-toast.service';
   styleUrl: './promotion.component.css',
 })
 export class PromotionComponent implements OnInit {
-  private static readonly CACHE_TTL_MS = 5 * 1000;
   private static listCache: {
     items: PromotionItem[];
     nextCursor: number | null;
@@ -469,7 +469,7 @@ export class PromotionComponent implements OnInit {
     PromotionComponent.listCache = {
       items: [...items],
       nextCursor,
-      expiredAt: Date.now() + PromotionComponent.CACHE_TTL_MS,
+      expiredAt: Date.now() + SHORT_READ_CACHE_TTL_MS,
     };
   }
 }

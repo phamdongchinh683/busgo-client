@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { finalize } from 'rxjs/operators';
 import { device } from '../../data/services';
 import { DeviceFcmToken } from '../../data/interfaces/device';
 import { PageToastHostComponent } from '../../shared/components/page-toast-host/page-toast-host.component';
@@ -28,6 +29,7 @@ export class DeviceComponent implements OnInit {
   private readonly toast = inject(PageToastService);
   private readonly deviceApi = inject(device.ApiService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly cdr = inject(ChangeDetectorRef);
   private readonly messaging = inject(Messaging);
   ngOnInit(): void {
     this.fetchTokens();
@@ -43,8 +45,10 @@ export class DeviceComponent implements OnInit {
           this.tokens = res ? res : [];
           this.loading = false;
         },
-        error: (err: unknown) =>
-          this.toast.show(getApiErrorMessage(err, 'Tải danh sách FCM token thất bại.'), 'error'),
+        error: (err: unknown) => {
+          this.loading = false;
+          this.toast.show(getApiErrorMessage(err, 'Tải danh sách FCM token thất bại.'), 'error');
+        },
       });
   }
 
@@ -53,12 +57,18 @@ export class DeviceComponent implements OnInit {
     this.deletingId = id;
     this.deviceApi
       .deleteFcmToken(id)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.deletingId = null;
+          this.cdr.markForCheck();
+        }),
+      )
       .subscribe({
         next: () => {
-          this.tokens = this.tokens.filter((item) => item.id !== id);
-          this.deletingId = null;
+          this.tokens = this.tokens.filter((item) => Number(item.id) !== Number(id));
           this.toast.show('Đã xóa', 'success');
+          this.cdr.markForCheck();
         },
         error: (err: unknown) =>
           this.toast.show(getApiErrorMessage(err, 'Xóa FCM token thất bại.'), 'error'),
@@ -148,12 +158,17 @@ export class DeviceComponent implements OnInit {
       .subscribe({
         next: (res: DeviceFcmToken) => {
           this.registering = false;
-          this.tokens = [res, ...this.tokens];
+          if (!this.tokens.some((item) => Number(item.id) === Number(res.id) || item.fcmToken === res.fcmToken)) {
+            this.tokens = [res, ...this.tokens];
+          }
+          this.currentFcmToken = res.fcmToken;
           this.toast.show('Đã lưu', 'success');
+          this.cdr.markForCheck();
         },
         error: (err: unknown) => {
           this.registering = false;
           this.toast.show(getApiErrorMessage(err, 'Lưu FCM token thất bại.'), 'error');
+          this.cdr.markForCheck();
         },
       });
   }

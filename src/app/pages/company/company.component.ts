@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { company } from '../../data/services/index';
@@ -48,6 +48,7 @@ export class CompanyComponent implements OnInit {
   deletingCompany: Company | null = null;
 
   readonly toast = inject(PageToastService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -215,6 +216,7 @@ export class CompanyComponent implements OnInit {
           this.toast.show('Cập nhật nhà xe thành công!', 'success');
           this.closeModal();
           this.submitting = false;
+          this.cdr.markForCheck();
         },
         error: (err: unknown) => {
           this.toast.show(getApiErrorMessage(err, 'Cập nhật thất bại.'), 'error');
@@ -228,6 +230,7 @@ export class CompanyComponent implements OnInit {
           this.toast.show('Tạo nhà xe thành công!', 'success');
           this.closeModal();
           this.submitting = false;
+          this.cdr.markForCheck();
         },
         error: (err: unknown) => {
           this.toast.show(getApiErrorMessage(err, 'Tạo mới thất bại.'), 'error');
@@ -255,21 +258,21 @@ export class CompanyComponent implements OnInit {
 
   onConfirmDelete() {
     if (!this.deletingCompany) return;
+    const deletedCompanyId = this.deletingCompany.id;
     this.submitting = true;
 
-    this.api.deleteCompany(this.deletingCompany.id).subscribe({
+    this.api.deleteCompany(deletedCompanyId).subscribe({
       next: () => {
-        const deleteId = this.deletingCompany?.id;
-        if (deleteId !== undefined) {
-          this.companies = this.companies.filter((c) => c.id !== deleteId);
-        }
+        this.companies = this.companies.filter((company) => company.id !== deletedCompanyId);
         this.toast.show('Xóa nhà xe thành công!', 'success');
         this.cancelDelete();
         this.submitting = false;
+        this.cdr.markForCheck();
       },
       error: (err: unknown) => {
         this.toast.show(getApiErrorMessage(err, 'Xóa thất bại.'), 'error');
         this.submitting = false;
+        this.cdr.markForCheck();
       },
     });
   }

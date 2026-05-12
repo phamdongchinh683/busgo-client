@@ -4,7 +4,7 @@ import { Observable, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { constant } from '../../constants';
 import { BalanceResponse } from '../../interfaces/balance';
-import { CacheEntry, clearCacheByPrefix, readCache, writeCache } from '../cache-utils';
+import { buildCacheKey, CacheEntry, clearCacheByPrefix, readCache, SHORT_READ_CACHE_TTL_MS, writeCache } from '../cache-utils';
 
 export interface WithdrawBalanceRequest {
   amount: number;
@@ -41,7 +41,7 @@ export interface PayoutListQuery {
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly balanceCache = new Map<string, CacheEntry<BalanceResponse>>();
-  private readonly BALANCE_TTL_MS = 5 * 1000;
+  private readonly payoutCache = new Map<string, CacheEntry<PayoutListResponse>>();
 
   constructor(private http: HttpClient) {}
 
@@ -60,7 +60,7 @@ export class ApiService {
       .get<BalanceResponse>(`${constant.baseUrl}/super-admin/balance`, {
         headers: this.jsonHeaders(),
       })
-      .pipe(tap((res) => writeCache(this.balanceCache, cacheKey, res, this.BALANCE_TTL_MS)));
+      .pipe(tap((res) => writeCache(this.balanceCache, cacheKey, res, SHORT_READ_CACHE_TTL_MS)));
   }
 
   withdrawBalance(payload: WithdrawBalanceRequest): Observable<WithdrawBalanceResponse> {
@@ -68,7 +68,10 @@ export class ApiService {
       .post<WithdrawBalanceResponse>(`${constant.baseUrl}/super-admin/balance/withdraw`, payload, {
         headers: this.jsonHeaders(),
       })
-      .pipe(tap(() => clearCacheByPrefix(this.balanceCache, 'balance-overview')));
+      .pipe(tap(() => {
+        clearCacheByPrefix(this.balanceCache, 'balance-overview');
+        clearCacheByPrefix(this.payoutCache, 'balance-payout');
+      }));
   }
 
   getPayouts(query: PayoutListQuery = {}): Observable<PayoutListResponse> {
@@ -83,9 +86,19 @@ export class ApiService {
       params = params.set('next', query.next);
     }
 
-    return this.http.get<PayoutListResponse>(`${constant.baseUrl}/super-admin/balance/payout`, {
-      headers: this.jsonHeaders(),
-      params,
+    const cacheKey = buildCacheKey('balance-payout', {
+      limit: query.limit ?? '',
+      status: query.status ?? '',
+      next: query.next ?? '',
     });
+    const cached = readCache(this.payoutCache, cacheKey);
+    if (cached) return of(cached);
+
+    return this.http
+      .get<PayoutListResponse>(`${constant.baseUrl}/super-admin/balance/payout`, {
+        headers: this.jsonHeaders(),
+        params,
+      })
+      .pipe(tap((res) => writeCache(this.payoutCache, cacheKey, res, SHORT_READ_CACHE_TTL_MS)));
   }
 }

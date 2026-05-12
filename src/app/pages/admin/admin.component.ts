@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormControl } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -9,7 +9,7 @@ import { PageToastService } from '@app/shared/services/page-toast.service';
 import { auth, companyAdmin, publicApi } from '../../data/services';
 import { Company, CompanyListResponse } from '../../data/interfaces/company';
 import { CompanyAdmin, CreateCompanyAdminBody, UpdateCompanyAdminBody } from '../../data/interfaces/company-admin';
-import { normalizeCompanyAdminList } from './utils/company-admin.mapper';
+import { normalizeCompanyAdminList, mapCompanyAdminRow } from './utils/company-admin.mapper';
 import { getApiErrorMessage } from '@app/shared/utils/api-error.util';
 import { DEFAULT_PAGE_LIMIT, PAGE_LIMITS, type PageLimit } from '../../data/constants';
 import { CompanyAdminToolbarComponent } from './components/company-admin-toolbar/company-admin-toolbar.component';
@@ -65,6 +65,7 @@ export class AdminComponent implements OnInit {
   notificationAdmin: CompanyAdmin | null = null;
 
   readonly toast = inject(PageToastService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   constructor(
     private readonly api: companyAdmin.ApiService,
@@ -136,14 +137,19 @@ export class AdminComponent implements OnInit {
   onCreateSubmit(body: CreateCompanyAdminBody) {
     this.createSubmitting = true;
     this.api.createCompanyAdmin(body).subscribe({
-      next: () => {
+      next: (res) => {
+        const created = this.resolveCreatedAdmin(res, body);
+        if (created) {
+          this.admins = [created, ...this.admins];
+        }
         this.toast.show('Thành công.', 'success');
         this.onCreateOpenChange(false);
-        this.fetch();
+        this.cdr.markForCheck();
       },
       error: (err: unknown) => {
         this.toast.show(getApiErrorMessage(err, 'Thất bại.'), 'error');
         this.createSubmitting = false;
+        this.cdr.markForCheck();
       },
     });
   }
@@ -198,6 +204,36 @@ export class AdminComponent implements OnInit {
     if (this.nextCursor === null || this.loadingMore) return;
     this.loadingMore = true;
     this.fetchAdmins(this.nextCursor, false);
+  }
+
+  private resolveCreatedAdmin(
+    res: { message?: string } | Record<string, unknown>,
+    body: CreateCompanyAdminBody,
+  ): CompanyAdmin | null {
+    if (this.selectedCompany && this.selectedCompany.id !== body.companyId) return null;
+
+    const raw = res as Record<string, unknown>;
+    const entity = raw['companyAdmin'] ?? raw['admin'] ?? raw['user'];
+    if (entity && typeof entity === 'object') {
+      return mapCompanyAdminRow(entity as Record<string, unknown>);
+    }
+
+    const companyName =
+      this.createCompanies.find((company) => company.id === body.companyId)?.name ??
+      this.filterCompanies.find((company) => company.id === body.companyId)?.name ??
+      this.selectedCompany?.name ??
+      '';
+
+    return {
+      id: -Date.now(),
+      username: body.username,
+      fullName: body.fullName,
+      email: body.contactInfo.email,
+      phone: body.contactInfo.phone,
+      status: 'active',
+      companyId: body.companyId,
+      companyName,
+    };
   }
 
   private fetch() {

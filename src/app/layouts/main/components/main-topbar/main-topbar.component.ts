@@ -91,6 +91,8 @@ export class MainTopbarComponent implements OnInit {
     navigator.serviceWorker?.addEventListener('message', swMessageHandler);
     this.destroyRef.onDestroy(() => navigator.serviceWorker?.removeEventListener('message', swMessageHandler));
 
+    this.destroyRef.onDestroy(() => this.unmountNotificationMenu());
+
     this.prefetchNotifications();
   }
 
@@ -104,9 +106,9 @@ export class MainTopbarComponent implements OnInit {
     const target = event.target as Node | null;
     if (!target) return;
     const root = this.notificationRootRef?.nativeElement ?? this.host.nativeElement;
-    if (!root.contains(target)) {
-      this.isNotificationOpen = false;
-      this.cdr.markForCheck();
+    const menu = this.notificationMenuRef?.nativeElement;
+    if (!root.contains(target) && !menu?.contains(target)) {
+      this.closeNotificationMenu();
     }
   }
 
@@ -128,21 +130,33 @@ export class MainTopbarComponent implements OnInit {
 
     if (this.isNotificationOpen) {
       event.preventDefault();
-      this.isNotificationOpen = false;
-      this.cdr.markForCheck();
+      this.closeNotificationMenu();
     }
   }
 
   toggleNotifications() {
-    const opening = !this.isNotificationOpen;
-    if (opening && this.chatDock.panelOpen()) {
+    if (this.isNotificationOpen) {
+      this.closeNotificationMenu();
+      return;
+    }
+
+    if (this.chatDock.panelOpen()) {
       this.chatDock.closePanel();
     }
-    this.isNotificationOpen = !this.isNotificationOpen;
-    if (this.isNotificationOpen) {
-      this.ensureNotificationsLoaded();
-    }
+
+    this.isNotificationOpen = true;
+    this.ensureNotificationsLoaded();
+    queueMicrotask(() => {
+      this.mountNotificationMenu();
+      this.syncNotificationMenuPosition();
+    });
     this.cdr.markForCheck();
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    if (!this.isNotificationOpen) return;
+    this.syncNotificationMenuPosition();
   }
 
   private ensureNotificationsLoaded(force = false): void {
@@ -169,11 +183,46 @@ export class MainTopbarComponent implements OnInit {
     this.loadNotifications({ background: true });
   }
 
+  private syncNotificationMenuPosition(): void {
+    const root = this.notificationRootRef?.nativeElement;
+    const menu = this.notificationMenuRef?.nativeElement;
+    if (!root || !menu) return;
+
+    const rect = root.getBoundingClientRect();
+    const gutter = 12;
+    const width = Math.min(400, window.innerWidth - 24);
+    const maxHeight = Math.min(480, window.innerHeight - rect.bottom - gutter - 16);
+
+    menu.style.setProperty('--notification-menu-top', `${Math.round(rect.bottom + gutter)}px`);
+    menu.style.setProperty('--notification-menu-right', `${Math.max(12, Math.round(window.innerWidth - rect.right))}px`);
+    menu.style.setProperty('--notification-menu-width', `${Math.round(width)}px`);
+    menu.style.setProperty('--notification-menu-max-height', `${Math.max(220, Math.round(maxHeight))}px`);
+  }
+
+  private mountNotificationMenu(): void {
+    const menu = this.notificationMenuRef?.nativeElement;
+    if (!menu || menu.parentElement === document.body) return;
+    document.body.appendChild(menu);
+  }
+
+  private unmountNotificationMenu(): void {
+    const menu = this.notificationMenuRef?.nativeElement;
+    const root = this.notificationRootRef?.nativeElement;
+    if (!menu || !root || menu.parentElement !== document.body) return;
+    root.appendChild(menu);
+  }
+
+  private closeNotificationMenu(): void {
+    if (!this.isNotificationOpen) return;
+    this.isNotificationOpen = false;
+    this.unmountNotificationMenu();
+    this.cdr.markForCheck();
+  }
+
   onChatButtonClick(button: HTMLElement): void {
     const chatWasOpen = this.chatDock.panelOpen();
     if (!chatWasOpen && this.isNotificationOpen) {
-      this.isNotificationOpen = false;
-      this.cdr.markForCheck();
+      this.closeNotificationMenu();
     }
     const rect = button.getBoundingClientRect();
     this.chatDock.togglePanel({
@@ -334,6 +383,9 @@ export class MainTopbarComponent implements OnInit {
           this.hasLoadedNotifications = true;
           this.loadedNotificationStatus = status;
           this.cdr.markForCheck();
+          if (this.isNotificationOpen) {
+            queueMicrotask(() => this.syncNotificationMenuPosition());
+          }
         },
         error: () => {
           this.cdr.markForCheck();

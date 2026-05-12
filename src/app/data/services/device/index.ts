@@ -4,12 +4,11 @@ import { Observable, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { constant } from '../../constants';
 import { DeviceFcmToken, SaveDeviceFcmTokenBody } from '../../interfaces/device';
-import { CacheEntry, clearCacheByPrefix, readCache, writeCache } from '../cache-utils';
+import { CacheEntry, clearCacheByPrefix, readCache, SHORT_READ_CACHE_TTL_MS, writeCache } from '../cache-utils';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly deviceCache = new Map<string, CacheEntry<DeviceFcmToken[]>>();
-  private readonly DEVICE_TTL_MS = 15 * 1000;
 
   constructor(private readonly http: HttpClient) {}
 
@@ -28,7 +27,7 @@ export class ApiService {
       .get<DeviceFcmToken[]>(`${constant.baseUrl}/auth/device/fcm-token`, {
         headers: this.jsonHeaders(),
       })
-      .pipe(tap((res) => writeCache(this.deviceCache, cacheKey, res, this.DEVICE_TTL_MS)));
+      .pipe(tap((res) => writeCache(this.deviceCache, cacheKey, res, SHORT_READ_CACHE_TTL_MS)));
   }
 
   saveFcmToken(body: SaveDeviceFcmTokenBody): Observable<DeviceFcmToken> {

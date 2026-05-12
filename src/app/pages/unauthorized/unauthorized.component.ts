@@ -1,7 +1,10 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { catchError, finalize, switchMap } from 'rxjs/operators';
+import { of } from 'rxjs';
 import { auth } from '../../data/services';
 import { ChatSocketService } from '../../core/services/chat-socket.service';
+import { FcmDeviceService } from '../../core/services/fcm-device.service';
 
 @Component({
   selector: 'app-unauthorized',
@@ -12,18 +15,26 @@ import { ChatSocketService } from '../../core/services/chat-socket.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UnauthorizedComponent {
-  constructor(
-    private readonly router: Router,
-    private readonly api: auth.ApiService,
-    private readonly chatSocket: ChatSocketService,
-  ) {}
+  private readonly router = inject(Router);
+  private readonly api = inject(auth.ApiService);
+  private readonly chatSocket = inject(ChatSocketService);
+  private readonly fcmDeviceService = inject(FcmDeviceService);
 
   logout() {
-    this.api.logout().subscribe(() => {
-      this.chatSocket.disconnect();
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      this.router.navigate(['/login']);
-    });
+    this.fcmDeviceService
+      .removeCurrentDeviceToken()
+      .pipe(
+        switchMap(() => this.api.logout()),
+        catchError(() => of(null)),
+        finalize(() => this.clearSessionAndRedirect()),
+      )
+      .subscribe();
+  }
+
+  private clearSessionAndRedirect() {
+    this.chatSocket.disconnect();
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    this.router.navigate(['/login']);
   }
 }

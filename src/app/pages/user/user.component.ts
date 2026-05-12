@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -90,6 +90,7 @@ export class UserComponent implements OnInit {
 
   private readonly destroyRef = inject(DestroyRef);
   private readonly toast = inject(PageToastService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   filters!: FormGroup<{
     email: FormControl<string | null>;
@@ -292,16 +293,39 @@ export class UserComponent implements OnInit {
         role: (v.role ?? 'driver') as (typeof USER_ROLES)[number],
       })
       .subscribe({
-        next: () => {
+        next: (res: CreateUserResponse | null) => {
+          const created = res?.user;
+          if (created && this.shouldDisplayCreatedUser(created)) {
+            this.users = [this.toUserListItem(created), ...this.users];
+          }
           this.toast.show('Tạo mới thành công.', 'success');
           this.closeCreateModal();
-          this.applyFilters();
+          this.cdr.markForCheck();
         },
         error: (err: unknown) => {
           this.toast.show(getApiErrorMessage(err, 'Tạo người dùng thất bại.'), 'error');
           this.creatingUser = false;
+          this.cdr.markForCheck();
         },
       });
+  }
+
+  private shouldDisplayCreatedUser(user: Omit<User, 'password'>): boolean {
+    const filters = this.filters.getRawValue();
+    if (filters.status && filters.status !== user.status) return false;
+    if (filters.role && filters.role !== user.role) return false;
+
+    const emailFilter = filters.email?.trim().toLowerCase();
+    if (emailFilter && !user.email.toLowerCase().includes(emailFilter)) return false;
+
+    const phoneFilter = filters.phone?.trim();
+    if (phoneFilter && !user.phone.includes(phoneFilter)) return false;
+
+    return true;
+  }
+
+  private toUserListItem(user: Omit<User, 'password'>): User {
+    return { ...user, password: '' };
   }
 
   private getCreateFormErrorMessage(): string {
@@ -392,16 +416,20 @@ export class UserComponent implements OnInit {
 
   submitDeleteUser() {
     if (!this.selectedActionUser) return;
+    const deletedUserId = this.selectedActionUser.id;
     this.deletingUserLoading = true;
-    this.userApi.deleteUser(this.selectedActionUser.id).subscribe({
-      next: (res: DeleteUserResponse) => {
-        this.users = this.users.filter((item) => item.id !== res.user.id);
+    this.userApi.deleteUser(deletedUserId).subscribe({
+      next: (res: DeleteUserResponse | null) => {
+        const removedId = res?.user?.id ?? deletedUserId;
+        this.users = this.users.filter((item) => item.id !== removedId);
         this.toast.show('Đã xóa.', 'success');
         this.closeDeleteModal();
+        this.cdr.markForCheck();
       },
       error: () => {
         this.toast.show('Không thể xóa người dùng này.', 'error');
         this.deletingUserLoading = false;
+        this.cdr.markForCheck();
       },
     });
   }

@@ -3,6 +3,8 @@ export interface CacheEntry<T> {
   expiresAt: number;
 }
 
+export const SHORT_READ_CACHE_TTL_MS = 5 * 1000;
+
 export function buildCacheKey(prefix: string, params: Record<string, unknown>): string {
   const normalized = Object.keys(params)
     .sort()

@@ -8,7 +8,7 @@ import {
   CreateCompanyAdminBody,
   UpdateCompanyAdminBody,
 } from '../../interfaces/company-admin';
-import { buildCacheKey, CacheEntry, clearCacheByPrefix, readCache, writeCache } from '../cache-utils';
+import { buildCacheKey, CacheEntry, clearCacheByPrefix, readCache, SHORT_READ_CACHE_TTL_MS, writeCache } from '../cache-utils';
 
 export interface CompanyAdminFilters {
   limit: number;
@@ -20,7 +20,6 @@ export interface CompanyAdminFilters {
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly adminsCache = new Map<string, CacheEntry<CompanyAdminListResponse>>();
-  private readonly ADMINS_TTL_MS = 15 * 1000;
 
   constructor(private http: HttpClient) {}
 
@@ -52,7 +51,7 @@ export class ApiService {
         params,
         headers: this.jsonHeaders(),
       })
-      .pipe(tap((res) => writeCache(this.adminsCache, cacheKey, res, this.ADMINS_TTL_MS)));
+      .pipe(tap((res) => writeCache(this.adminsCache, cacheKey, res, SHORT_READ_CACHE_TTL_MS)));
   }
 
   createCompanyAdmin(body: CreateCompanyAdminBody): Observable<{ message?: string }> {

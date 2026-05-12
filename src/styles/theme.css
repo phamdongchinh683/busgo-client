@@ -79,6 +79,12 @@
   --sidebar-collapsed: 72px;
   --topbar-bg: linear-gradient(180deg, #f7fcf9 0%, #f0f8f3 100%);
   --topbar-border: #bfd5c6;
+
+  --layer-topbar: 120;
+  --layer-topbar-menu: 2400;
+  --layer-modal: 9997;
+  --layer-notification-menu: 9998;
+  --layer-toast: 9999;
 }
 
 *,

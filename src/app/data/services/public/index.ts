@@ -4,12 +4,11 @@ import { Observable, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { constant } from '../../constants';
 import { CompanyListResponse } from '../../interfaces/company';
-import { buildCacheKey, CacheEntry, readCache, writeCache } from '../cache-utils';
+import { buildCacheKey, CacheEntry, readCache, SHORT_READ_CACHE_TTL_MS, writeCache } from '../cache-utils';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly companiesCache = new Map<string, CacheEntry<CompanyListResponse>>();
-  private readonly COMPANIES_TTL_MS = 15 * 1000;
 
   constructor(private http: HttpClient) {}
 
@@ -23,7 +22,7 @@ export class ApiService {
     if (cached) return of(cached);
 
     return this.http.get<CompanyListResponse>(`${constant.baseUrl}/public/company`, { params }).pipe(
-      tap((res) => writeCache(this.companiesCache, cacheKey, res, this.COMPANIES_TTL_MS)),
+      tap((res) => writeCache(this.companiesCache, cacheKey, res, SHORT_READ_CACHE_TTL_MS)),
     );
   }
 }

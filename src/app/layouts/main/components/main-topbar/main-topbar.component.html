@@ -1,4 +1,4 @@
-<header class="topbar">
+<header class="topbar" [class.topbar--menu-open]="isNotificationOpen">
   <div class="topbar__actions">
     <div class="chat-launch">
       <button
@@ -17,7 +17,7 @@
       </button>
     </div>
 
-    <div class="notification" #notificationRoot>
+    <div class="notification" #notificationRoot [class.notification--open]="isNotificationOpen">
       <button
         type="button"
         class="btn-notification"

@@ -6,13 +6,12 @@ import { constant } from '../../constants';
 import { DashboardResponse } from '../../interfaces/dashboard';
 import type { RevenueExportQuery } from '../../interfaces/dashboard/revenue-export';
 import type { DashboardStatsQuery } from '../../interfaces/dashboard/stats';
-import { buildCacheKey, CacheEntry, readCache, writeCache } from '../cache-utils';
+import { buildCacheKey, CacheEntry, readCache, SHORT_READ_CACHE_TTL_MS, writeCache } from '../cache-utils';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly dashboardOverviewCache = new Map<string, CacheEntry<DashboardResponse>>();
   private readonly dashboardStatsCache = new Map<string, CacheEntry<unknown>>();
-  private readonly DASHBOARD_TTL_MS = 15 * 1000;
 
   constructor(private http: HttpClient) {}
 
@@ -55,7 +54,7 @@ export class ApiService {
       .get<DashboardResponse>(`${constant.baseUrl}/super-admin/dashboard`, {
         headers: this.jsonHeaders(),
       })
-      .pipe(tap((res) => writeCache(this.dashboardOverviewCache, cacheKey, res, this.DASHBOARD_TTL_MS)));
+      .pipe(tap((res) => writeCache(this.dashboardOverviewCache, cacheKey, res, SHORT_READ_CACHE_TTL_MS)));
   }
 
   getDashboardBooking(q: DashboardStatsQuery): Observable<unknown> {
@@ -76,7 +75,7 @@ export class ApiService {
         headers: this.jsonHeaders(),
         params,
       })
-      .pipe(tap((res) => writeCache(this.dashboardStatsCache, cacheKey, res, this.DASHBOARD_TTL_MS)));
+      .pipe(tap((res) => writeCache(this.dashboardStatsCache, cacheKey, res, SHORT_READ_CACHE_TTL_MS)));
   }
 
   getDashboardRevenue(q: DashboardStatsQuery): Observable<unknown> {
@@ -97,7 +96,7 @@ export class ApiService {
         headers: this.jsonHeaders(),
         params,
       })
-      .pipe(tap((res) => writeCache(this.dashboardStatsCache, cacheKey, res, this.DASHBOARD_TTL_MS)));
+      .pipe(tap((res) => writeCache(this.dashboardStatsCache, cacheKey, res, SHORT_READ_CACHE_TTL_MS)));
   }
 
   getDashboardUser(q: DashboardStatsQuery): Observable<unknown> {
@@ -118,7 +117,7 @@ export class ApiService {
         headers: this.jsonHeaders(),
         params,
       })
-      .pipe(tap((res) => writeCache(this.dashboardStatsCache, cacheKey, res, this.DASHBOARD_TTL_MS)));
+      .pipe(tap((res) => writeCache(this.dashboardStatsCache, cacheKey, res, SHORT_READ_CACHE_TTL_MS)));
   }
 
   exportRevenueReport(q: RevenueExportQuery): Observable<HttpResponse<Blob>> {

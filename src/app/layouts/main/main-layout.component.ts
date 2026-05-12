@@ -1,6 +1,7 @@
 import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
-import { filter, take } from 'rxjs/operators';
+import { filter, take, catchError, finalize, switchMap } from 'rxjs/operators';
+import { of } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { navItems } from '../../data/mocks';
 import { auth } from '../../data/services';
@@ -86,7 +87,14 @@ export class MainLayoutComponent implements OnInit {
   }
 
   logout() {
-    this.api.logout().subscribe(() => this.handleLogoutSuccess());
+    this.fcmDeviceService
+      .removeCurrentDeviceToken()
+      .pipe(
+        switchMap(() => this.api.logout()),
+        catchError(() => of(null)),
+        finalize(() => this.handleLogoutSuccess()),
+      )
+      .subscribe();
   }
 
   private loadUser() {
