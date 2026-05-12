@@ -1,52 +1,121 @@
+.chart-block {
+  padding: 16px 16px 12px;
+  border: 1px solid color-mix(in srgb, var(--color-border) 82%, #ffffff);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
 .chart-block__summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 10px;
-  padding: 5px 14px;
-  border-radius: var(--radius-lg, 10px);
-  background: color-mix(in srgb, var(--color-primary, #15803d) 6%, var(--color-surface, #fff));
-  border: 1px solid var(--color-border, #e5e7eb);
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--color-primary, #15803d) 8%, #ffffff) 0%,
+    color-mix(in srgb, var(--color-primary, #15803d) 3%, #ffffff) 100%
+  );
+  border: 1px solid color-mix(in srgb, var(--color-primary, #15803d) 16%, var(--color-border, #e5e7eb));
 }
 
 .chart-block__summary-label {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
   color: var(--color-text-muted, #6b7280);
 }
 
 .chart-block__summary-value {
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
   color: var(--color-text-dark, #111827);
   font-variant-numeric: tabular-nums;
 }
 
 .chart-block__summary-value--currency {
-  font-size: 16px;
+  font-size: 17px;
 }
 
 ::ng-deep .chart-block__filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 12px;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--color-border) 82%, #ffffff);
+  background: #f8fafc;
 }
 
 ::ng-deep .chart-block__filters .filter {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 10px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.08em;
   color: var(--color-text-muted, #6b7280);
 }
 
 ::ng-deep .chart-block__filters .select {
-  min-width: 140px;
+  min-width: 148px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--color-border) 88%, #ffffff);
+  background: #ffffff;
+  color: var(--color-text-dark);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+::ng-deep .chart-block__filters .select:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+}
+
+::ng-deep .chart-block__filters .select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 16%, transparent);
+}
+
+::ng-deep .chart-block .chart-card {
+  border: none;
+  border-radius: 12px;
+  padding: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+::ng-deep .chart-block .chart-card__title {
+  margin-bottom: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+::ng-deep .chart-block .chart-card__canvas {
+  height: 300px;
+}
+
+@media (max-width: 720px) {
+  .chart-block {
+    padding: 14px 12px 10px;
+  }
+
+  ::ng-deep .chart-block__filters .filter {
+    flex: 1 1 140px;
+  }
+
+  ::ng-deep .chart-block__filters .select {
+    width: 100%;
+    min-width: 0;
+  }
 }

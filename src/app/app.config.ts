@@ -8,11 +8,12 @@ import { firebaseWebConfig } from './data/constants';
 import { provideMessaging } from '@angular/fire/messaging';
 import { getMessaging } from 'firebase/messaging';
 import { authExpiredInterceptor } from './core/interceptors/auth-expired.interceptor';
+import { authTokenInterceptor } from './core/interceptors/auth-token.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
-    provideHttpClient(withInterceptors([authExpiredInterceptor])),
+    provideHttpClient(withInterceptors([authTokenInterceptor, authExpiredInterceptor])),
     provideFirebaseApp(() => initializeApp(firebaseWebConfig)),
     provideMessaging(() => getMessaging()),
   ],

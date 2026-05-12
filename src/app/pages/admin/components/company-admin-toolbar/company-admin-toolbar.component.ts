@@ -9,16 +9,31 @@ import { Company } from '../../../../data/interfaces/company';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './company-admin-toolbar.component.html',
-  styleUrl: './company-admin-toolbar.component.css',
+  styleUrls: ['../../../user/styles/user-shared.css', './company-admin-toolbar.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CompanyAdminToolbarComponent {
   @Input({ required: true }) limit!: PageLimit;
   @Input({ required: true }) pageLimits: readonly PageLimit[] = [];
   @Input() companies: Company[] = [];
-  @Input() selectedCompanyId: number | null = null;
+  @Input() companiesLoading = false;
+  @Input() companiesLoadingMore = false;
+  @Input() dropdownOpen = false;
+  @Input() selectedCompany: Company | null = null;
+  @Input() companySearchValue = '';
 
   @Output() limitChange = new EventEmitter<PageLimit>();
-  @Output() companyFilterChange = new EventEmitter<number | null>();
   @Output() createClick = new EventEmitter<void>();
+  @Output() selectCompany = new EventEmitter<Company | null>();
+  @Output() dropdownOpenChange = new EventEmitter<boolean>();
+  @Output() companySearchValueChange = new EventEmitter<string>();
+  @Output() companyDropdownScroll = new EventEmitter<Event>();
+
+  onCompanyFocus(): void {
+    this.dropdownOpenChange.emit(true);
+  }
+
+  onScroll(event: Event): void {
+    this.companyDropdownScroll.emit(event);
+  }
 }

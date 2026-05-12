@@ -1,9 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { company } from '../../data/services/index';
 import { Company } from '../../data/interfaces/company';
-import { SharedModule } from '@app/shared/shared.module';
+import { AppCompanyListComponent } from '@app/shared/components/app-company-list/app-company-list.component';
+import { PageToastHostComponent } from '@app/shared/components/page-toast-host/page-toast-host.component';
+import { PageHeaderIntroComponent } from '@app/shared/components/page-header-intro/page-header-intro.component';
+import { PageToastService } from '@app/shared/services/page-toast.service';
 import { getApiErrorMessage } from '@app/shared/utils/api-error.util';
 import { PAGE_LIMITS, DEFAULT_PAGE_LIMIT, type PageLimit } from '../../data/constants/index';
 import { CompanyToolbarComponent } from './components/company-toolbar/company-toolbar.component';
@@ -16,7 +19,9 @@ import { CompanyDeleteModalComponent } from './components/company-delete-modal/c
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    SharedModule,
+    PageToastHostComponent,
+    PageHeaderIntroComponent,
+    AppCompanyListComponent,
     CompanyToolbarComponent,
     CompanyFormModalComponent,
     CompanyDeleteModalComponent,
@@ -42,11 +47,7 @@ export class CompanyComponent implements OnInit {
   showDeleteConfirm = false;
   deletingCompany: Company | null = null;
 
-  notification: { show: boolean; message: string; type: 'success' | 'error' | 'warning' | 'info' } = {
-    show: false,
-    message: '',
-    type: 'info',
-  };
+  readonly toast = inject(PageToastService);
 
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -66,10 +67,6 @@ export class CompanyComponent implements OnInit {
 
   ngOnInit() {
     this.fetch();
-  }
-
-  showNotification(message: string, type: 'success' | 'error' | 'warning' | 'info') {
-    this.notification = { show: true, message, type };
   }
 
   onSearchInput(value: string) {
@@ -153,43 +150,43 @@ export class CompanyComponent implements OnInit {
     const longitude = this.toNullableNumber(rawLongitude);
 
     if (!name) {
-      this.showNotification('Tên là bắt buộc.', 'warning');
+      this.toast.show('Tên là bắt buộc.', 'warning');
       return;
     }
     if (!this.NAME_REGEX.test(name)) {
-      this.showNotification('Tên phải có ít nhất 5 ký tự và chỉ chứa chữ cái.', 'warning');
+      this.toast.show('Tên phải có ít nhất 5 ký tự và chỉ chứa chữ cái.', 'warning');
       return;
     }
     if (hotline && (hotline.length <= 9 || !/^\d+$/.test(hotline))) {
-      this.showNotification('Hotline phải có ít nhất 10 chữ số.', 'warning');
+      this.toast.show('Hotline phải có ít nhất 10 chữ số.', 'warning');
       return;
     }
     const originalAddress = (this.editingCompany?.address ?? '').trim();
     const isAddressChanged = !this.editingCompany || address !== originalAddress;
     if (isAddressChanged) {
       if (!address) {
-        this.showNotification('Địa chỉ là bắt buộc.', 'warning');
+        this.toast.show('Địa chỉ là bắt buộc.', 'warning');
         return;
       }
       if (address.length < 6) {
-        this.showNotification('Địa chỉ quá ngắn.', 'warning');
+        this.toast.show('Địa chỉ quá ngắn.', 'warning');
         return;
       }
       if (latitude === null || longitude === null) {
-        this.showNotification('Vui lòng kiểm tra địa chỉ trên bản đồ để lấy tọa độ.', 'warning');
+        this.toast.show('Vui lòng kiểm tra địa chỉ trên bản đồ để lấy tọa độ.', 'warning');
         return;
       }
     }
     if ((latitude === null) !== (longitude === null)) {
-      this.showNotification('Vui lòng nhập đầy đủ cả latitude và longitude.', 'warning');
+      this.toast.show('Vui lòng nhập đầy đủ cả latitude và longitude.', 'warning');
       return;
     }
     if (latitude !== null && (latitude < -90 || latitude > 90)) {
-      this.showNotification('Latitude phải trong khoảng -90 đến 90.', 'warning');
+      this.toast.show('Latitude phải trong khoảng -90 đến 90.', 'warning');
       return;
     }
     if (longitude !== null && (longitude < -180 || longitude > 180)) {
-      this.showNotification('Longitude phải trong khoảng -180 đến 180.', 'warning');
+      this.toast.show('Longitude phải trong khoảng -180 đến 180.', 'warning');
       return;
     }
 
@@ -207,7 +204,7 @@ export class CompanyComponent implements OnInit {
       if (latitude !== originalLatitude) data['latitude'] = latitude;
       if (longitude !== originalLongitude) data['longitude'] = longitude;
       if (Object.keys(data).length === 0) {
-        this.showNotification('Không có thay đổi để cập nhật.', 'info');
+        this.toast.show('Không có thay đổi để cập nhật.', 'info');
         this.submitting = false;
         return;
       }
@@ -215,12 +212,12 @@ export class CompanyComponent implements OnInit {
       this.api.updateCompany(this.editingCompany.id, data).subscribe({
         next: (res) => {
           this.companies = this.companies.map((c) => (c.id === res.company.id ? res.company : c));
-          this.showNotification('Cập nhật nhà xe thành công!', 'success');
+          this.toast.show('Cập nhật nhà xe thành công!', 'success');
           this.closeModal();
           this.submitting = false;
         },
         error: (err: unknown) => {
-          this.showNotification(getApiErrorMessage(err, 'Cập nhật thất bại.'), 'error');
+          this.toast.show(getApiErrorMessage(err, 'Cập nhật thất bại.'), 'error');
           this.submitting = false;
         },
       });
@@ -228,12 +225,12 @@ export class CompanyComponent implements OnInit {
       this.api.createCompany(name, hotline, logoUrl, address, latitude ?? undefined, longitude ?? undefined).subscribe({
         next: (res) => {
           this.companies = [res.company, ...this.companies];
-          this.showNotification('Tạo nhà xe thành công!', 'success');
+          this.toast.show('Tạo nhà xe thành công!', 'success');
           this.closeModal();
           this.submitting = false;
         },
         error: (err: unknown) => {
-          this.showNotification(getApiErrorMessage(err, 'Tạo mới thất bại.'), 'error');
+          this.toast.show(getApiErrorMessage(err, 'Tạo mới thất bại.'), 'error');
           this.submitting = false;
         },
       });
@@ -266,12 +263,12 @@ export class CompanyComponent implements OnInit {
         if (deleteId !== undefined) {
           this.companies = this.companies.filter((c) => c.id !== deleteId);
         }
-        this.showNotification('Xóa nhà xe thành công!', 'success');
+        this.toast.show('Xóa nhà xe thành công!', 'success');
         this.cancelDelete();
         this.submitting = false;
       },
       error: (err: unknown) => {
-        this.showNotification(getApiErrorMessage(err, 'Xóa thất bại.'), 'error');
+        this.toast.show(getApiErrorMessage(err, 'Xóa thất bại.'), 'error');
         this.submitting = false;
       },
     });

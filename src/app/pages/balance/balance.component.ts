@@ -8,14 +8,18 @@ import { finalize } from 'rxjs';
 import { balance, dashboard, fxRate } from '../../data/services';
 import type { RevenueExportMethod, RevenueExportQuery, RevenueExportTimeType } from '../../data/interfaces/dashboard/revenue-export';
 import { BalanceMoneyItem, BalanceResponse } from '../../data/interfaces/balance';
-import { SharedModule } from '../../shared/shared.module';
+import { PageToastHostComponent } from '@app/shared/components/page-toast-host/page-toast-host.component';
+import { PageHeaderIntroComponent } from '@app/shared/components/page-header-intro/page-header-intro.component';
+import { PageToastService } from '@app/shared/services/page-toast.service';
 import { BalanceStatusCardComponent } from './components/balance-status-card/balance-status-card.component';
 import { getApiErrorMessage } from '@app/shared/utils/api-error.util';
+import { buildYearOptions } from '@app/shared/utils/year-options';
+import { payoutStatusLabel as mapPayoutStatusLabel } from '@app/shared/utils/domain-labels';
 
 @Component({
   selector: 'app-balance',
   standalone: true,
-  imports: [CommonModule, FormsModule, SharedModule, BalanceStatusCardComponent],
+  imports: [CommonModule, FormsModule, PageToastHostComponent, PageHeaderIntroComponent, BalanceStatusCardComponent],
   templateUrl: './balance.component.html',
   styleUrl: './balance.component.css',
 })
@@ -25,16 +29,11 @@ export class BalanceComponent implements OnInit {
   data: BalanceResponse | null = null;
   loading = true;
 
-  notification: { show: boolean; message: string; type: 'success' | 'error' | 'warning' | 'info' } = {
-    show: false,
-    message: '',
-    type: 'error',
-  };
-
   private readonly api = inject(balance.ApiService);
   private readonly dashboardApi = inject(dashboard.ApiService);
   private readonly fxApi = inject(fxRate.ApiService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toast = inject(PageToastService);
 
   usdToVndRate: number | null = null;
 
@@ -67,11 +66,11 @@ export class BalanceComponent implements OnInit {
   readonly secondaryAmountFormatter = (item: BalanceMoneyItem) => this.formatUsdAsVndSecondary(item);
   readonly contextFormatter = (item: BalanceMoneyItem, section: 'available' | 'pending') =>
     this.balanceContextMessage(item, section);
+  readonly payoutStatusLabel = mapPayoutStatusLabel;
 
   ngOnInit(): void {
-    const y = new Date().getFullYear();
-    this.yearOptions = [y - 2, y - 1, y, y + 1];
-    this.exportYear = y;
+    this.yearOptions = buildYearOptions();
+    this.exportYear = new Date().getFullYear();
     this.load();
   }
 
@@ -89,7 +88,7 @@ export class BalanceComponent implements OnInit {
           this.data = res;
         },
         error: (err: unknown) =>
-          this.showNotification(getApiErrorMessage(err, 'Tải số dư thất bại.'), 'error'),
+          this.toast.show(getApiErrorMessage(err, 'Tải số dư thất bại.'), 'error'),
       });
   }
 
@@ -281,7 +280,7 @@ export class BalanceComponent implements OnInit {
   submitWithdraw(): void {
     const amountVnd = Number(this.withdrawAmountVnd);
     if (!Number.isFinite(amountVnd) || amountVnd < BalanceComponent.MIN_WITHDRAW_VND) {
-      this.showNotification(`Số tiền rút phải từ ${BalanceComponent.MIN_WITHDRAW_VND.toLocaleString('vi-VN')} VND.`, 'warning');
+      this.toast.show(`Số tiền rút phải từ ${BalanceComponent.MIN_WITHDRAW_VND.toLocaleString('vi-VN')} VND.`, 'warning');
       return;
     }
 
@@ -290,13 +289,13 @@ export class BalanceComponent implements OnInit {
 
     this.api.withdrawBalance({ amount: Math.round(amountVnd) }).subscribe({
       next: (res) => {
-        this.showNotification(res.message || 'Rút tiền thành công.', 'success');
+        this.toast.show(res.message || 'Rút tiền thành công.', 'success');
         this.withdrawing = false;
         this.closeWithdrawModal();
         this.load();
       },
       error: (err: unknown) => {
-        this.showNotification(getApiErrorMessage(err, 'Rút tiền thất bại.'), 'error');
+        this.toast.show(getApiErrorMessage(err, 'Rút tiền thất bại.'), 'error');
         this.withdrawing = false;
       },
       complete: () => {
@@ -357,7 +356,7 @@ export class BalanceComponent implements OnInit {
         },
         error: (err: unknown) => {
           if (requestSeq !== this.payoutRequestSeq) return;
-          this.showNotification(getApiErrorMessage(err, 'Không tải được lịch sử giao dịch.'), 'error');
+          this.toast.show(getApiErrorMessage(err, 'Không tải được lịch sử giao dịch.'), 'error');
         },
         complete: () => {
           if (requestSeq !== this.payoutRequestSeq) return;
@@ -400,20 +399,10 @@ export class BalanceComponent implements OnInit {
     return new Date(seconds * 1000).toLocaleString('vi-VN');
   }
 
-  payoutStatusLabel(status: string): string {
-    const s = status?.toLowerCase() || '';
-    if (s === 'paid') return 'Đã chuyển';
-    if (s === 'pending') return 'Đang chờ';
-    if (s === 'in_transit') return 'Đang xử lý';
-    if (s === 'failed') return 'Thất bại';
-    if (s === 'canceled') return 'Đã hủy';
-    return status || 'Không rõ';
-  }
-
   private handleExportResponse(res: HttpResponse<Blob>): void {
     const blob = res.body;
     if (!blob) {
-      this.showNotification('Không nhận được file từ máy chủ.', 'error');
+      this.toast.show('Không nhận được file từ máy chủ.', 'error');
       return;
     }
     const ct = (res.headers.get('Content-Type') || '').toLowerCase();
@@ -422,18 +411,18 @@ export class BalanceComponent implements OnInit {
         (text) => {
           try {
             const j = JSON.parse(text) as { message?: string };
-            this.showNotification(j.message || 'Xuất Excel không thành công.', 'error');
+            this.toast.show(j.message || 'Xuất Excel không thành công.', 'error');
           } catch {
-            this.showNotification('Xuất Excel không thành công.', 'error');
+            this.toast.show('Xuất Excel không thành công.', 'error');
           }
         },
-        () => this.showNotification('Xuất Excel không thành công.', 'error'),
+        () => this.toast.show('Xuất Excel không thành công.', 'error'),
       );
       return;
     }
     const filename = this.filenameFromContentDisposition(res.headers.get('Content-Disposition'));
     this.downloadBlob(blob, filename);
-    this.showNotification('Đã tải file Excel.', 'success');
+    this.toast.show('Đã tải file Excel.', 'success');
   }
 
   private handleExportError(err: unknown): void {
@@ -442,12 +431,12 @@ export class BalanceComponent implements OnInit {
         (text) => {
           try {
             const j = JSON.parse(text) as { message?: string };
-            this.showNotification(j.message || 'Xuất Excel không thành công.', 'error');
+            this.toast.show(j.message || 'Xuất Excel không thành công.', 'error');
           } catch {
-            this.showNotification('Xuất Excel không thành công.', 'error');
+            this.toast.show('Xuất Excel không thành công.', 'error');
           }
         },
-        () => this.showNotification('Xuất Excel không thành công.', 'error'),
+        () => this.toast.show('Xuất Excel không thành công.', 'error'),
       );
       return;
     }
@@ -459,7 +448,7 @@ export class BalanceComponent implements OnInit {
         : err instanceof Error
           ? err.message
           : 'Xuất Excel thất bại.';
-    this.showNotification(msg || 'Xuất Excel thất bại.', 'error');
+    this.toast.show(msg || 'Xuất Excel thất bại.', 'error');
   }
 
   private filenameFromContentDisposition(header: string | null): string {
@@ -489,7 +478,4 @@ export class BalanceComponent implements OnInit {
     URL.revokeObjectURL(url);
   }
 
-  private showNotification(message: string, type: 'success' | 'error' | 'warning' | 'info'): void {
-    this.notification = { show: true, message, type };
-  }
 }

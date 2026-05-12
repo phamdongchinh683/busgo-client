@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CompanyAdmin } from '../../../../data/interfaces/company-admin';
+import { userStatusLabel } from '@app/shared/utils/domain-labels';
 
 @Component({
   selector: 'app-company-admin-table',
@@ -15,16 +16,5 @@ export class CompanyAdminTableComponent {
   @Output() updateClick = new EventEmitter<CompanyAdmin>();
   @Output() notifyClick = new EventEmitter<CompanyAdmin>();
 
-  displayStatus(value: string): string {
-    switch (value) {
-      case 'active':
-        return 'Hoạt động';
-      case 'inactive':
-        return 'Tạm ngưng';
-      case 'banned':
-        return 'Bị cấm';
-      default:
-        return value;
-    }
-  }
+  displayStatus = userStatusLabel;
 }

@@ -1,65 +1,82 @@
+:host {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
 .toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 10px 12px;
+  width: 100%;
 }
 
-.search-input {
-  flex: 1;
-  min-width: 160px;
-  padding: 10px 14px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  font-size: 13px;
-  outline: none;
-  background: var(--color-surface);
-  color: var(--color-text-dark);
-  transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
+.field--search {
+  flex: 1 1 220px;
+  min-width: 200px;
+  max-width: 360px;
 }
 
-.search-input:hover {
-  border-color: var(--color-primary);
+.field--limit {
+  flex: 0 0 auto;
 }
 
-.search-input:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent);
+.field--action {
+  flex: 0 0 auto;
 }
 
-.limit-select {
-  min-width: 94px;
+.label--spacer {
+  visibility: hidden;
+}
+
+.field--limit .select-shell--limit {
+  width: 72px;
 }
 
 .btn-add {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
+  justify-content: center;
+  height: 40px;
+  width: 40px;
+  padding: 0;
   background: #ffffff;
   color: var(--color-primary);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  font-size: 13px;
-  font-weight: 600;
   cursor: pointer;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-primary) 12%, transparent);
+  box-shadow: var(--shadow-sm);
   transition:
     border-color 0.3s ease,
     background 0.3s ease,
     box-shadow 0.3s ease;
-  white-space: nowrap;
 }
 
 .btn-add:hover {
   border-color: var(--color-primary);
   background: var(--color-primary-hover-bg);
-  box-shadow: 0 0 8px color-mix(in srgb, var(--color-primary) 16%, transparent);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
 }
 
 .btn-add svg {
   width: 16px;
   height: 16px;
+}
+
+@media (max-width: 720px) {
+  .toolbar {
+    justify-content: flex-start;
+  }
+
+  .field--search {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+
+  .field--limit,
+  .field--action {
+    flex: 0 0 auto;
+  }
 }

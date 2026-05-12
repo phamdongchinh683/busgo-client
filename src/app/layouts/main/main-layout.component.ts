@@ -2,7 +2,6 @@ import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
 import { filter, take } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError, of, switchMap } from 'rxjs';
 import { navItems } from '../../data/mocks';
 import { auth } from '../../data/services';
 import { MainSidebarComponent, type MainNavItem } from './components/main-sidebar/main-sidebar.component';
@@ -13,6 +12,7 @@ import { ChatDockService } from '../../core/services/chat-dock.service';
 import { ChatSocketService } from '../../core/services/chat-socket.service';
 import { chat } from '../../data/services';
 import { getChatViewerUserId, normalizeBoxPayload } from '../../core/utils/chat-box-list';
+import { staffProfileRoleLabel } from '@app/shared/utils/domain-labels';
 @Component({
   selector: 'app-main-layout',
   standalone: true,
@@ -51,7 +51,7 @@ export class MainLayoutComponent implements OnInit {
   private hasRequestedNotificationAccess = false;
 
   get pageTitle(): string {
-    return this.pageTitles[this.currentUrl] || 'Tổng quan';
+    return this.pageTitles[this.currentUrl];
   }
 
   ngOnInit() {
@@ -86,13 +86,7 @@ export class MainLayoutComponent implements OnInit {
   }
 
   logout() {
-    this.fcmDeviceService
-      .removeCurrentDeviceToken()
-      .pipe(
-        switchMap(() => this.api.logout()),
-        catchError(() => of(null)),
-      )
-      .subscribe(() => this.handleLogoutSuccess());
+    this.api.logout().subscribe(() => this.handleLogoutSuccess());
   }
 
   private loadUser() {
@@ -106,9 +100,10 @@ export class MainLayoutComponent implements OnInit {
         staffProfileRole?: string;
         role?: string;
       };
-      this.userName = user.fullName || user.username || 'Người dùng';
+      const rawRole = (user.staffProfileRole || user.role || '').trim();
+      this.userName = user.fullName || user.username || '';
       this.userEmail = user.email || '';
-      this.userRole = (user.staffProfileRole || user.role || '').replace(/_/g, ' ');
+      this.userRole = rawRole ? staffProfileRoleLabel(rawRole) : '';
       this.userInitial = this.userName.charAt(0).toUpperCase();
     } catch { }
   }

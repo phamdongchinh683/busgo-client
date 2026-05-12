@@ -24,16 +24,15 @@ export class ApiService {
 
   constructor(private http: HttpClient) {}
 
-  private authHeaders() {
+  private jsonHeaders() {
     return {
-      Authorization: `Bearer ${localStorage.getItem('token') ?? ''}`,
       Accept: 'application/json',
     };
   }
 
-  private jsonAuthHeaders() {
+  private jsonContentHeaders() {
     return {
-      ...this.authHeaders(),
+      Accept: 'application/json',
       'Content-Type': 'application/json',
     };
   }
@@ -51,7 +50,7 @@ export class ApiService {
     return this.http
       .get<CompanyAdminListResponse>(`${constant.baseUrl}/super-admin/company-admin`, {
         params,
-        headers: this.authHeaders(),
+        headers: this.jsonHeaders(),
       })
       .pipe(tap((res) => writeCache(this.adminsCache, cacheKey, res, this.ADMINS_TTL_MS)));
   }
@@ -59,7 +58,7 @@ export class ApiService {
   createCompanyAdmin(body: CreateCompanyAdminBody): Observable<{ message?: string }> {
     return this.http
       .post<{ message?: string }>(`${constant.baseUrl}/super-admin/company-admin`, body, {
-        headers: this.jsonAuthHeaders(),
+        headers: this.jsonContentHeaders(),
       })
       .pipe(tap(() => clearCacheByPrefix(this.adminsCache, 'company-admin-list')));
   }
@@ -67,7 +66,7 @@ export class ApiService {
   updateCompanyAdmin(id: number, body: UpdateCompanyAdminBody): Observable<{ message?: string }> {
     return this.http
       .put<{ message?: string }>(`${constant.baseUrl}/super-admin/company-admin/${id}`, body, {
-        headers: this.jsonAuthHeaders(),
+        headers: this.jsonContentHeaders(),
       })
       .pipe(tap(() => clearCacheByPrefix(this.adminsCache, 'company-admin-list')));
   }

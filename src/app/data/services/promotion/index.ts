@@ -19,14 +19,10 @@ export class ApiService {
   }
 
   createPromotion(body: PromotionUpsertBody): Observable<PromotionUpsertResponse> {
-    return this.http.post<PromotionUpsertResponse>(`${constant.baseUrl}/super-admin/promotion-new`, body, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-    });
+    return this.http.post<PromotionUpsertResponse>(`${constant.baseUrl}/super-admin/promotion-new`, body);
   }
 
   updatePromotion(id: number, body: PromotionUpsertBody): Observable<PromotionUpsertResponse> {
-    return this.http.put<PromotionUpsertResponse>(`${constant.baseUrl}/super-admin/promotion-new/${id}`, body, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-    });
+    return this.http.put<PromotionUpsertResponse>(`${constant.baseUrl}/super-admin/promotion-new/${id}`, body);
   }
 }

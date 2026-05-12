@@ -1,8 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { SharedModule } from '@app/shared/shared.module';
+import { FormControl } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { PageToastHostComponent } from '@app/shared/components/page-toast-host/page-toast-host.component';
+import { PageHeaderIntroComponent } from '@app/shared/components/page-header-intro/page-header-intro.component';
+import { PageToastService } from '@app/shared/services/page-toast.service';
 import { auth, companyAdmin, publicApi } from '../../data/services';
-import { Company } from '../../data/interfaces/company';
+import { Company, CompanyListResponse } from '../../data/interfaces/company';
 import { CompanyAdmin, CreateCompanyAdminBody, UpdateCompanyAdminBody } from '../../data/interfaces/company-admin';
 import { normalizeCompanyAdminList } from './utils/company-admin.mapper';
 import { getApiErrorMessage } from '@app/shared/utils/api-error.util';
@@ -18,7 +23,8 @@ import { UserNotificationModalComponent } from '../user/components/user-notifica
   standalone: true,
   imports: [
     CommonModule,
-    SharedModule,
+    PageToastHostComponent,
+    PageHeaderIntroComponent,
     CompanyAdminToolbarComponent,
     CompanyAdminTableComponent,
     CompanyAdminCreateModalComponent,
@@ -26,15 +32,23 @@ import { UserNotificationModalComponent } from '../user/components/user-notifica
     UserNotificationModalComponent,
   ],
   templateUrl: './admin.component.html',
-  styleUrls: ['./admin.component.css'],
 })
 export class AdminComponent implements OnInit {
   limit: PageLimit = DEFAULT_PAGE_LIMIT;
   pageLimits = PAGE_LIMITS;
 
   admins: CompanyAdmin[] = [];
-  companies: Company[] = [];
-  selectedCompanyId: number | null = null;
+  createCompanies: Company[] = [];
+  filterCompanies: Company[] = [];
+  companiesLoading = false;
+  companiesLoadingMore = false;
+  companyDropdownOpen = false;
+  selectedCompany: Company | null = null;
+  companySearch = new FormControl('');
+  private companyNextCursor: number | null = null;
+  private companySearchTerm = '';
+  private readonly COMPANY_PAGE_LIMIT = 10;
+  private readonly destroyRef = inject(DestroyRef);
   nextCursor: number | null = null;
   loading = false;
   loadingMore = false;
@@ -50,11 +64,7 @@ export class AdminComponent implements OnInit {
   notificationSubmitting = false;
   notificationAdmin: CompanyAdmin | null = null;
 
-  notification: { show: boolean; message: string; type: 'success' | 'error' | 'warning' | 'info' } = {
-    show: false,
-    message: '',
-    type: 'info',
-  };
+  readonly toast = inject(PageToastService);
 
   constructor(
     private readonly api: companyAdmin.ApiService,
@@ -63,21 +73,50 @@ export class AdminComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.loadCompaniesForSelect();
+    this.loadCreateCompanies();
+    this.fetchFilterCompanies('');
+
+    this.companySearch.valueChanges
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
+      .subscribe((name) => {
+        const term = (name ?? '').toString().trim();
+        this.companySearchTerm = term;
+        this.fetchFilterCompanies(term);
+        this.companyDropdownOpen = true;
+      });
+
+    const onClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (!target) return;
+      if (target.closest('.dropdown') || target.closest('.field--company .input')) return;
+      this.companyDropdownOpen = false;
+    };
+    window.addEventListener('click', onClick);
+    this.destroyRef.onDestroy(() => window.removeEventListener('click', onClick));
+
     this.fetch();
   }
 
-  showNotification(message: string, type: 'success' | 'error' | 'warning' | 'info') {
-    this.notification = { show: true, message, type };
+  onCompanySearchValueChange(value: string) {
+    this.companySearch.setValue(value);
+  }
+
+  selectFilterCompany(company: Company | null) {
+    this.selectedCompany = company;
+    this.companySearch.setValue(company?.name ?? '', { emitEvent: false });
+    this.companyDropdownOpen = false;
+    this.fetch();
+  }
+
+  onCompanyDropdownScroll(event: Event) {
+    const el = event.target as HTMLElement;
+    const reachedBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 16;
+    if (!reachedBottom) return;
+    this.fetchMoreFilterCompanies();
   }
 
   onLimitChange(value: PageLimit) {
     this.limit = value;
-    this.fetch();
-  }
-
-  onCompanyFilterChange(companyId: number | null) {
-    this.selectedCompanyId = companyId;
     this.fetch();
   }
 
@@ -91,19 +130,19 @@ export class AdminComponent implements OnInit {
   }
 
   onCreateValidateFailed(msg: string) {
-    this.showNotification(msg, 'warning');
+    this.toast.show(msg, 'warning');
   }
 
   onCreateSubmit(body: CreateCompanyAdminBody) {
     this.createSubmitting = true;
     this.api.createCompanyAdmin(body).subscribe({
       next: () => {
-        this.showNotification('Thành công.', 'success');
+        this.toast.show('Thành công.', 'success');
         this.onCreateOpenChange(false);
         this.fetch();
       },
       error: (err: unknown) => {
-        this.showNotification(getApiErrorMessage(err, 'Thất bại.'), 'error');
+        this.toast.show(getApiErrorMessage(err, 'Thất bại.'), 'error');
         this.createSubmitting = false;
       },
     });
@@ -140,7 +179,7 @@ export class AdminComponent implements OnInit {
     this.editSubmitting = true;
     this.api.updateCompanyAdmin(id, body).subscribe({
       next: (res) => {
-        this.showNotification('Thành công.', 'success');
+        this.toast.show('Thành công.', 'success');
         this.admins = this.admins.map((a) =>
           a.id === id
             ? { ...a, fullName: body.fullName, email: body.email, phone: body.phone, status: body.status }
@@ -149,7 +188,7 @@ export class AdminComponent implements OnInit {
         this.onEditOpenChange(false);
       },
       error: (err: unknown) => {
-        this.showNotification(getApiErrorMessage(err, 'Thất bại.'), 'error');
+        this.toast.show(getApiErrorMessage(err, 'Thất bại.'), 'error');
         this.editSubmitting = false;
       },
     });
@@ -173,7 +212,7 @@ export class AdminComponent implements OnInit {
       .getCompanyAdmins({
         limit: this.limit,
         next,
-        companyId: this.selectedCompanyId ?? undefined,
+        companyId: this.selectedCompany?.id,
       })
       .subscribe({
         next: (res) => {
@@ -185,7 +224,7 @@ export class AdminComponent implements OnInit {
         },
         error: (err: unknown) => {
           const fallback = replace ? 'Tải danh sách tài khoản Nhà Xe thất bại.' : 'Tải thêm thất bại.';
-          this.showNotification(getApiErrorMessage(err, fallback), 'error');
+          this.toast.show(getApiErrorMessage(err, fallback), 'error');
           this.loading = false;
           this.loadingMore = false;
         },
@@ -205,23 +244,66 @@ export class AdminComponent implements OnInit {
       })
       .subscribe({
         next: () => {
-          this.showNotification('Gửi thông báo thành công.', 'success');
+          this.toast.show('Gửi thông báo thành công.', 'success');
           this.closeNotificationModal();
         },
         error: (err: unknown) => {
-          this.showNotification(getApiErrorMessage(err, 'Gửi thông báo thất bại.'), 'error');
+          this.toast.show(getApiErrorMessage(err, 'Gửi thông báo thất bại.'), 'error');
           this.notificationSubmitting = false;
         },
       });
   }
 
-  private loadCompaniesForSelect() {
+  private loadCreateCompanies() {
     this.publicCompanies.getCompanies(50).subscribe({
       next: (r) => {
-        this.companies = r.companies ?? [];
+        this.createCompanies = r.companies ?? [];
       },
       error: () => {
-        this.companies = [];
+        this.createCompanies = [];
+      },
+    });
+  }
+
+  private fetchMoreFilterCompanies() {
+    if (this.companyNextCursor === null) return;
+    if (this.companiesLoading || this.companiesLoadingMore) return;
+
+    this.companiesLoadingMore = true;
+    this.publicCompanies
+      .getCompanies(this.COMPANY_PAGE_LIMIT, this.companyNextCursor, this.companySearchTerm || undefined)
+      .subscribe({
+        next: (res: CompanyListResponse) => {
+          const incoming = res.companies ?? [];
+          const existingIds = new Set(this.filterCompanies.map((company) => company.id));
+          const merged = incoming.filter((company) => !existingIds.has(company.id));
+          this.filterCompanies = [...this.filterCompanies, ...merged];
+          this.companyNextCursor = res.next ?? null;
+          this.companiesLoadingMore = false;
+        },
+        error: () => {
+          this.companiesLoadingMore = false;
+        },
+      });
+  }
+
+  private fetchFilterCompanies(name: string) {
+    this.companiesLoading = true;
+    this.filterCompanies = [];
+    this.companyNextCursor = null;
+
+    this.publicCompanies.getCompanies(this.COMPANY_PAGE_LIMIT, undefined, name || undefined).subscribe({
+      next: (res: CompanyListResponse) => {
+        this.filterCompanies = res.companies ?? [];
+        this.companyNextCursor = res.next ?? null;
+        this.companiesLoading = false;
+        this.companiesLoadingMore = false;
+      },
+      error: () => {
+        this.filterCompanies = [];
+        this.companyNextCursor = null;
+        this.companiesLoading = false;
+        this.companiesLoadingMore = false;
       },
     });
   }

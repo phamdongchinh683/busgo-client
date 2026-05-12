@@ -46,6 +46,8 @@ export class MainTopbarComponent implements OnInit {
   isFetching = false;
   private pendingLoadMore = false;
   private pendingFilterReload = false;
+  private hasLoadedNotifications = false;
+  private loadedNotificationStatus: NotificationStatus | null | undefined;
   selectedNotification: NotificationItem | null = null;
   isVerifyDialogOpen = false;
   isVerifyingAccount = false;
@@ -89,7 +91,7 @@ export class MainTopbarComponent implements OnInit {
     navigator.serviceWorker?.addEventListener('message', swMessageHandler);
     this.destroyRef.onDestroy(() => navigator.serviceWorker?.removeEventListener('message', swMessageHandler));
 
-    this.loadNotifications();
+    this.prefetchNotifications();
   }
 
   get unreadCount(): number {
@@ -137,10 +139,34 @@ export class MainTopbarComponent implements OnInit {
       this.chatDock.closePanel();
     }
     this.isNotificationOpen = !this.isNotificationOpen;
+    if (this.isNotificationOpen) {
+      this.ensureNotificationsLoaded();
+    }
     this.cdr.markForCheck();
-    if (this.isNotificationOpen && this.notifications.length === 0 && !this.isLoadingNotifications) {
+  }
+
+  private ensureNotificationsLoaded(force = false): void {
+    const status = this.selectedNotificationStatus;
+    const hasCachedData =
+      this.hasLoadedNotifications &&
+      this.loadedNotificationStatus === status &&
+      this.notifications.length > 0;
+
+    if (!force && (hasCachedData || this.isFetching)) {
+      if (this.isFetching) {
+        this.isLoadingNotifications = true;
+      }
+      return;
+    }
+
+    if (!this.isFetching) {
       this.loadNotifications();
     }
+  }
+
+  private prefetchNotifications(): void {
+    if (this.isFetching || this.hasLoadedNotifications) return;
+    this.loadNotifications({ background: true });
   }
 
   onChatButtonClick(button: HTMLElement): void {
@@ -250,31 +276,52 @@ export class MainTopbarComponent implements OnInit {
   }
 
   setNotificationStatusFilter(status: NotificationStatus | null): void {
+    if (this.selectedNotificationStatus === status) return;
+
     this.selectedNotificationStatus = status;
-    this.notifications = [];
     this.nextCursor = null;
     this.pendingLoadMore = false;
     this.cdr.markForCheck();
+
     if (this.isFetching) {
       this.pendingFilterReload = true;
       return;
     }
-    this.loadNotifications();
+
+    this.loadNotifications({ force: true });
   }
 
-  private loadNotifications() {
+  private loadNotifications(options: { background?: boolean; force?: boolean } = {}) {
     if (this.isFetching) return;
+
+    const status = this.selectedNotificationStatus;
+    const hasCachedData =
+      this.hasLoadedNotifications &&
+      this.loadedNotificationStatus === status &&
+      this.notifications.length > 0;
+
+    if (!options.force && hasCachedData) {
+      return;
+    }
+
     this.pendingLoadMore = false;
     this.isFetching = true;
-    this.isLoadingNotifications = true;
+
+    const showLoading = options.background !== true || this.isNotificationOpen;
+    if (showLoading) {
+      this.isLoadingNotifications = true;
+    }
+
+    this.cdr.markForCheck();
 
     this.notificationApi
-      .getNotifications(undefined, this.selectedNotificationStatus)
+      .getNotifications(undefined, status)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => {
           this.isFetching = false;
           this.isLoadingNotifications = false;
+          this.cdr.markForCheck();
           if (this.flushPendingFilterReload()) return;
           this.flushPendingLoadMore();
         }),
@@ -284,6 +331,11 @@ export class MainTopbarComponent implements OnInit {
           const incoming = res.notifications ? res.notifications.map((item) => this.normalizeNotification(item)) : [];
           this.notifications = incoming;
           this.nextCursor = this.parseNextCursor(res.next);
+          this.hasLoadedNotifications = true;
+          this.loadedNotificationStatus = status;
+          this.cdr.markForCheck();
+        },
+        error: () => {
           this.cdr.markForCheck();
         },
       });
@@ -307,6 +359,7 @@ export class MainTopbarComponent implements OnInit {
         finalize(() => {
           this.isFetching = false;
           this.isLoadingMore = false;
+          this.cdr.markForCheck();
           if (this.flushPendingFilterReload()) return;
           this.flushPendingLoadMore();
         }),
@@ -349,7 +402,7 @@ export class MainTopbarComponent implements OnInit {
   private flushPendingFilterReload(): boolean {
     if (!this.pendingFilterReload || this.isFetching) return false;
     this.pendingFilterReload = false;
-    this.loadNotifications();
+    this.loadNotifications({ force: true });
     return true;
   }
 

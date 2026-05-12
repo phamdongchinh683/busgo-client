@@ -60,29 +60,19 @@ export class ApiService {
       body['username'] = input;
     }
 
-    return this.http.post<AuthResponse>(`${constant.baseUrl}/auth/sign-in`, body);
+    return this.http.post<AuthResponse>(`${constant.baseUrl}/super-admin/login`, body);
   }
 
   logout(): Observable<unknown> {
-    return this.http.post<unknown>(
-      `${constant.baseUrl}/auth/logout`,
-      {},
-      {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      },
-    );
+    return this.http.post<unknown>(`${constant.baseUrl}/auth/logout`, {});
   }
 
   updatePassword(payload: UpdatePasswordBody): Observable<UpdatePasswordResponse> {
-    return this.http.put<UpdatePasswordResponse>(`${constant.baseUrl}/auth/password`, payload, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-    });
+    return this.http.put<UpdatePasswordResponse>(`${constant.baseUrl}/auth/password`, payload);
   }
 
   sendNotification(payload: SendNotificationRequest): Observable<SendNotificationResponse> {
-    return this.http.post<SendNotificationResponse>(`${constant.baseUrl}/auth/notification`, payload, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-    });
+    return this.http.post<SendNotificationResponse>(`${constant.baseUrl}/auth/notification`, payload);
   }
 
   sendOtp(payload: SendOtpRequest): Observable<SendOtpResponse> {

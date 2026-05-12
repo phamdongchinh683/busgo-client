@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { userStatusLabel } from '@app/shared/utils/domain-labels';
 
 @Component({
   selector: 'app-user-edit-modal',
@@ -27,17 +28,5 @@ export class UserEditModalComponent {
     ev.stopPropagation();
   }
 
-  displayStatus(value: string): string {
-    switch (value) {
-      case 'active':
-        return 'Hoạt động';
-      case 'inactive':
-        return 'Tạm ngưng';
-      case 'banned':
-        return 'Bị cấm';
-      default:
-        return value;
-    }
-  }
-
+  displayStatus = userStatusLabel;
 }

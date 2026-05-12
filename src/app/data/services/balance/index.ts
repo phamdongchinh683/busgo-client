@@ -45,9 +45,8 @@ export class ApiService {
 
   constructor(private http: HttpClient) {}
 
-  private authHeaders() {
+  private jsonHeaders() {
     return {
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
       Accept: 'application/json',
     };
   }
@@ -59,7 +58,7 @@ export class ApiService {
 
     return this.http
       .get<BalanceResponse>(`${constant.baseUrl}/super-admin/balance`, {
-        headers: this.authHeaders(),
+        headers: this.jsonHeaders(),
       })
       .pipe(tap((res) => writeCache(this.balanceCache, cacheKey, res, this.BALANCE_TTL_MS)));
   }
@@ -67,7 +66,7 @@ export class ApiService {
   withdrawBalance(payload: WithdrawBalanceRequest): Observable<WithdrawBalanceResponse> {
     return this.http
       .post<WithdrawBalanceResponse>(`${constant.baseUrl}/super-admin/balance/withdraw`, payload, {
-        headers: this.authHeaders(),
+        headers: this.jsonHeaders(),
       })
       .pipe(tap(() => clearCacheByPrefix(this.balanceCache, 'balance-overview')));
   }
@@ -85,7 +84,7 @@ export class ApiService {
     }
 
     return this.http.get<PayoutListResponse>(`${constant.baseUrl}/super-admin/balance/payout`, {
-      headers: this.authHeaders(),
+      headers: this.jsonHeaders(),
       params,
     });
   }

@@ -18,7 +18,7 @@
         <th>Số điện thoại</th>
         <th>Công ty</th>
         <th>Trạng thái</th>
-        <th>Thao tác</th>
+        <th class="actions-col">Thao tác</th>
       </tr>
     </thead>
     <tbody>
@@ -34,7 +34,7 @@
           <td>
             <span class="pill" [class]="'pill--' + a.status">{{ displayStatus(a.status) }}</span>
           </td>
-          <td>
+          <td class="actions-col">
             <div class="row-actions">
               <button
                 class="btn-icon btn-icon--edit"

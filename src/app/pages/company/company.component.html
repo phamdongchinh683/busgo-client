@@ -1,22 +1,22 @@
-<app-notification
-  *ngIf="notification.show"
-  [message]="notification.message"
-  [type]="notification.type"
-  (closed)="notification.show = false"
-></app-notification>
+<app-page-toast-host />
 
 <div class="page">
   <div class="page-header">
-    <h2>Nhà xe</h2>
+    <div class="header-row page-header__tools-row">
+      <app-page-header-intro
+        title="Nhà xe"
+        subtitle="Xem và cập nhật thông tin doanh nghiệp vận tải trong hệ thống."
+      />
 
-    <app-company-toolbar
-      [searchName]="searchName"
-      [limit]="limit"
-      [pageLimits]="pageLimits"
-      (searchNameChange)="onSearchInput($event)"
-      (limitChange)="onLimitChange($event)"
-      (addClick)="openCreateModal()"
-    ></app-company-toolbar>
+      <app-company-toolbar
+        [searchName]="searchName"
+        [limit]="limit"
+        [pageLimits]="pageLimits"
+        (searchNameChange)="onSearchInput($event)"
+        (limitChange)="onLimitChange($event)"
+        (addClick)="openCreateModal()"
+      ></app-company-toolbar>
+    </div>
   </div>
 
   <div *ngIf="loading" class="loading">
@@ -51,7 +51,7 @@
   [submitting]="submitting"
   (closed)="closeModal()"
   (submitted)="onSubmit()"
-  (logoUploadError)="showNotification($event, 'error')"
+  (logoUploadError)="toast.show($event, 'error')"
 ></app-company-form-modal>
 
 <app-company-delete-modal

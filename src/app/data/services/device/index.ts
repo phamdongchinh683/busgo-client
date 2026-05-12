@@ -13,9 +13,8 @@ export class ApiService {
 
   constructor(private readonly http: HttpClient) {}
 
-  private authHeaders() {
+  private jsonHeaders() {
     return {
-      Authorization: `Bearer ${localStorage.getItem('token') ?? ''}`,
       Accept: 'application/json',
     };
   }
@@ -27,7 +26,7 @@ export class ApiService {
 
     return this.http
       .get<DeviceFcmToken[]>(`${constant.baseUrl}/auth/device/fcm-token`, {
-        headers: this.authHeaders(),
+        headers: this.jsonHeaders(),
       })
       .pipe(tap((res) => writeCache(this.deviceCache, cacheKey, res, this.DEVICE_TTL_MS)));
   }
@@ -35,7 +34,7 @@ export class ApiService {
   saveFcmToken(body: SaveDeviceFcmTokenBody): Observable<DeviceFcmToken> {
     return this.http
       .post<DeviceFcmToken>(`${constant.baseUrl}/auth/device/fcm-token`, body, {
-        headers: this.authHeaders(),
+        headers: this.jsonHeaders(),
       })
       .pipe(tap(() => clearCacheByPrefix(this.deviceCache, 'device-fcm-tokens')));
   }
@@ -43,7 +42,7 @@ export class ApiService {
   deleteFcmToken(id: number): Observable<unknown> {
     return this.http
       .delete(`${constant.baseUrl}/auth/device/fcm-token/${id}`, {
-        headers: this.authHeaders(),
+        headers: this.jsonHeaders(),
       })
       .pipe(tap(() => clearCacheByPrefix(this.deviceCache, 'device-fcm-tokens')));
   }

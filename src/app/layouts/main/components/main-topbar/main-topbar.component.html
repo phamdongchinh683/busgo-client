@@ -80,36 +80,56 @@
           </div>
         </div>
 
-        <div *ngIf="isLoadingNotifications" class="notification-state">Đang tải thông báo...</div>
+        <div *ngIf="isLoadingNotifications" class="notification-state notification-state--loading">
+          <p class="notification-state__message">Đang tải thông báo...</p>
+        </div>
+
         <ng-container *ngIf="!isLoadingNotifications">
-          <button
-            type="button"
-            class="notification-item"
-            [class.notification-item--unread]="!noti.isRead"
-            *ngFor="let noti of notifications; trackBy: trackByNotificationId"
-            [class.notification-item--new]="isNewNotification(noti)"
-            (click)="onNotificationClick($event, noti)"
-          >
-            <span class="notification-item__avatar" aria-hidden="true">
+          <div class="notification-menu__list" *ngIf="notifications.length > 0">
+            <button
+              type="button"
+              class="notification-item"
+              [class.notification-item--unread]="!noti.isRead"
+              *ngFor="let noti of notifications; trackBy: trackByNotificationId"
+              [class.notification-item--new]="isNewNotification(noti)"
+              (click)="onNotificationClick($event, noti)"
+            >
+              <span class="notification-item__avatar-wrap">
+                <span class="notification-item__avatar-unread-dot" *ngIf="!noti.isRead" aria-hidden="true"></span>
+                <span class="notification-item__avatar" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8" />
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                  </svg>
+                </span>
+              </span>
+              <span class="notification-item__info">
+                <span class="notification-item__title" [attr.title]="notificationTitle(noti)">
+                  {{ notificationTitle(noti) }}
+                </span>
+                <span class="notification-item__preview" *ngIf="notificationBody(noti)">{{ notificationBody(noti) }}</span>
+              </span>
+              <span class="notification-item__unread-badge" *ngIf="!noti.isRead">Mới</span>
+            </button>
+          </div>
+
+          <div *ngIf="notifications.length === 0" class="notification-state notification-state--empty">
+            <span class="notification-state__icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                 <path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8" />
                 <path d="M13.73 21a2 2 0 0 1-3.46 0" />
               </svg>
             </span>
-            <span class="notification-item__content">
-              <span class="notification-item__title">{{ notificationTitle(noti) }}</span>
-              <span class="notification-item__body" *ngIf="notificationBody(noti)">{{ notificationBody(noti) }}</span>
-            </span>
-            <span class="notification-item__dot" *ngIf="!noti.isRead" aria-hidden="true"></span>
-          </button>
+            <p class="notification-state__title">Không có thông báo</p>
+            <p class="notification-state__copy">Thông báo mới sẽ hiển thị tại đây.</p>
+          </div>
 
-          <div *ngIf="notifications.length === 0" class="notification-state">Không có thông báo</div>
           <div class="notification-load-more-action" *ngIf="nextCursor !== null && !isLoadingMore">
             <button type="button" class="notification-load-more-btn" (click)="onLoadMoreNotificationsClick($event)">
               Tải thêm
             </button>
           </div>
-          <div *ngIf="isLoadingMore" class="notification-state">Đang tải thêm...</div>
+          <p *ngIf="isLoadingMore" class="notification-state notification-state--loading-more">Đang tải thêm...</p>
         </ng-container>
       </div>
     </div>

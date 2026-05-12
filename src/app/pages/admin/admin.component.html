@@ -1,42 +1,51 @@
-<app-notification
-  *ngIf="notification.show"
-  [message]="notification.message"
-  [type]="notification.type"
-  (closed)="notification.show = false"
-></app-notification>
+<app-page-toast-host />
 
 <div class="page">
   <div class="page-header">
-    <h2>Tài khoản Nhà Xe</h2>
-    <app-company-admin-toolbar
-      [limit]="limit"
-      [pageLimits]="pageLimits"
-      [companies]="companies"
-      [selectedCompanyId]="selectedCompanyId"
-      (limitChange)="onLimitChange($event)"
-      (companyFilterChange)="onCompanyFilterChange($event)"
-      (createClick)="openCreate()"
-    ></app-company-admin-toolbar>
+    <div class="header-row page-header__tools-row">
+      <app-page-header-intro
+        title="Tài khoản Nhà Xe"
+        subtitle="Quản lý tài khoản đăng nhập của đối tác nhà xe và gửi thông báo nhanh."
+      />
+      <app-company-admin-toolbar
+        [limit]="limit"
+        [pageLimits]="pageLimits"
+        [companies]="filterCompanies"
+        [companiesLoading]="companiesLoading"
+        [companiesLoadingMore]="companiesLoadingMore"
+        [dropdownOpen]="companyDropdownOpen"
+        (dropdownOpenChange)="companyDropdownOpen = $event"
+        [selectedCompany]="selectedCompany"
+        [companySearchValue]="companySearch.value ?? ''"
+        (companySearchValueChange)="onCompanySearchValueChange($event)"
+        (limitChange)="onLimitChange($event)"
+        (selectCompany)="selectFilterCompany($event)"
+        (companyDropdownScroll)="onCompanyDropdownScroll($event)"
+        (createClick)="openCreate()"
+      ></app-company-admin-toolbar>
+    </div>
   </div>
 
-  <app-company-admin-table
-    [admins]="admins"
-    [loading]="loading"
-    (updateClick)="onUpdateClick($event)"
-    (notifyClick)="openNotificationModal($event)"
-  ></app-company-admin-table>
+  <div class="page-body">
+    <app-company-admin-table
+      [admins]="admins"
+      [loading]="loading"
+      (updateClick)="onUpdateClick($event)"
+      (notifyClick)="openNotificationModal($event)"
+    ></app-company-admin-table>
 
-  <div class="pagination" *ngIf="!loading && admins.length > 0">
-    <button class="btn-load-more" [disabled]="nextCursor === null || loadingMore" type="button" (click)="loadMore()">
-      {{ nextCursor !== null ? (loadingMore ? 'Đang tải...' : 'Tiếp theo') : 'Không còn dữ liệu' }}
-    </button>
+    <div class="pagination" *ngIf="!loading && admins.length > 0">
+      <button class="btn-load-more" [disabled]="nextCursor === null || loadingMore" type="button" (click)="loadMore()">
+        {{ nextCursor !== null ? (loadingMore ? 'Đang tải...' : 'Tiếp theo') : 'Không còn dữ liệu' }}
+      </button>
+    </div>
   </div>
 </div>
 
 <app-company-admin-create-modal
   [open]="showCreate"
   (openChange)="onCreateOpenChange($event)"
-  [companies]="companies"
+  [companies]="createCompanies"
   [submitting]="createSubmitting"
   (submitted)="onCreateSubmit($event)"
   (validateFailed)="onCreateValidateFailed($event)"
@@ -48,7 +57,7 @@
   [admin]="editingAdmin"
   [submitting]="editSubmitting"
   (submitted)="onEditSubmit($event)"
-  (validateFailed)="showNotification($event, 'warning')"
+  (validateFailed)="toast.show($event, 'warning')"
 ></app-company-admin-edit-modal>
 
 <app-user-notification-modal

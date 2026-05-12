@@ -5,49 +5,20 @@
 .company-table-wrap {
   width: 100%;
   overflow-x: auto;
-  background: var(--color-surface);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-sm);
 }
 
 .company-table {
-  width: 100%;
   min-width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
 }
 
 .company-table th,
 .company-table td {
-  padding: 12px 14px;
   text-align: left;
-  border-bottom: 1px solid var(--color-border);
   vertical-align: middle;
-  font-size: 13px;
-  color: var(--color-text-dark);
-}
-
-.company-table thead th {
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  color: var(--color-text-muted);
-  background: #f8fafc;
-}
-
-.company-table tbody tr:hover {
-  background: #fbfdff;
-}
-
-.company-table tbody tr:last-child td {
-  border-bottom: none;
 }
 
 .actions-col {
   text-align: center;
-  width: 96px;
 }
 
 .company-table th:first-child,

@@ -47,33 +47,25 @@ export class ApiService {
 
     return this.http.get<UserListResponse>(`${constant.baseUrl}/super-admin/user`, {
       params,
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
     });
   }
 
   createUser(payload: CreateUserBody): Observable<CreateUserResponse> {
-    return this.http.post<CreateUserResponse>(`${constant.baseUrl}/super-admin/user`, payload, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-    });
+    return this.http.post<CreateUserResponse>(`${constant.baseUrl}/super-admin/user`, payload);
   }
 
   updateUser(userId: number, payload: UpdateUserBody): Observable<UpdateUserResponse> {
-    return this.http.put<UpdateUserResponse>(`${constant.baseUrl}/super-admin/user/${userId}`, payload, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-    });
+    return this.http.put<UpdateUserResponse>(`${constant.baseUrl}/super-admin/user/${userId}`, payload);
   }
 
   deleteUser(userId: number): Observable<DeleteUserResponse> {
-    return this.http.delete<DeleteUserResponse>(`${constant.baseUrl}/super-admin/user/${userId}`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-    });
+    return this.http.delete<DeleteUserResponse>(`${constant.baseUrl}/super-admin/user/${userId}`);
   }
 
   updatePassword(userId: number, password: string): Observable<UpdateUserPasswordResponse> {
     return this.http.put<UpdateUserPasswordResponse>(
       `${constant.baseUrl}/super-admin/user/${userId}/password`,
       { password },
-      { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } },
     );
   }
 }

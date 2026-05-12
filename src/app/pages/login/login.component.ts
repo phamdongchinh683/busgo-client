@@ -3,7 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { auth } from '../../data/services/index';
-import { SharedModule } from '@app/shared/shared.module';
+import { AppButtonComponent } from '@app/shared/components/app-button/app-button.component';
+import { AppInputComponent } from '@app/shared/components/app-input/app-input.component';
+import { PageToastHostComponent } from '@app/shared/components/page-toast-host/page-toast-host.component';
+import { PageToastService } from '@app/shared/services/page-toast.service';
 import { getApiErrorMessage } from '@app/shared/utils/api-error.util';
 import {
   isDigitsOnly,
@@ -16,13 +19,14 @@ import {
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, SharedModule],
+  imports: [CommonModule, ReactiveFormsModule, PageToastHostComponent, AppInputComponent, AppButtonComponent],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css',
 })
 export class LoginComponent implements OnDestroy {
   private static readonly OTP_COOLDOWN_SECONDS = 120;
   private readonly fb = inject(FormBuilder);
+  private readonly toast = inject(PageToastService);
   private resendOtpTimerId: ReturnType<typeof setInterval> | null = null;
 
   @ViewChildren('otpBox') otpBoxRefs!: QueryList<ElementRef<HTMLInputElement>>;
@@ -47,11 +51,6 @@ export class LoginComponent implements OnDestroy {
   otpSent = false;
   otpTarget: { field: 'email' | 'phone'; value: string } | null = null;
   resendOtpCooldownSeconds = 0;
-  notification: { show: boolean; message: string; type: 'success' | 'error' | 'warning' | 'info' } = {
-    show: false,
-    message: '',
-    type: 'error',
-  };
 
   constructor(
     private readonly api: auth.ApiService,
@@ -60,10 +59,6 @@ export class LoginComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.clearResendOtpTimer();
-  }
-
-  showNotification(message: string, type: 'success' | 'error' | 'warning' | 'info') {
-    this.notification = { show: true, message, type };
   }
 
   private validateText(text: string): string | null {
@@ -96,7 +91,7 @@ export class LoginComponent implements OnDestroy {
   }
 
   openForgotPassword(): void {
-    this.notification.show = false;
+    this.toast.hide();
     this.forgotPasswordOpen = true;
   }
 
@@ -189,16 +184,16 @@ export class LoginComponent implements OnDestroy {
   }
 
   sendOtp(): void {
-    this.notification.show = false;
+    this.toast.hide();
     if (!this.canSendOtp) {
-      this.showNotification(`Vui lòng chờ ${this.resendOtpCooldownLabel} để gửi lại OTP.`, 'info');
+      this.toast.show(`Vui lòng chờ ${this.resendOtpCooldownLabel} để gửi lại OTP.`, 'info');
       return;
     }
     const account = this.forgotForm.controls.account.value;
     const target = this.parseForgotAccount(account);
 
     if (!target) {
-      this.showNotification('Vui lòng nhập email hợp lệ hoặc số điện thoại từ 10 chữ số.', 'warning');
+      this.toast.show('Vui lòng nhập email hợp lệ hoặc số điện thoại từ 10 chữ số.', 'warning');
       return;
     }
 
@@ -209,11 +204,11 @@ export class LoginComponent implements OnDestroy {
         this.otpSent = true;
         this.otpTarget = target;
         this.startResendOtpCooldown();
-        this.showNotification('Đã gửi OTP thành công vui lòng kiểm tra email hoặc số điện thoại nếu không nhận được vui lòng kiểm tra thư rác.', 'info');
+        this.toast.show('Đã gửi OTP thành công vui lòng kiểm tra email hoặc số điện thoại nếu không nhận được vui lòng kiểm tra thư rác.', 'info');
         setTimeout(() => this.focusOtpBox(0), 50);
       },
       error: (err: { error?: { message?: string } }) => {
-        this.showNotification(getApiErrorMessage(err, 'Gửi OTP thất bại.'), 'error');
+        this.toast.show(getApiErrorMessage(err, 'Gửi OTP thất bại.'), 'error');
         this.sendingOtp = false;
       },
       complete: () => {
@@ -247,16 +242,16 @@ export class LoginComponent implements OnDestroy {
       return;
     }
 
-    this.notification.show = false;
+    this.toast.hide();
 
     const target = this.otpTarget ?? this.parseForgotAccount(this.forgotForm.controls.account.value);
     if (!target) {
-      this.showNotification('Vui lòng nhập email hợp lệ hoặc số điện thoại hợp lệ trước khi xác nhận OTP.', 'warning');
+      this.toast.show('Vui lòng nhập email hợp lệ hoặc số điện thoại hợp lệ trước khi xác nhận OTP.', 'warning');
       return;
     }
 
     if (this.isOtpExpired) {
-      this.showNotification('Mã OTP đã hết hạn. Vui lòng gửi lại OTP mới.', 'warning');
+      this.toast.show('Mã OTP đã hết hạn. Vui lòng gửi lại OTP mới.', 'warning');
       return;
     }
 
@@ -264,12 +259,12 @@ export class LoginComponent implements OnDestroy {
     const newPassword = this.forgotForm.controls.newPassword.value.trim();
 
     if (otp.length !== 6 || !newPassword) {
-      this.showNotification('Vui lòng nhập đủ 6 số OTP và mật khẩu mới.', 'warning');
+      this.toast.show('Vui lòng nhập đủ 6 số OTP và mật khẩu mới.', 'warning');
       return;
     }
 
     if (!isValidPassword(newPassword)) {
-      this.showNotification(PASSWORD_MESSAGE, 'warning');
+      this.toast.show(PASSWORD_MESSAGE, 'warning');
       return;
     }
 
@@ -282,11 +277,11 @@ export class LoginComponent implements OnDestroy {
     this.resettingPassword = true;
     this.api.resetPasswordWithOtp(payload).subscribe({
       next: (res) => {
-        this.showNotification(res.message || 'Đặt lại mật khẩu thành công.', 'success');
+        this.toast.show(res.message || 'Đặt lại mật khẩu thành công.', 'success');
         this.closeForgotPassword();
       },
       error: (err) => {
-        this.showNotification('OTP không hợp lệ.', 'error');
+        this.toast.show('OTP không hợp lệ.', 'error');
         this.resettingPassword = false;
       },
       complete: () => {
@@ -296,24 +291,24 @@ export class LoginComponent implements OnDestroy {
   }
 
   onSubmit() {
-    this.notification.show = false;
+    this.toast.hide();
 
     const { text: rawText, password } = this.loginForm.getRawValue();
     const text = rawText.trim();
 
     if (!text || !password) {
-      this.showNotification('Vui lòng điền đầy đủ thông tin.', 'warning');
+      this.toast.show('Vui lòng điền đầy đủ thông tin.', 'warning');
       return;
     }
 
     const textError = this.validateText(text);
     if (textError) {
-      this.showNotification(textError, 'warning');
+      this.toast.show(textError, 'warning');
       return;
     }
 
     if (!isValidPassword(password)) {
-      this.showNotification(PASSWORD_MESSAGE, 'warning');
+      this.toast.show(PASSWORD_MESSAGE, 'warning');
       return;
     }
 
@@ -322,12 +317,12 @@ export class LoginComponent implements OnDestroy {
       next: (res: { token: string; user: unknown }) => {
         localStorage.setItem('token', res.token);
         localStorage.setItem('user', JSON.stringify(res.user));
-        this.showNotification('Đăng nhập thành công', 'success');
+        this.toast.show('Đăng nhập thành công', 'success');
         this.router.navigate(['/dashboard']);
         this.loading = false;
       },
       error: (err: { error?: { message?: string } }) => {
-        this.showNotification(getApiErrorMessage(err, 'Đăng nhập thất bại.'), 'error');
+        this.toast.show(getApiErrorMessage(err, 'Đăng nhập thất bại.'), 'error');
         this.loading = false;
       },
     });

@@ -16,16 +16,14 @@ export class ApiService {
 
   constructor(private http: HttpClient) {}
 
-  private authHeaders() {
+  private jsonHeaders() {
     return {
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
       Accept: 'application/json',
     };
   }
 
-  private authHeadersExport() {
+  private exportHeaders() {
     return {
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
       Accept:
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/octet-stream, application/json, */*',
     };
@@ -55,7 +53,7 @@ export class ApiService {
 
     return this.http
       .get<DashboardResponse>(`${constant.baseUrl}/super-admin/dashboard`, {
-        headers: this.authHeaders(),
+        headers: this.jsonHeaders(),
       })
       .pipe(tap((res) => writeCache(this.dashboardOverviewCache, cacheKey, res, this.DASHBOARD_TTL_MS)));
   }
@@ -75,7 +73,7 @@ export class ApiService {
 
     return this.http
       .get(`${constant.baseUrl}/super-admin/dashboard/booking`, {
-        headers: this.authHeaders(),
+        headers: this.jsonHeaders(),
         params,
       })
       .pipe(tap((res) => writeCache(this.dashboardStatsCache, cacheKey, res, this.DASHBOARD_TTL_MS)));
@@ -96,7 +94,7 @@ export class ApiService {
 
     return this.http
       .get(`${constant.baseUrl}/super-admin/dashboard/revenue`, {
-        headers: this.authHeaders(),
+        headers: this.jsonHeaders(),
         params,
       })
       .pipe(tap((res) => writeCache(this.dashboardStatsCache, cacheKey, res, this.DASHBOARD_TTL_MS)));
@@ -117,7 +115,7 @@ export class ApiService {
 
     return this.http
       .get(`${constant.baseUrl}/super-admin/dashboard/user`, {
-        headers: this.authHeaders(),
+        headers: this.jsonHeaders(),
         params,
       })
       .pipe(tap((res) => writeCache(this.dashboardStatsCache, cacheKey, res, this.DASHBOARD_TTL_MS)));
@@ -125,7 +123,7 @@ export class ApiService {
 
   exportRevenueReport(q: RevenueExportQuery): Observable<HttpResponse<Blob>> {
     return this.http.get(`${constant.baseUrl}/super-admin/dashboard/revenue/export`, {
-      headers: this.authHeadersExport(),
+      headers: this.exportHeaders(),
       params: this.revenueExportParams(q),
       responseType: 'blob',
       observe: 'response',

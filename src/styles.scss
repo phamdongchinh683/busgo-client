@@ -1,6 +1,9 @@
 @import './styles/theme.css';
 @import './styles/call-theme.css';
 @import './styles/custom-dropdown.css';
+@import './styles/data-table.css';
+@import './styles/page-header.css';
+@import './styles/page-shell.css';
 
 *,
 *::before,
@@ -13,6 +16,15 @@
 /* Keep rounded UI globally, but never curve vector icons */
 svg,
 svg * {
+  border-radius: 0 !important;
+}
+
+table,
+thead,
+tbody,
+tr,
+th,
+td {
   border-radius: 0 !important;
 }
 
@@ -279,6 +291,11 @@ button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-
   border-radius: 999px !important;
 }
 
+.action-button--icon svg {
+  width: 16px;
+  height: 16px;
+}
+
 .action-button--sm {
   min-height: 30px;
   padding: 6px 10px;
@@ -449,24 +466,12 @@ label:focus-within .field-label {
   }
 }
 
-/* Compact admin/page table layout across pages */
-.page :is(.table, .company-table, .payout-table) th,
-.page :is(.table, .company-table, .payout-table) td {
-  padding: 10px 12px !important;
-  font-size: 13px !important;
-}
-
-.page :is(.table, .company-table, .payout-table) th {
-  font-size: 12px !important;
-  letter-spacing: 0.2px;
-}
-
-.page :is(.table-wrap, .company-table-wrap, .payout-table-wrap) :is(input, select) {
+:is(.page, .modal) :is(.table-wrap, .company-table-wrap, .payout-table-wrap) :is(input, select) {
   min-height: 34px;
   font-size: 13px;
 }
 
-.page :is(.table-wrap, .company-table-wrap, .payout-table-wrap) .action-button--sm {
+:is(.page, .modal) :is(.table-wrap, .company-table-wrap, .payout-table-wrap) .action-button--sm {
   min-height: 30px;
   padding: 6px 10px;
   font-size: 12px;

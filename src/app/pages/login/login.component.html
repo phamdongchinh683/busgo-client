@@ -1,9 +1,4 @@
-<app-notification
-  *ngIf="notification.show"
-  [message]="notification.message"
-  [type]="notification.type"
-  (closed)="notification.show = false"
-></app-notification>
+<app-page-toast-host />
 
 <div class="page">
   <div class="login-box">

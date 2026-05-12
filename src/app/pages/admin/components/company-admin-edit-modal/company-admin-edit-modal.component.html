@@ -18,7 +18,7 @@
         <span class="label">Trạng thái</span>
         <select class="select" formControlName="status">
           @for (s of statuses; track s) {
-            <option [ngValue]="s">{{ s }}</option>
+            <option [ngValue]="s">{{ displayStatus(s) }}</option>
           }
         </select>
       </label>

@@ -84,17 +84,6 @@
           </button>
         }
         <div class="messenger__window-actions">
-          <button
-            type="button"
-            class="messenger__icon-btn"
-            (click)="goToListView()"
-            aria-label="Về danh sách chat"
-            title="Về danh sách chat"
-          >
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
-              <path d="M6 12h12" />
-            </svg>
-          </button>
           <button type="button" class="messenger__icon-btn" (click)="dock.closePanel()" aria-label="Đóng" title="Đóng">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M18 6L6 18M6 6l12 12" />
@@ -117,7 +106,18 @@
             <p class="messenger__err">{{ listBoxesError() }}</p>
             <button type="button" class="messenger__retry" (click)="retryLoadBoxes()">Thử lại</button>
           } @else if (boxes().length === 0) {
-            <p class="messenger__hint">Chưa có cuộc trò chuyện</p>
+            <div class="messenger__list-empty">
+              <span class="messenger__list-empty-icon" aria-hidden="true">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                  <path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
+                </svg>
+              </span>
+              <p class="messenger__list-empty-title">Chưa có cuộc trò chuyện</p>
+              <p class="messenger__list-empty-copy">Tìm người nhận và gửi tin nhắn đầu tiên để bắt đầu.</p>
+              <button type="button" class="messenger__list-empty-cta" (click)="startNewChat()">
+                Tạo hội thoại mới
+              </button>
+            </div>
           } @else {
             @for (b of boxes(); track trackBox($index, b)) {
               @let preview = threadPreviewLine(b);
@@ -397,12 +397,31 @@
 
   @if (newChatPopupOpen()) {
     <div class="messenger__new-popup-backdrop" (click)="closeNewChatPopup()">
-      <div class="messenger__new-popup" role="dialog" aria-label="Tạo hội thoại mới" (click)="$event.stopPropagation()">
-        <div class="messenger__new-popup-head">
-          <h3>Hội thoại mới</h3>
+      <div
+        class="messenger__new-popup"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="messenger-new-chat-title"
+        aria-describedby="messenger-new-chat-desc"
+        (click)="$event.stopPropagation()"
+      >
+        <header class="messenger__new-popup-head">
+          <div class="messenger__new-popup-intro">
+            <span class="messenger__new-popup-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
+                <path d="M12 8v4" />
+                <path d="M10 10h4" />
+              </svg>
+            </span>
+            <div class="messenger__new-popup-copy">
+              <h3 id="messenger-new-chat-title">Hội thoại mới</h3>
+              <p id="messenger-new-chat-desc">Tìm người nhận và gửi tin nhắn đầu tiên.</p>
+            </div>
+          </div>
           <button
             type="button"
-            class="messenger__icon-btn"
+            class="messenger__icon-btn messenger__new-popup-close"
             (click)="closeNewChatPopup()"
             aria-label="Đóng popup tạo hội thoại"
             title="Đóng"
@@ -412,66 +431,133 @@
               <path d="m6 6 12 12"></path>
             </svg>
           </button>
-        </div>
+        </header>
         <div class="messenger__new-form">
-          <label class="messenger__label">
-            Người nhận
-            <div class="messenger__search-row">
-              <input
-                type="search"
-                [value]="searchQuery()"
-                (input)="onRecipientSearchInput($event)"
-                (keydown.enter)="onRecipientSearchSubmit($event)"
-                placeholder="Email hoặc số điện thoại"
-                autocomplete="off"
-              />
-              <button type="button" class="messenger__search-btn action-button action-button--sm action-button--ghost" (click)="onRecipientSearchSubmit()">
-                Tìm
+          <section class="messenger__new-panel">
+            <div class="messenger__new-panel-head">
+              <span class="messenger__new-step">1</span>
+              <div class="messenger__new-panel-copy">
+                <label class="messenger__label" for="messenger-new-chat-recipient">Người nhận</label>
+                <p class="messenger__new-panel-hint">Tìm theo email hoặc số điện thoại.</p>
+              </div>
+            </div>
+            <div class="messenger__search-shell">
+              <span class="messenger__search-field">
+                <svg class="messenger__search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <circle cx="11" cy="11" r="7"></circle>
+                  <path d="m20 20-3.5-3.5"></path>
+                </svg>
+                <input
+                  id="messenger-new-chat-recipient"
+                  class="messenger__search-input"
+                  type="search"
+                  [value]="searchQuery()"
+                  (input)="onRecipientSearchInput($event)"
+                  (keydown.enter)="onRecipientSearchSubmit($event)"
+                  placeholder="Email hoặc số điện thoại"
+                  autocomplete="off"
+                />
+              </span>
+              <button
+                type="button"
+                class="messenger__search-submit"
+                (click)="onRecipientSearchSubmit()"
+                aria-label="Tìm người nhận"
+                title="Tìm"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <circle cx="11" cy="11" r="7"></circle>
+                  <path d="m20 20-3.5-3.5"></path>
+                </svg>
               </button>
             </div>
-          </label>
-          @if (searchingUsers()) {
-            <p class="messenger__hint messenger__hint--sm">Đang tìm…</p>
-          }
-          @if (searchResults().length > 0) {
-            <ul class="messenger__searchhits">
-              @for (u of searchResults(); track u.id) {
-                <li>
-                  <button type="button" class="messenger__hit" (click)="pickUser(u)">
-                    <span class="messenger__avatar-wrap messenger__avatar-wrap--hit">
-                      @if (userSearchHitOnline(u)) {
-                        <span class="messenger__presence-online" aria-label="Đang hoạt động"></span>
-                      }
-                      <span class="messenger__avatar messenger__avatar--sm">{{ initials(u.fullName) }}</span>
-                    </span>
-                    <span class="messenger__hit-text">
-                      <strong class="messenger__hit-name" [attr.title]="u.fullName">{{ u.fullName }}</strong>
-                      <small>{{ u.email }} · {{ u.phone }}</small>
-                    </span>
-                  </button>
-                </li>
-              }
-            </ul>
-          }
+
+            @if (searchingUsers()) {
+              <p class="messenger__hint messenger__hint--sm messenger__new-status">Đang tìm…</p>
+            }
+
+            @if (searchResults().length > 0) {
+              <ul class="messenger__searchhits messenger__searchhits--popup">
+                @for (u of searchResults(); track u.id) {
+                  <li>
+                    <button type="button" class="messenger__hit" (click)="pickUser(u)">
+                      <span class="messenger__avatar-wrap messenger__avatar-wrap--hit">
+                        @if (userSearchHitOnline(u)) {
+                          <span class="messenger__presence-online" aria-label="Đang hoạt động"></span>
+                        }
+                        <span class="messenger__avatar messenger__avatar--sm">{{ initials(u.fullName) }}</span>
+                      </span>
+                      <span class="messenger__hit-text">
+                        <strong class="messenger__hit-name" [attr.title]="u.fullName">{{ u.fullName }}</strong>
+                        <small>{{ u.email }} · {{ u.phone }}</small>
+                      </span>
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+
           @if (selectedReceiver(); as ru) {
-            <div class="messenger__chips">
-              <span class="messenger__chip">
-                <span class="messenger__chip-label" [attr.title]="ru.fullName">{{ ru.fullName }}</span>
-                <button type="button" class="messenger__chip-x" (click)="clearSelectedReceiver()" aria-label="Bỏ chọn">×</button>
-              </span>
+            <section class="messenger__new-panel messenger__new-panel--selected">
+              <p class="messenger__new-section-label">Đã chọn</p>
+              <div class="messenger__selected-recipient">
+                <span class="messenger__avatar messenger__avatar--sm">{{ initials(ru.fullName) }}</span>
+                <span class="messenger__selected-recipient-text">
+                  <strong [attr.title]="ru.fullName">{{ ru.fullName }}</strong>
+                  <small>{{ ru.email }}</small>
+                </span>
+                <button
+                  type="button"
+                  class="messenger__selected-recipient-clear"
+                  (click)="clearSelectedReceiver()"
+                  aria-label="Bỏ chọn người nhận"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6 6 18"></path>
+                    <path d="m6 6 12 12"></path>
+                  </svg>
+                </button>
+              </div>
+            </section>
+          }
+
+          <section class="messenger__new-panel">
+            <div class="messenger__new-panel-head">
+              <span class="messenger__new-step">2</span>
+              <div class="messenger__new-panel-copy">
+                <label class="messenger__label" for="messenger-new-chat-message">Tin nhắn đầu tiên</label>
+                <p class="messenger__new-panel-hint">Nội dung sẽ mở cuộc trò chuyện mới.</p>
+              </div>
             </div>
-          }
-          <label class="messenger__label">
-            Tin nhắn đầu tiên
-            <textarea rows="3" [ngModel]="newMessage()" (ngModelChange)="newMessage.set($event)" placeholder="Nội dung…"></textarea>
-          </label>
+            <textarea
+              id="messenger-new-chat-message"
+              class="messenger__new-message"
+              rows="4"
+              [ngModel]="newMessage()"
+              (ngModelChange)="newMessage.set($event)"
+              placeholder="Nhập nội dung tin nhắn…"
+            ></textarea>
+          </section>
+
           @if (createError()) {
-            <p class="messenger__err">{{ createError() }}</p>
+            <p class="messenger__err messenger__new-error" role="alert">{{ createError() }}</p>
           }
-          <button type="button" class="messenger__send-lg action-button" (click)="submitNewChat()" [disabled]="creating()">
+        </div>
+
+        <footer class="messenger__new-popup-foot">
+          <button type="button" class="messenger__new-cancel action-button action-button--ghost" (click)="closeNewChatPopup()">
+            Hủy
+          </button>
+          <button
+            type="button"
+            class="messenger__send-lg action-button"
+            (click)="submitNewChat()"
+            [disabled]="creating()"
+          >
             {{ creating() ? 'Đang tạo…' : 'Bắt đầu trò chuyện' }}
           </button>
-        </div>
+        </footer>
       </div>
     </div>
   }

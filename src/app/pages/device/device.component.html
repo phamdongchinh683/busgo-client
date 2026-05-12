@@ -1,56 +1,89 @@
-<app-notification
-  *ngIf="notification.show"
-  [message]="notification.message"
-  [type]="notification.type"
-  (closed)="notification.show = false"
-/>
+<app-page-toast-host />
 
 <div class="page">
-  <div class="page-header">
-    <div>
-      <h2>Thiết bị của tôi</h2>
-      <p class="subtitle">Quản lý thiết bị đã đăng ký</p>
-    </div>
+  <div class="page-header page-header--split">
+    <app-page-header-intro
+      title="Thiết bị của tôi"
+      subtitle="Quản lý thiết bị đã đăng ký để nhận thông báo."
+    />
 
     <div class="header-actions">
-      <button type="button" class="btn btn-secondary" [disabled]="loading" (click)="fetchTokens()">Làm mới</button>
-      <button type="button" class="btn btn-primary" [disabled]="registering" (click)="registerCurrentDevice()">
-        {{ registering ? 'Đang đăng ký...' : 'Thêm thiết bị' }}
+      <button
+        type="button"
+        class="action-button action-button--ghost action-button--icon"
+        [disabled]="loading"
+        (click)="fetchTokens()"
+        title="Làm mới"
+        aria-label="Làm mới"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M23 4v6h-6M1 20v-6h6" />
+          <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        class="action-button action-button--icon"
+        [disabled]="registering"
+        (click)="registerCurrentDevice()"
+        title="Thêm thiết bị"
+        aria-label="Thêm thiết bị"
+      >
+        @if (registering) {
+          <span class="btn-icon__spinner" aria-hidden="true"></span>
+        } @else {
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+        }
       </button>
     </div>
   </div>
 
-  <div class="card">
-    <div *ngIf="loading" class="state">Đang tải token...</div>
+  <div *ngIf="loading" class="state card-surface">Đang tải token...</div>
 
-    <div *ngIf="!loading && tokens.length === 0" class="state">Không tìm thấy FCM token.</div>
+  <div *ngIf="!loading && tokens.length === 0" class="state card-surface">Không tìm thấy token thiết bị.</div>
 
-    <div *ngIf="!loading && tokens.length > 0" class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>FCM Token</th>
-            <th class="actions-col">Thao tác</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let token of tokens">
-            <td>
-              <code class="token" [title]="token.fcmToken">{{ token.fcmToken }}</code>
-            </td>
-            <td class="actions-col">
+  <div *ngIf="!loading && tokens.length > 0" class="page-body">
+    <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Token thiết bị</th>
+          <th class="actions-col">Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let token of tokens">
+          <td>
+            <code class="token" [title]="token.fcmToken">{{ token.fcmToken }}</code>
+          </td>
+          <td class="actions-col">
+            <div class="row-actions">
               <button
                 type="button"
-                class="btn-delete"
+                class="btn-icon btn-icon--delete"
                 [disabled]="deletingId === token.id"
                 (click)="deleteToken(token.id)"
+                [title]="deletingId === token.id ? 'Đang xóa token' : 'Xóa token'"
+                [attr.aria-label]="deletingId === token.id ? 'Đang xóa token' : 'Xóa token'"
               >
-                {{ deletingId === token.id ? 'Đang xóa...' : 'Xóa' }}
+                @if (deletingId === token.id) {
+                  <span class="btn-icon__spinner" aria-hidden="true"></span>
+                } @else {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  </svg>
+                }
               </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
     </div>
   </div>
 </div>

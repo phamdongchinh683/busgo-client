@@ -46,42 +46,16 @@
 }
 
 .table-wrap {
-  border: 1px solid var(--color-border);
-  border-radius: 0;
-  background: #f7fcf9;
   overflow: auto;
 }
 
 .table {
-  width: 100%;
-  border-collapse: collapse;
   min-width: 980px;
-  table-layout: fixed;
 }
 
 th,
 td {
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--color-border);
-  font-size: 12px;
-  color: var(--color-text-dark);
-  font-family: var(--font-family-mono);
-}
-
-th {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  color: var(--color-text-muted);
   text-align: left;
-  background: #ffffff;
-  position: sticky;
-  top: 0;
-  z-index: 1;
-}
-
-tr:hover td {
-  background: color-mix(in srgb, var(--color-primary) 6%, #ffffff);
 }
 
 .table th:nth-child(1),
@@ -97,9 +71,13 @@ tr:hover td {
   text-overflow: ellipsis;
 }
 
-.table th:nth-child(7),
-.table td:nth-child(7) {
+.table :is(th.actions-col, td.actions-col) {
   width: 120px;
+  min-width: 120px;
+  max-width: 120px;
+  text-align: center;
+  overflow: visible;
+  white-space: nowrap;
 }
 
 .col-email {

@@ -2,7 +2,7 @@
   position: relative;
   background: #fff;
   border: 1px solid var(--color-border);
-  border-radius: 0;
+  border-radius: 16px;
   padding: 22px 20px 20px;
   min-height: 206px;
   box-shadow:
@@ -31,12 +31,12 @@
   flex-shrink: 0;
   width: 44px;
   height: 44px;
-  border-radius: 0;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: 1px solid currentColor;
-  background: transparent !important;
+  background: color-mix(in srgb, currentColor 8%, #ffffff) !important;
 }
 
 .balance-card--available .balance-card__icon {
@@ -75,6 +75,7 @@
 
 .balance-list__row {
   border-bottom: 1px solid #f1f5f9;
+  padding: 12px 0;
 }
 
 .balance-list__row:last-child {
@@ -82,19 +83,11 @@
 }
 
 .balance-list__line {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 10px 20px;
-}
-
-.balance-list__row:last-child .balance-list__line {
-  padding-bottom: 2px;
+  display: grid;
+  gap: 6px;
 }
 
 .balance-list__figures {
-  flex: 0 1 auto;
-  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -102,11 +95,10 @@
 }
 
 .balance-list__context {
-  flex: 1 1 min(100%, 260px);
   margin: 0;
-  max-width: 420px;
+  max-width: none;
   font-size: 13px;
-  line-height: 1.56;
+  line-height: 1.5;
   color: var(--color-text-muted);
 }
 

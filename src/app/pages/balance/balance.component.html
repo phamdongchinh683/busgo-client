@@ -1,90 +1,109 @@
-<app-notification
-  *ngIf="notification.show"
-  [message]="notification.message"
-  [type]="notification.type"
-  (closed)="notification.show = false"
-/>
+<app-page-toast-host />
 
-<div class="page">
-  <header class="page-header">
-    <div class="page-header__text">
-      <h2 class="page-title">Lợi nhuận của bạn </h2>
+<div class="page balance-page">
+  <header class="page-header page-header--stacked balance-page__header">
+    <div class="header-row balance-page__top">
+      <app-page-header-intro
+        title="Số dư của bạn"
+        subtitle="Theo dõi số dư khả dụng, khoản đang chờ và thao tác rút tiền."
+      />
 
-      <div class="header-actions">
-        <div class="header-actions__panel">
-          <button
-            type="button"
-            class="btn btn-secondary btn--block btn-refresh"
-            [class.btn--loading]="loading"
-            [disabled]="loading"
-            (click)="load()"
-          >
-            <span class="btn__icon" aria-hidden="true">
-              <span *ngIf="loading" class="btn__spinner"></span>
-              <svg *ngIf="!loading" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M23 4v6h-6M1 20v-6h6" />
-                <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
-              </svg>
-            </span>
-            <span class="btn__label">{{ loading ? 'Đang tải...' : 'Làm mới số dư' }}</span>
-          </button>
-          <button type="button" class="btn btn-danger btn--block btn-withdraw" [disabled]="withdrawing" (click)="openWithdrawModal()">
-            Rút tiền về tài khoản
-          </button>
-          <button type="button" class="btn btn-ghost btn--block" [disabled]="payoutLoading" (click)="openPayoutModal()">
-            {{ payoutLoading && !payoutOpen ? 'Đang tải...' : 'Xem giao dịch rút tiền' }}
-          </button>
-        </div>
+      <div class="balance-actions" role="toolbar" aria-label="Thao tác số dư">
+      <button
+        type="button"
+        class="action-button action-button--ghost"
+        [class.action-button--loading]="loading"
+        [disabled]="loading"
+        (click)="load()"
+        title="Làm mới số dư"
+        aria-label="Làm mới số dư"
+      >
+        <span *ngIf="loading" class="btn__spinner" aria-hidden="true"></span>
+        <svg *ngIf="!loading" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M23 4v6h-6M1 20v-6h6" />
+          <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
+        </svg>
+        Làm mới
+      </button>
+      <button
+        type="button"
+        class="action-button"
+        [disabled]="withdrawing"
+        (click)="openWithdrawModal()"
+        title="Rút tiền về tài khoản"
+        aria-label="Rút tiền về tài khoản"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M12 1v22" />
+          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6" />
+        </svg>
+        Rút tiền
+      </button>
+      <button
+        type="button"
+        class="action-button action-button--ghost"
+        [disabled]="payoutLoading"
+        (click)="openPayoutModal()"
+        title="Xem giao dịch rút tiền"
+        aria-label="Xem giao dịch rút tiền"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M8 6h13" />
+          <path d="M8 12h13" />
+          <path d="M8 18h13" />
+          <path d="M3 6h.01" />
+          <path d="M3 12h.01" />
+          <path d="M3 18h.01" />
+        </svg>
+        Giao dịch rút tiền
+      </button>
       </div>
-    </div>
-
-    <div class="header-right">
-      <div class="header-balance">
-        <div *ngIf="loading" class="balance-grid balance-grid--header balance-grid--skeleton" aria-hidden="true">
-          <div class="balance-skeleton-card">
-            <span class="balance-skeleton-line balance-skeleton-line--sm"></span>
-            <span class="balance-skeleton-line balance-skeleton-line--md"></span>
-            <span class="balance-skeleton-line balance-skeleton-line--lg"></span>
-            <span class="balance-skeleton-line"></span>
-          </div>
-          <div class="balance-skeleton-card">
-            <span class="balance-skeleton-line balance-skeleton-line--sm"></span>
-            <span class="balance-skeleton-line balance-skeleton-line--md"></span>
-            <span class="balance-skeleton-line balance-skeleton-line--lg"></span>
-            <span class="balance-skeleton-line"></span>
-          </div>
-        </div>
-
-        <div *ngIf="!loading && !data" class="header-balance__state header-balance__state--error">
-          <span>Không tải được số dư.</span>
-          <button type="button" class="btn btn-secondary" (click)="load()">Thử lại</button>
-        </div>
-
-        <div *ngIf="!loading && data" class="balance-grid balance-grid--header">
-          <app-balance-status-card
-            [title]="'Khả dụng'"
-            [hint]="'Có thể rút tiền ngay'"
-            [section]="'available'"
-            [items]="data.available"
-            [amountFormatter]="amountFormatter"
-            [secondaryAmountFormatter]="secondaryAmountFormatter"
-            [contextFormatter]="contextFormatter"
-          />
-
-          <app-balance-status-card
-            [title]="'Đang chờ'"
-            [hint]="'Không thể rút chờ 2 - 3 ngày'"
-            [section]="'pending'"
-            [items]="data.pending"
-            [amountFormatter]="amountFormatter"
-            [secondaryAmountFormatter]="secondaryAmountFormatter"
-            [contextFormatter]="contextFormatter"
-          />
-        </div>
-      </div>
-
     </div>
   </header>
+
+  <section class="balance-page__summary" aria-label="Tổng quan số dư">
+    <div *ngIf="loading" class="balance-grid balance-grid--skeleton" aria-hidden="true">
+      <div class="balance-skeleton-card">
+        <span class="balance-skeleton-line balance-skeleton-line--sm"></span>
+        <span class="balance-skeleton-line balance-skeleton-line--md"></span>
+        <span class="balance-skeleton-line balance-skeleton-line--lg"></span>
+        <span class="balance-skeleton-line"></span>
+      </div>
+      <div class="balance-skeleton-card">
+        <span class="balance-skeleton-line balance-skeleton-line--sm"></span>
+        <span class="balance-skeleton-line balance-skeleton-line--md"></span>
+        <span class="balance-skeleton-line balance-skeleton-line--lg"></span>
+        <span class="balance-skeleton-line"></span>
+      </div>
+    </div>
+
+    <div *ngIf="!loading && !data" class="header-balance__state header-balance__state--error">
+      <span>Không tải được số dư.</span>
+      <button type="button" class="btn btn-secondary" (click)="load()">Thử lại</button>
+    </div>
+
+    <div *ngIf="!loading && data" class="balance-grid">
+      <app-balance-status-card
+        [title]="'Khả dụng'"
+        [hint]="'Có thể rút tiền ngay'"
+        [section]="'available'"
+        [items]="data.available"
+        [amountFormatter]="amountFormatter"
+        [secondaryAmountFormatter]="secondaryAmountFormatter"
+        [contextFormatter]="contextFormatter"
+      />
+
+      <app-balance-status-card
+        [title]="'Đang chờ'"
+        [hint]="'Không thể rút chờ 2 - 3 ngày'"
+        [section]="'pending'"
+        [items]="data.pending"
+        [amountFormatter]="amountFormatter"
+        [secondaryAmountFormatter]="secondaryAmountFormatter"
+        [contextFormatter]="contextFormatter"
+      />
+    </div>
+  </section>
 
   <section class="export-panel" aria-labelledby="export-revenue-heading">
     <div class="export-panel__accent" aria-hidden="true"></div>
@@ -103,14 +122,19 @@
             <p class="export-panel__hint">Chọn tiêu chí, sau đó bấm <strong>Xuất Excel</strong> để tải báo cáo.</p>
           </div>
         </div>
-        <button type="button" class="btn btn-primary" [disabled]="exportLoading" (click)="exportRevenueExcel()">
-          <span class="btn__icon" aria-hidden="true">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-              <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />
-            </svg>
-          </span>
-          {{ exportLoading ? 'Đang xuất...' : 'Xuất Excel' }}
+        <button
+          type="button"
+          class="action-button"
+          [disabled]="exportLoading"
+          (click)="exportRevenueExcel()"
+          title="Xuất Excel"
+          aria-label="Xuất Excel"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+            <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />
+          </svg>
+          Xuất Excel
         </button>
       </div>
 
@@ -147,7 +171,6 @@
       </div>
     </div>
   </section>
-
 </div>
 
 <div *ngIf="payoutOpen" class="modal-overlay" (click)="closePayoutModal()">
@@ -158,11 +181,11 @@
         <span class="field__label">Trạng thái</span>
         <select class="select" [(ngModel)]="payoutStatus" [disabled]="payoutLoading || payoutLoadingMore" (change)="applyPayoutFilter()">
           <option [ngValue]="''">Tất cả</option>
-          <option [ngValue]="'paid'">paid</option>
-          <option [ngValue]="'pending'">pending</option>
-          <option [ngValue]="'in_transit'">in_transit</option>
-          <option [ngValue]="'canceled'">canceled</option>
-          <option [ngValue]="'failed'">failed</option>
+          <option [ngValue]="'paid'">{{ payoutStatusLabel('paid') }}</option>
+          <option [ngValue]="'pending'">{{ payoutStatusLabel('pending') }}</option>
+          <option [ngValue]="'in_transit'">{{ payoutStatusLabel('in_transit') }}</option>
+          <option [ngValue]="'canceled'">{{ payoutStatusLabel('canceled') }}</option>
+          <option [ngValue]="'failed'">{{ payoutStatusLabel('failed') }}</option>
         </select>
       </label>
       <label class="field">

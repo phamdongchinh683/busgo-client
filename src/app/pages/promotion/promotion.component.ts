@@ -11,12 +11,14 @@ import {
 } from '@app/data/interfaces/promotion';
 import { UploadPresignedResponse } from '@app/data/interfaces/upload';
 import { imageUploadPresets } from '@app/data/services/upload/image-upload-presets';
-import { SharedModule } from '@app/shared/shared.module';
+import { PageToastHostComponent } from '@app/shared/components/page-toast-host/page-toast-host.component';
+import { PageHeaderIntroComponent } from '@app/shared/components/page-header-intro/page-header-intro.component';
+import { PageToastService } from '@app/shared/services/page-toast.service';
 
 @Component({
   selector: 'app-promotion',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, SharedModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, PageToastHostComponent, PageHeaderIntroComponent],
   templateUrl: './promotion.component.html',
   styleUrl: './promotion.component.css',
 })
@@ -28,6 +30,7 @@ export class PromotionComponent implements OnInit {
     expiredAt: number;
   } | null = null;
   private readonly fb = inject(FormBuilder);
+  private readonly toast = inject(PageToastService);
 
   promotions: PromotionItem[] = [];
   filteredPromotionsView: PromotionItem[] = [];
@@ -55,12 +58,6 @@ export class PromotionComponent implements OnInit {
     endDate: ['', [Validators.required]],
   });
 
-  notification: { show: boolean; message: string; type: 'success' | 'error' | 'warning' | 'info' } = {
-    show: false,
-    message: '',
-    type: 'info',
-  };
-
   constructor(
     private readonly api: promotion.ApiService,
     private readonly uploadApi: upload.ApiService,
@@ -85,10 +82,6 @@ export class PromotionComponent implements OnInit {
   private buildFilteredPromotions(): PromotionItem[] {
     if (this.filterStatus === null) return this.promotions;
     return this.promotions.filter((item) => item.isActive === this.filterStatus);
-  }
-
-  showNotification(message: string, type: 'success' | 'error' | 'warning' | 'info'): void {
-    this.notification = { show: true, message, type };
   }
 
   resetFilters(): void {
@@ -123,7 +116,7 @@ export class PromotionComponent implements OnInit {
       },
       error: () => {
         this.loading = false;
-        this.showNotification('Không tải được danh sách khuyến mãi.', 'error');
+        this.toast.show('Không tải được danh sách khuyến mãi.', 'error');
       },
     });
   }
@@ -141,7 +134,7 @@ export class PromotionComponent implements OnInit {
       },
       error: () => {
         this.loadingMore = false;
-        this.showNotification('Không tải thêm được khuyến mãi.', 'error');
+        this.toast.show('Không tải thêm được khuyến mãi.', 'error');
       },
     });
   }
@@ -212,15 +205,15 @@ export class PromotionComponent implements OnInit {
       const secureUrl = await this.uploadPromotionImage(this.editingPromotion.id, file);
       this.form.patchValue({ imageUrl: secureUrl });
       this.revokePendingPreview();
-      this.showNotification('Upload ảnh thành công.', 'success');
+      this.toast.show('Tải ảnh lên thành công.', 'success');
     } catch (err: unknown) {
-      let message = 'Upload ảnh thất bại.';
+      let message = 'Tải ảnh lên thất bại.';
       if (err instanceof HttpErrorResponse) {
         message = (err.error as { message?: string })?.message ?? err.message ?? message;
       } else if (err instanceof Error) {
         message = err.message;
       }
-      this.showNotification(message, 'error');
+      this.toast.show(message, 'error');
     } finally {
       this.uploading = false;
       this.uploadProgress = 0;
@@ -230,7 +223,7 @@ export class PromotionComponent implements OnInit {
   submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.showNotification('Vui lòng điền đầy đủ thông tin.', 'warning');
+      this.toast.show('Vui lòng điền đầy đủ thông tin.', 'warning');
       return;
     }
 
@@ -245,17 +238,17 @@ export class PromotionComponent implements OnInit {
     };
 
     if (!body.title || !body.content || !body.startDate || !body.endDate) {
-      this.showNotification('Thiếu dữ liệu bắt buộc.', 'warning');
+      this.toast.show('Thiếu dữ liệu bắt buộc.', 'warning');
       return;
     }
 
     if (!this.isValidMonthDay(body.startDate) || !this.isValidMonthDay(body.endDate)) {
-      this.showNotification('Vui lòng chọn ngày bắt đầu và ngày kết thúc.', 'warning');
+      this.toast.show('Vui lòng chọn ngày bắt đầu và ngày kết thúc.', 'warning');
       return;
     }
 
     if (this.monthDayValue(body.endDate) < this.monthDayValue(this.todayMonthDay())) {
-      this.showNotification('Ngày kết thúc chỉ được chọn từ hôm nay trở đi.', 'warning');
+      this.toast.show('Ngày kết thúc chỉ được chọn từ hôm nay trở đi.', 'warning');
       return;
     }
 
@@ -268,12 +261,12 @@ export class PromotionComponent implements OnInit {
           this.promotions = this.promotions.map((x) => (x.id === updated.id ? updated : x));
           this.updateListCache(this.promotions, this.nextCursor);
           this.applyPromotionFilters();
-          this.showNotification('Cập nhật khuyến mãi thành công.', 'success');
+          this.toast.show('Cập nhật khuyến mãi thành công.', 'success');
           this.closeModal();
         },
         error: () => {
           this.submitting = false;
-          this.showNotification('Cập nhật khuyến mãi thất bại.', 'error');
+          this.toast.show('Cập nhật khuyến mãi thất bại.', 'error');
         },
       });
       return;
@@ -413,7 +406,7 @@ export class PromotionComponent implements OnInit {
           createdId > 0 &&
           !created.imageUrl
         ) {
-          this.showNotification('Đã tạo tin. Ảnh đang được đồng bộ nền...', 'info');
+          this.toast.show('Đã tạo tin. Ảnh đang được đồng bộ nền...', 'info');
           pendingUploadTask
             .then((secureUrl) => {
               if (!secureUrl) return;
@@ -435,16 +428,16 @@ export class PromotionComponent implements OnInit {
               });
             })
             .catch(() => {
-              this.showNotification('Upload ảnh thất bại sau khi tạo. Bạn có thể sửa lại để upload.', 'warning');
+              this.toast.show('Tải ảnh lên thất bại sau khi tạo. Bạn có thể sửa lại để tải lại.', 'warning');
             });
         } else {
-          this.showNotification('Tạo khuyến mãi thành công.', 'success');
+          this.toast.show('Tạo khuyến mãi thành công.', 'success');
         }
         this.closeModal();
       },
       error: () => {
         this.submitting = false;
-        this.showNotification('Tạo khuyến mãi thất bại.', 'error');
+        this.toast.show('Tạo khuyến mãi thất bại.', 'error');
       },
     });
   }
@@ -464,7 +457,7 @@ export class PromotionComponent implements OnInit {
         this.pendingCreateUploadTask = null;
         this.pendingCreateUploadedUrl = '';
         this.form.patchValue({ imageUrl: '' });
-        this.showNotification('Upload ảnh thất bại. Bạn vẫn có thể tạo tin và upload lại sau.', 'warning');
+        this.toast.show('Tải ảnh lên thất bại. Bạn vẫn có thể tạo tin và tải lại sau.', 'warning');
       })
       .finally(() => {
         this.uploading = false;

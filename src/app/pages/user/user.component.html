@@ -1,14 +1,12 @@
-<app-notification
-  *ngIf="notification.show"
-  [message]="notification.message"
-  [type]="notification.type"
-  (closed)="notification.show = false"
-/>
+<app-page-toast-host />
 
 <div class="page">
-  <div class="page-header">
+  <div class="page-header page-header--stacked">
     <div class="header-row">
-      <h2>Người dùng trong hệ thống</h2>
+      <app-page-header-intro
+        title="Người dùng trong hệ thống"
+        subtitle="Tìm kiếm, lọc và quản lý tài khoản người dùng theo công ty."
+      />
       <button class="btn-create" type="button" (click)="openCreateModal()" title="Tạo người dùng" aria-label="Tạo người dùng">
         <svg
           viewBox="0 0 24 24"

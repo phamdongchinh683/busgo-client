@@ -21,7 +21,6 @@ export class ApiService {
   getPresigned(folder: string, id: number): Observable<UploadPresignedResponse> {
     return this.http.get<UploadPresignedResponse>(`${constant.baseUrl}/file/upload/super-admin/presigned`, {
       params: { folder, id: String(id) },
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
     });
   }
 

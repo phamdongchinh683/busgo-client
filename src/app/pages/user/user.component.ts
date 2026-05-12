@@ -23,7 +23,9 @@ import {
   passwordValidator,
   phone10DigitsValidator,
 } from '@app/shared/utils/validators';
-import { SharedModule } from '@app/shared/shared.module';
+import { PageToastHostComponent } from '@app/shared/components/page-toast-host/page-toast-host.component';
+import { PageHeaderIntroComponent } from '@app/shared/components/page-header-intro/page-header-intro.component';
+import { PageToastService } from '@app/shared/services/page-toast.service';
 import { getApiErrorMessage } from '@app/shared/utils/api-error.util';
 import { UserFiltersPanelComponent } from './components/user-filters-panel/user-filters-panel.component';
 import { UserListPanelComponent } from './components/user-list-panel/user-list-panel.component';
@@ -39,7 +41,8 @@ import { UserNotificationModalComponent } from './components/user-notification-m
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    SharedModule,
+    PageToastHostComponent,
+    PageHeaderIntroComponent,
     UserFiltersPanelComponent,
     UserListPanelComponent,
     UserCreateModalComponent,
@@ -85,11 +88,8 @@ export class UserComponent implements OnInit {
   notificationSubmitting = false;
   selectedNotificationUser: User | null = null;
 
-  notification: { show: boolean; message: string; type: 'success' | 'error' | 'warning' | 'info' } = {
-    show: false,
-    message: '',
-    type: 'info',
-  };
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly toast = inject(PageToastService);
 
   filters!: FormGroup<{
     email: FormControl<string | null>;
@@ -118,8 +118,6 @@ export class UserComponent implements OnInit {
     role: FormControl<(typeof USER_ROLES)[number] | null>;
   }>;
   passwordForm!: FormGroup<{ password: FormControl<string | null> }>;
-
-  private readonly destroyRef = inject(DestroyRef);
 
   constructor(
     private readonly fb: FormBuilder,
@@ -179,10 +177,6 @@ export class UserComponent implements OnInit {
     };
     window.addEventListener('click', onClick);
     this.destroyRef.onDestroy(() => window.removeEventListener('click', onClick));
-  }
-
-  showNotification(message: string, type: 'success' | 'error' | 'warning' | 'info') {
-    this.notification = { show: true, message, type };
   }
 
   openCreateModal() {
@@ -279,7 +273,7 @@ export class UserComponent implements OnInit {
   submitCreateUser() {
     if (this.createForm.invalid) {
       this.createForm.markAllAsTouched();
-      this.showNotification(this.getCreateFormErrorMessage(), 'warning');
+      this.toast.show(this.getCreateFormErrorMessage(), 'warning');
       return;
     }
 
@@ -299,12 +293,12 @@ export class UserComponent implements OnInit {
       })
       .subscribe({
         next: () => {
-          this.showNotification('Tạo mới thành công.', 'success');
+          this.toast.show('Tạo mới thành công.', 'success');
           this.closeCreateModal();
           this.applyFilters();
         },
         error: (err: unknown) => {
-          this.showNotification(getApiErrorMessage(err, 'Tạo người dùng thất bại.'), 'error');
+          this.toast.show(getApiErrorMessage(err, 'Tạo người dùng thất bại.'), 'error');
           this.creatingUser = false;
         },
       });
@@ -332,7 +326,7 @@ export class UserComponent implements OnInit {
     if (!this.selectedActionUser) return;
     if (this.editForm.invalid) {
       this.editForm.markAllAsTouched();
-      this.showNotification(this.getEditFormErrorMessage(), 'warning');
+      this.toast.show(this.getEditFormErrorMessage(), 'warning');
       return;
     }
     const v = this.editForm.getRawValue();
@@ -348,11 +342,11 @@ export class UserComponent implements OnInit {
       .subscribe({
         next: (res: UpdateUserResponse) => {
           this.users = this.users.map((item) => (item.id === res.user.id ? { ...item, ...res.user } : item));
-          this.showNotification('Cập nhật thành công.', 'success');
+          this.toast.show('Cập nhật thành công.', 'success');
           this.closeEditModal();
         },
         error: (err: unknown) => {
-          this.showNotification(getApiErrorMessage(err, 'Cập nhật người dùng thất bại.'), 'error');
+          this.toast.show(getApiErrorMessage(err, 'Cập nhật người dùng thất bại.'), 'error');
           this.editingUserLoading = false;
         },
       });
@@ -376,7 +370,7 @@ export class UserComponent implements OnInit {
     if (!this.selectedActionUser) return;
     if (this.passwordForm.invalid) {
       this.passwordForm.markAllAsTouched();
-      this.showNotification(
+      this.toast.show(
         this.passwordForm.controls.password.errors?.['password'] ? PASSWORD_MESSAGE : 'Mật khẩu là bắt buộc.',
         'warning',
       );
@@ -386,11 +380,11 @@ export class UserComponent implements OnInit {
     this.updatingPasswordLoading = true;
     this.userApi.updatePassword(this.selectedActionUser.id, password).subscribe({
       next: (res: UpdateUserPasswordResponse) => {
-        this.showNotification(`Đã cập nhật mật khẩu: ${res.password}`, 'success');
+        this.toast.show(`Đã cập nhật mật khẩu: ${res.password}`, 'success');
         this.closePasswordModal();
       },
       error: (err: unknown) => {
-        this.showNotification(getApiErrorMessage(err, 'Cập nhật mật khẩu thất bại.'), 'error');
+        this.toast.show(getApiErrorMessage(err, 'Cập nhật mật khẩu thất bại.'), 'error');
         this.updatingPasswordLoading = false;
       },
     });
@@ -402,11 +396,11 @@ export class UserComponent implements OnInit {
     this.userApi.deleteUser(this.selectedActionUser.id).subscribe({
       next: (res: DeleteUserResponse) => {
         this.users = this.users.filter((item) => item.id !== res.user.id);
-        this.showNotification('Đã xóa.', 'success');
+        this.toast.show('Đã xóa.', 'success');
         this.closeDeleteModal();
       },
       error: () => {
-        this.showNotification('Không thể xóa người dùng này.', 'error');
+        this.toast.show('Không thể xóa người dùng này.', 'error');
         this.deletingUserLoading = false;
       },
     });
@@ -425,11 +419,11 @@ export class UserComponent implements OnInit {
       })
       .subscribe({
         next: () => {
-          this.showNotification('Gửi thông báo thành công.', 'success');
+          this.toast.show('Gửi thông báo thành công.', 'success');
           this.closeNotificationModal();
         },
         error: (err: unknown) => {
-          this.showNotification(getApiErrorMessage(err, 'Gửi thông báo thất bại.'), 'error');
+          this.toast.show(getApiErrorMessage(err, 'Gửi thông báo thất bại.'), 'error');
           this.notificationSubmitting = false;
         },
       });
@@ -438,7 +432,7 @@ export class UserComponent implements OnInit {
   applyFilters() {
     if (this.filters.invalid) {
       this.filters.markAllAsTouched();
-      this.showNotification('Vui lòng sửa các lỗi xác thực.', 'warning');
+      this.toast.show('Vui lòng sửa các lỗi xác thực.', 'warning');
       return;
     }
     this.loading = true;
@@ -463,7 +457,7 @@ export class UserComponent implements OnInit {
           this.loading = false;
         },
         error: (err: unknown) => {
-          this.showNotification(getApiErrorMessage(err, 'Tải danh sách người dùng thất bại.'), 'error');
+          this.toast.show(getApiErrorMessage(err, 'Tải danh sách người dùng thất bại.'), 'error');
           this.loading = false;
         },
       });
@@ -492,7 +486,7 @@ export class UserComponent implements OnInit {
           this.loadingMore = false;
         },
         error: (err: unknown) => {
-          this.showNotification(getApiErrorMessage(err, 'Tải thêm người dùng thất bại.'), 'error');
+          this.toast.show(getApiErrorMessage(err, 'Tải thêm người dùng thất bại.'), 'error');
           this.loadingMore = false;
         },
       });

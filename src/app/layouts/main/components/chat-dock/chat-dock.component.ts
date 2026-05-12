@@ -455,15 +455,6 @@ export class ChatDockComponent {
     this.loadBoxesInitial();
   }
 
-  goToListView(): void {
-    if (this.view() === 'thread') {
-      this.backToList();
-      return;
-    }
-    this.view.set('list');
-    this.loadBoxesInitial();
-  }
-
   startNewChat(): void {
     this.stopTypingNow();
     this.resetCallState();
@@ -1017,7 +1008,7 @@ export class ChatDockComponent {
     }
     return messages.map((m) => {
       const sid = msgSenderId(m);
-      const merged = (bySender.get(sid)?.trim() || m.fullName?.trim() || '').trim() || 'Người dùng';
+      const merged = (bySender.get(sid)?.trim() || m.fullName?.trim() || '').trim();
       return { ...m, senderId: sid > 0 ? sid : m.senderId, fullName: merged };
     });
   }

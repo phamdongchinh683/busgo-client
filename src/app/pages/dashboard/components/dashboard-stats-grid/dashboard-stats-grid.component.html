@@ -1,4 +1,6 @@
-<div class="cards-grid">
+<section class="metrics-section" aria-labelledby="dashboard-metrics-heading">
+  <h2 id="dashboard-metrics-heading" class="section-heading">Chỉ số chính</h2>
+  <div class="cards-grid">
   <app-stat-card label="Người dùng" [value]="overview.totalUsers" color="blue">
     <svg
       viewBox="0 0 24 24"
@@ -60,4 +62,5 @@
       <polyline points="9 22 9 12 15 12 15 22" />
     </svg>
   </app-stat-card>
-</div>
+  </div>
+</section>

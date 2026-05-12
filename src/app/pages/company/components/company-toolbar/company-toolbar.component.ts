@@ -8,7 +8,7 @@ import type { PageLimit } from '../../../../data/constants/index';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './company-toolbar.component.html',
-  styleUrl: './company-toolbar.component.css',
+  styleUrls: ['../../../user/styles/user-shared.css', './company-toolbar.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CompanyToolbarComponent {

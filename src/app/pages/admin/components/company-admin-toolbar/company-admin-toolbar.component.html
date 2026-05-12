@@ -1,48 +1,80 @@
 <div class="toolbar">
-  <select
-    class="company-select"
-    [ngModel]="selectedCompanyId"
-    (ngModelChange)="companyFilterChange.emit($event)"
-    name="adminCompanyFilter"
-    title="Lọc theo công ty"
-    aria-label="Lọc theo công ty"
-  >
-    <option [ngValue]="null">Tất cả công ty</option>
-    @for (company of companies; track company.id) {
-      <option [ngValue]="company.id">{{ company.name }}</option>
-    }
-  </select>
+  <label class="field field--company">
+    <span class="label">
+      Công ty
+      <span class="label-tag" *ngIf="selectedCompany">
+        {{ selectedCompany.name }}
+        <button class="btn-link" type="button" (click)="selectCompany.emit(null)">xóa</button>
+      </span>
+    </span>
+    <input
+      class="input"
+      [ngModel]="companySearchValue"
+      (ngModelChange)="companySearchValueChange.emit($event)"
+      placeholder="Tìm công ty theo tên..."
+      (focus)="onCompanyFocus()"
+      autocomplete="off"
+      aria-label="Tìm công ty theo tên"
+    />
+    <div class="dropdown" *ngIf="dropdownOpen" (scroll)="onScroll($event)">
+      <button class="dropdown-item" type="button" (click)="selectCompany.emit(null)">
+        <span class="company-name">Tất cả công ty</span>
+        <span class="company-hotline">Không lọc công ty</span>
+      </button>
 
-  <select
-    class="limit-select"
-    [ngModel]="limit"
-    (ngModelChange)="limitChange.emit($event)"
-    name="adminLimit"
-    title="Số dòng mỗi trang"
-    aria-label="Số dòng mỗi trang"
-  >
-    @for (l of pageLimits; track l) {
-      <option [ngValue]="l">{{ l }}</option>
-    }
-  </select>
+      <div class="dropdown-loading" *ngIf="companiesLoading">Đang tải công ty...</div>
 
-  <button
-    class="btn-add"
-    type="button"
-    (click)="createClick.emit()"
-    title="Tạo tài khoản Nhà Xe"
-    aria-label="Tạo tài khoản Nhà Xe"
-  >
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
+      @for (company of companies; track company.id) {
+        <button class="dropdown-item" type="button" (click)="selectCompany.emit(company)">
+          <span class="company-name">{{ company.name }}</span>
+          <span class="company-hotline">{{ company.hotline || '—' }}</span>
+        </button>
+      }
+
+      <div class="dropdown-empty" *ngIf="!companiesLoading && companies.length === 0">Không có công ty</div>
+      <div class="dropdown-loading" *ngIf="companiesLoadingMore">Đang tải thêm...</div>
+    </div>
+
+  </label>
+
+  <label class="field field--limit">
+    <span class="label">Số dòng</span>
+    <span class="select-shell select-shell--limit">
+      <select
+        class="limit-select"
+        [ngModel]="limit"
+        (ngModelChange)="limitChange.emit($event)"
+        name="adminLimit"
+        title="Số dòng mỗi trang"
+        aria-label="Số dòng mỗi trang"
+      >
+        @for (l of pageLimits; track l) {
+          <option [ngValue]="l">{{ l }}</option>
+        }
+      </select>
+    </span>
+  </label>
+
+  <div class="field field--action">
+    <span class="label label--spacer" aria-hidden="true">&nbsp;</span>
+    <button
+      class="btn-add"
+      type="button"
+      (click)="createClick.emit()"
+      title="Tạo tài khoản Nhà Xe"
+      aria-label="Tạo tài khoản Nhà Xe"
     >
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-  </button>
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <line x1="12" y1="5" x2="12" y2="19" />
+        <line x1="5" y1="12" x2="19" y2="12" />
+      </svg>
+    </button>
+  </div>
 </div>

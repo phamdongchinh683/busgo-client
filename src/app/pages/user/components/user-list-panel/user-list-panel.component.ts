@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { User } from '../../../../data/interfaces/user';
+import { userRoleLabel, userStatusLabel } from '@app/shared/utils/domain-labels';
 
 @Component({
   selector: 'app-user-list-panel',
@@ -22,29 +23,6 @@ export class UserListPanelComponent {
   @Output() deleteUser = new EventEmitter<User>();
   @Output() notifyUser = new EventEmitter<User>();
 
-  displayStatus(value: string): string {
-    switch (value) {
-      case 'active':
-        return 'Hoạt động';
-      case 'inactive':
-        return 'Tạm ngưng';
-      case 'banned':
-        return 'Bị cấm';
-      default:
-        return value;
-    }
-  }
-
-  displayRole(value: string): string {
-    switch (value) {
-      case 'driver':
-        return 'Tài xế';
-      case 'customer':
-        return 'Khách hàng';
-      case 'operator':
-        return 'Nhà xe';
-      default:
-        return value;
-    }
-  }
+  displayStatus = userStatusLabel;
+  displayRole = userRoleLabel;
 }

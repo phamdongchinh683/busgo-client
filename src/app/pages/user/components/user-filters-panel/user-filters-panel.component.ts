@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Company } from '../../../../data/interfaces/company';
 import { PageLimit } from '../../../../data/constants';
+import { userRoleLabel, userStatusLabel } from '@app/shared/utils/domain-labels';
 
 @Component({
   selector: 'app-user-filters-panel',
@@ -38,29 +39,6 @@ export class UserFiltersPanelComponent {
     this.companyDropdownScroll.emit(ev);
   }
 
-  displayStatus(value: string): string {
-    switch (value) {
-      case 'active':
-        return 'Hoạt động';
-      case 'inactive':
-        return 'Tạm ngưng';
-      case 'banned':
-        return 'Bị cấm';
-      default:
-        return value;
-    }
-  }
-
-  displayRole(value: string): string {
-    switch (value) {
-      case 'driver':
-        return 'Tài xế';
-      case 'customer':
-        return 'Khách hàng';
-      case 'operator':
-        return 'Nhà xe';
-      default:
-        return value;
-    }
-  }
+  displayStatus = userStatusLabel;
+  displayRole = userRoleLabel;
 }

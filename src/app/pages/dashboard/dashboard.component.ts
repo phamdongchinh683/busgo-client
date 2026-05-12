@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
@@ -11,8 +11,17 @@ import type {
   DashboardTimeType,
   DashboardTrendChartKind,
 } from '../../data/interfaces/dashboard/stats';
-import { SharedModule } from '@app/shared/shared.module';
+import { PageToastHostComponent } from '@app/shared/components/page-toast-host/page-toast-host.component';
+import { PageToastService } from '@app/shared/services/page-toast.service';
 import { getApiErrorMessage } from '@app/shared/utils/api-error.util';
+import {
+  bookingStatusLabel,
+  localizeDashboardDatasetLabel,
+  paymentMethodLabel,
+  userRoleLabel,
+} from '@app/shared/utils/domain-labels';
+import { buildYearOptions } from '@app/shared/utils/year-options';
+import { PageHeaderIntroComponent } from '@app/shared/components/page-header-intro/page-header-intro.component';
 import { DashboardStatsGridComponent } from './components/dashboard-stats-grid/dashboard-stats-grid.component';
 import { DashboardChartsToolbarComponent } from './components/dashboard-charts-toolbar/dashboard-charts-toolbar.component';
 import { DashboardTrendChartPanelComponent } from './components/dashboard-trend-chart-panel/dashboard-trend-chart-panel.component';
@@ -34,7 +43,8 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    SharedModule,
+    PageToastHostComponent,
+    PageHeaderIntroComponent,
     DashboardStatsGridComponent,
     DashboardChartsToolbarComponent,
     DashboardTrendChartPanelComponent,
@@ -81,17 +91,16 @@ export class DashboardComponent implements OnInit {
     { value: 'pie', label: 'Tròn' },
   ];
 
-  notification: { show: boolean; message: string; type: 'success' | 'error' | 'warning' | 'info' } = {
-    show: false,
-    message: '',
-    type: 'error',
-  };
+  readonly displayStatusLabel = bookingStatusLabel;
+  readonly displayRoleLabel = userRoleLabel;
+  readonly displayMethodLabel = paymentMethodLabel;
 
-  constructor(private api: dashboard.ApiService) {}
+  private readonly toast = inject(PageToastService);
+
+  constructor(private api: dashboard.ApiService) { }
 
   ngOnInit() {
-    const y = new Date().getFullYear();
-    this.yearOptions = [y - 2, y - 1, y, y + 1];
+    this.yearOptions = buildYearOptions();
 
     this.api.getDashboard().subscribe({
       next: (res) => {
@@ -99,7 +108,7 @@ export class DashboardComponent implements OnInit {
         this.loading = false;
       },
       error: (err: unknown) => {
-        this.showNotification(getApiErrorMessage(err, 'Tải tổng quan thất bại.'), 'error');
+        this.toast.show(getApiErrorMessage(err, 'Tải tổng quan thất bại.'), 'error');
         this.loading = false;
       },
     });
@@ -150,7 +159,7 @@ export class DashboardComponent implements OnInit {
           this.userChart = this.localizeDatasetLabels(data);
         },
         error: (err: unknown) => {
-          this.showNotification(getApiErrorMessage(err, 'Tải biểu đồ người dùng thất bại.'), 'error');
+          this.toast.show(getApiErrorMessage(err, 'Tải biểu đồ người dùng thất bại.'), 'error');
         },
       });
   }
@@ -164,7 +173,7 @@ export class DashboardComponent implements OnInit {
           this.bookingChart = this.localizeDatasetLabels(data);
         },
         error: (err: unknown) => {
-          this.showNotification(getApiErrorMessage(err, 'Tải biểu đồ đặt vé thất bại.'), 'error');
+          this.toast.show(getApiErrorMessage(err, 'Tải biểu đồ đặt vé thất bại.'), 'error');
         },
       });
   }
@@ -178,7 +187,7 @@ export class DashboardComponent implements OnInit {
           this.revenueChart = this.localizeDatasetLabels(data);
         },
         error: (err: unknown) => {
-          this.showNotification(getApiErrorMessage(err, 'Tải biểu đồ doanh thu thất bại.'), 'error');
+          this.toast.show(getApiErrorMessage(err, 'Tải biểu đồ doanh thu thất bại.'), 'error');
         },
       });
   }
@@ -213,88 +222,13 @@ export class DashboardComponent implements OnInit {
     return chartSeriesGrandTotal(chart);
   }
 
-  showNotification(message: string, type: 'success' | 'error' | 'warning' | 'info') {
-    this.notification = { show: true, message, type };
-  }
-
-  displayStatusLabel(value: string): string {
-    switch (value) {
-      case 'active':
-        return 'Hoạt động';
-      case 'inactive':
-        return 'Tạm ngưng';
-      case 'banned':
-        return 'Bị cấm';
-      case 'pending':
-        return 'Chờ xử lý';
-      case 'paid':
-        return 'Đã thanh toán';
-      case 'cancelled':
-        return 'Đã hủy';
-      case 'expired':
-        return 'Hết hạn';
-      case 'success':
-        return 'Thành công';
-      case 'failed':
-        return 'Thất bại';
-      case 'refunded':
-        return 'Đã hoàn tiền';
-      default:
-        return value;
-    }
-  }
-
-  displayRoleLabel(value: string): string {
-    switch (value) {
-      case 'operator':
-        return 'Nhà xe';
-      case 'customer':
-        return 'Khách hàng';
-      case 'driver':
-        return 'Tài xế';
-      default:
-        return value;
-    }
-  }
-
-  displayMethodLabel(value: string): string {
-    switch (value) {
-      case 'cash':
-        return 'Tiền mặt';
-      case 'vnpay':
-        return 'VNPay';
-      case 'stripe':
-        return 'Stripe';
-      default:
-        return value;
-    }
-  }
-
   private localizeDatasetLabels(chart: DashboardChartSeries): DashboardChartSeries {
     return {
       labels: chart.labels,
       datasets: chart.datasets.map((dataset) => ({
         ...dataset,
-        label: this.localizeDatasetLabel(dataset.label),
+        label: localizeDashboardDatasetLabel(dataset.label),
       })),
     };
-  }
-
-  private localizeDatasetLabel(label: string): string {
-    if (label.includes(' · ')) {
-      return label
-        .split(' · ')
-        .map((part) => this.localizeDatasetLabel(part))
-        .join(' · ');
-    }
-
-    switch (label) {
-      case 'Users':
-        return 'Người dùng';
-      case 'Revenue':
-        return 'Doanh thu';
-      default:
-        return this.displayStatusLabel(this.displayRoleLabel(this.displayMethodLabel(label)));
-    }
   }
 }

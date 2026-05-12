@@ -1,51 +1,20 @@
-.page {
-  padding: 24px 20px 40px;
-  max-width: 1120px;
-  margin: 0 auto;
-}
-
-.page-header {
-  margin-bottom: 18px;
-}
-
-.page-header h2 {
-  margin: 0;
-  font-size: 22px;
-  font-weight: var(--font-weight-title);
-  letter-spacing: -0.02em;
-  color: var(--color-text-dark);
-}
-
-.header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 18px;
-  flex-wrap: wrap;
-}
-
 .btn-create {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 38px;
-  width: 48px;
+  height: 40px;
+  width: 40px;
   padding: 0;
   border: 1px solid var(--color-border);
-  border-radius: 0;
+  border-radius: var(--radius-md);
   background: #ffffff;
   color: #059669;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  white-space: nowrap;
   cursor: pointer;
-  box-shadow: none;
+  box-shadow: var(--shadow-sm);
   transition:
     border-color 0.3s ease,
-    background 0.3s ease;
+    background 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .btn-create svg {
@@ -56,6 +25,7 @@
 .btn-create:hover {
   border-color: #059669;
   background: #e8f6ef;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
 }
 
 .btn-create:active {

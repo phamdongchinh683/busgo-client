@@ -25,7 +25,6 @@ export class ApiService {
     return this.http
       .get<CompanyListResponse>(`${constant.baseUrl}/super-admin/bus-company`, {
         params,
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       })
       .pipe(tap((res) => writeCache(this.companiesCache, cacheKey, res, this.COMPANIES_TTL_MS)));
   }
@@ -49,9 +48,6 @@ export class ApiService {
         latitude,
         longitude,
       },
-      {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      },
       )
       .pipe(tap(() => clearCacheByPrefix(this.companiesCache, 'company-list')));
   }
@@ -61,17 +57,13 @@ export class ApiService {
     data: Partial<{ name: string; hotline: string; logoUrl: string; address: string; latitude: number | null; longitude: number | null }>,
   ): Observable<CreateCompanyResponse> {
     return this.http
-      .put<CreateCompanyResponse>(`${constant.baseUrl}/super-admin/bus-company/${id}`, data, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      })
+      .put<CreateCompanyResponse>(`${constant.baseUrl}/super-admin/bus-company/${id}`, data)
       .pipe(tap(() => clearCacheByPrefix(this.companiesCache, 'company-list')));
   }
 
   deleteCompany(id: number): Observable<CreateCompanyResponse> {
     return this.http
-      .delete<CreateCompanyResponse>(`${constant.baseUrl}/super-admin/bus-company/${id}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      })
+      .delete<CreateCompanyResponse>(`${constant.baseUrl}/super-admin/bus-company/${id}`)
       .pipe(tap(() => clearCacheByPrefix(this.companiesCache, 'company-list')));
   }
 }

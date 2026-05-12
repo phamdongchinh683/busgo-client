@@ -15,16 +15,11 @@ const chatBase = () => `${constant.baseUrl}/chat`;
 export class ApiService {
   constructor(private readonly http: HttpClient) { }
 
-  private authHeaders(): { Authorization: string } {
-    return { Authorization: `Bearer ${localStorage.getItem('token') ?? ''}` };
-  }
-
   listBoxes(limit = 10, next?: number | null): Observable<ChatBoxListResponse> {
     let params = new HttpParams().set('limit', String(limit));
     if (next !== undefined && next !== null) params = params.set('next', String(next));
     return this.http.get<ChatBoxListResponse>(`${chatBase()}/box`, {
       params,
-      headers: this.authHeaders(),
     });
   }
 
@@ -41,14 +36,12 @@ export class ApiService {
     if (q) params = params.set('message', q);
     return this.http.get<ChatMessagesListResponse>(`${chatBase()}/box/${boxId}/message`, {
       params,
-      headers: this.authHeaders(),
     });
   }
 
   createBox(body: CreateChatBoxBody): Observable<unknown> {
     return this.http.post(`${chatBase()}/box`, body, {
       headers: {
-        ...this.authHeaders(),
         'Content-Type': 'application/json',
         Accept: 'application/json',
       },
@@ -58,7 +51,6 @@ export class ApiService {
   sendMessage(boxId: number, body: SendChatMessageBody): Observable<unknown> {
     return this.http.post(`${chatBase()}/box/${boxId}/message`, body, {
       headers: {
-        ...this.authHeaders(),
         'Content-Type': 'application/json',
         Accept: 'application/json',
       },
@@ -68,7 +60,6 @@ export class ApiService {
   recallMessage(boxId: number, messageId: number): Observable<unknown> {
     return this.http.put(`${chatBase()}/box/${boxId}/message/${messageId}`, {}, {
       headers: {
-        ...this.authHeaders(),
         'Content-Type': 'application/json',
         Accept: 'application/json',
       },

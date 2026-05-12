@@ -1,0 +1,67 @@
+:is(.page, .modal) :is(.table-wrap, .company-table-wrap, .payout-table-wrap) {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  overflow: auto;
+  box-shadow: var(--shadow-sm);
+}
+
+:is(.page, .modal) :is(.table-wrap, .company-table-wrap, .payout-table-wrap) :is(.table, .company-table, .payout-table, table) {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+:is(.page, .modal) :is(.table-wrap, .company-table-wrap, .payout-table-wrap) :is(.table, .company-table, .payout-table, table) th,
+:is(.page, .modal) :is(.table-wrap, .company-table-wrap, .payout-table-wrap) :is(.table, .company-table, .payout-table, table) td {
+  padding: 12px 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 72%, #ffffff);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-text-dark);
+  vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:is(.page, .modal) :is(.table-wrap, .company-table-wrap, .payout-table-wrap) :is(.table, .company-table, .payout-table, table) th {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-subtle);
+  text-align: left;
+  text-transform: none;
+  letter-spacing: 0;
+  white-space: nowrap;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+:is(.page, .modal) :is(.table-wrap, .company-table-wrap, .payout-table-wrap) :is(.table, .company-table, .payout-table, table) tbody tr:last-child td {
+  border-bottom: none;
+}
+
+:is(.page, .modal) :is(.table-wrap, .company-table-wrap, .payout-table-wrap) :is(.table, .company-table, .payout-table, table) tbody tr:hover td {
+  background: color-mix(in srgb, var(--color-primary) 5%, #ffffff);
+}
+
+:is(.page, .modal) :is(.table-wrap, .company-table-wrap, .payout-table-wrap) :is(.table, .company-table, .payout-table, table) :is(.actions-col, th.actions-col, td.actions-col) {
+  width: 148px;
+  min-width: 148px;
+  max-width: 148px;
+  padding-left: 10px;
+  padding-right: 10px;
+  text-align: center;
+  overflow: visible;
+  white-space: nowrap;
+  text-overflow: clip;
+}
+
+:is(.page, .modal) :is(.table-wrap, .company-table-wrap, .payout-table-wrap) :is(.table, .company-table, .payout-table, table) :is(.row-actions, .company-actions) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: 6px;
+}

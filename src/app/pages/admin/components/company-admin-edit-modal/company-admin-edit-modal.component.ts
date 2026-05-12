@@ -7,6 +7,7 @@ import {
   UpdateCompanyAdminBody,
 } from '../../../../data/interfaces/company-admin';
 import { emailValidator } from '@app/shared/utils/validators';
+import { userStatusLabel } from '@app/shared/utils/domain-labels';
 import { digitsOnlyPhone } from '../../utils/company-admin.mapper';
 import { companyAdminEditPhoneValidator } from '../../utils/company-admin-edit.validators';
 
@@ -28,6 +29,7 @@ export class CompanyAdminEditModalComponent implements OnChanges {
   @Output() validateFailed = new EventEmitter<string>();
 
   statuses = COMPANY_ADMIN_STATUSES;
+  readonly displayStatus = userStatusLabel;
 
   form = this.fb.group({
     fullName: ['', [Validators.required, Validators.minLength(7)]],

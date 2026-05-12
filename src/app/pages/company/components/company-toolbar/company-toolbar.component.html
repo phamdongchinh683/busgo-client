@@ -1,29 +1,41 @@
 <div class="toolbar">
-  <input
-    class="search-input"
-    type="text"
-    placeholder="Tìm theo tên..."
-    [ngModel]="searchName"
-    (ngModelChange)="searchNameChange.emit($event)"
-  />
+  <label class="field field--search">
+    <span class="label">Tên nhà xe</span>
+    <input
+      class="input"
+      type="text"
+      placeholder="Tìm theo tên..."
+      [ngModel]="searchName"
+      (ngModelChange)="searchNameChange.emit($event)"
+      aria-label="Tìm theo tên nhà xe"
+    />
+  </label>
 
-  <select class="limit-select" [ngModel]="limit" (ngModelChange)="limitChange.emit($event)">
-    @for (l of pageLimits; track l) {
-      <option [ngValue]="l">{{ l }}</option>
-    }
-  </select>
+  <label class="field field--limit">
+    <span class="label">Số dòng</span>
+    <span class="select-shell select-shell--limit">
+      <select class="limit-select" [ngModel]="limit" (ngModelChange)="limitChange.emit($event)" aria-label="Số dòng mỗi trang">
+        @for (l of pageLimits; track l) {
+          <option [ngValue]="l">{{ l }}</option>
+        }
+      </select>
+    </span>
+  </label>
 
-  <button class="btn-add" type="button" (click)="addClick.emit()">
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-  </button>
+  <div class="field field--action">
+    <span class="label label--spacer" aria-hidden="true">&nbsp;</span>
+    <button class="btn-add" type="button" (click)="addClick.emit()" title="Thêm nhà xe" aria-label="Thêm nhà xe">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <line x1="12" y1="5" x2="12" y2="19" />
+        <line x1="5" y1="12" x2="19" y2="12" />
+      </svg>
+    </button>
+  </div>
 </div>

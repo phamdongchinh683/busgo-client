@@ -1,10 +1,5 @@
 <div class="dashboard">
-  <app-notification
-    *ngIf="notification.show"
-    [message]="notification.message"
-    [type]="notification.type"
-    (closed)="notification.show = false"
-  />
+  <app-page-toast-host />
 
   <div *ngIf="loading" class="loading-container">
     <div class="spinner-large"></div>
@@ -12,9 +7,17 @@
   </div>
 
   <div *ngIf="!loading && overview" class="dashboard__body">
+    <header class="dashboard__hero">
+      <app-page-header-intro
+        title="Tổng quan"
+        subtitle="Theo dõi người dùng, đặt vé, doanh thu và nhà xe."
+        badge="Thống kê"
+      />
+    </header>
+
     <app-dashboard-stats-grid [overview]="overview"></app-dashboard-stats-grid>
 
-    <section class="charts-section">
+    <section class="charts-section" aria-labelledby="dashboard-trends-heading">
       <app-dashboard-charts-toolbar
         [chartType]="chartType"
         [selectedYear]="selectedYear"
