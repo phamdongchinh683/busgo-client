@@ -29,9 +29,6 @@
             <option [ngValue]="false">Đang tắt</option>
           </select>
         </label>
-        <label class="promotion-filter">
-          <input aria-label="Lọc theo ngày bắt đầu" type="date" [(ngModel)]="filterDate" (ngModelChange)="applyPromotionFilters()" />
-        </label>
       </div>
       <div class="promotion-filters__right">
         <span class="promotion-filters__meta">{{ filteredPromotionsView.length }}/{{ promotions.length }} kết quả</span>
@@ -148,15 +145,15 @@
     <div class="row">
       <div class="field">
         <label>Bắt đầu</label>
-        <input type="datetime-local" [formControl]="form.controls.startDate" title="Thời gian bắt đầu" />
+        <input type="date" [formControl]="form.controls.startDate" title="Chọn ngày bắt đầu" />
       </div>
       <div class="field">
         <label>Kết thúc</label>
         <input
-          type="datetime-local"
+          type="date"
           [formControl]="form.controls.endDate"
-          [min]="minEndDateLocal"
-          title="Thời gian kết thúc"
+          [min]="minEndCalendarDate"
+          title="Chọn ngày kết thúc"
         />
       </div>
     </div>

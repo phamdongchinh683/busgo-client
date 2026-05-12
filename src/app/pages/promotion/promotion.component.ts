@@ -21,7 +21,7 @@ import { SharedModule } from '@app/shared/shared.module';
   styleUrl: './promotion.component.css',
 })
 export class PromotionComponent implements OnInit {
-  private static readonly CACHE_TTL_MS = 15 * 1000;
+  private static readonly CACHE_TTL_MS = 5 * 1000;
   private static listCache: {
     items: PromotionItem[];
     nextCursor: number | null;
@@ -35,7 +35,6 @@ export class PromotionComponent implements OnInit {
   loading = true;
   loadingMore = false;
   filterStatus: boolean | null = null;
-  filterDate = '';
 
   showModal = false;
   submitting = false;
@@ -79,24 +78,13 @@ export class PromotionComponent implements OnInit {
     return this.pendingCreateImagePreviewUrl || (this.form.controls.imageUrl.value ?? '').trim();
   }
 
-  get minEndDateLocal(): string {
-    return this.toDateTimeLocal(new Date().toISOString());
+  get minEndCalendarDate(): string {
+    return this.todayCalendarDate();
   }
 
   private buildFilteredPromotions(): PromotionItem[] {
-    const fromTime = this.parseFilterDate(this.filterDate);
-    const toTime = this.parseFilterDate(this.filterDate, true);
-
-    return this.promotions.filter((item) => {
-      if (this.filterStatus !== null && item.isActive !== this.filterStatus) return false;
-
-      const startTime = Date.parse(item.startDate);
-      if (!Number.isFinite(startTime)) return false;
-
-      if (fromTime !== null && startTime < fromTime) return false;
-      if (toTime !== null && startTime > toTime) return false;
-      return true;
-    });
+    if (this.filterStatus === null) return this.promotions;
+    return this.promotions.filter((item) => item.isActive === this.filterStatus);
   }
 
   showNotification(message: string, type: 'success' | 'error' | 'warning' | 'info'): void {
@@ -105,7 +93,6 @@ export class PromotionComponent implements OnInit {
 
   resetFilters(): void {
     this.filterStatus = null;
-    this.filterDate = '';
     this.applyPromotionFilters();
   }
 
@@ -184,8 +171,8 @@ export class PromotionComponent implements OnInit {
       content: item.content,
       imageUrl: item.imageUrl ?? '',
       isActive: !!item.isActive,
-      startDate: this.toDateTimeLocal(item.startDate),
-      endDate: this.toDateTimeLocal(item.endDate),
+      startDate: this.toCalendarDate(item.startDate),
+      endDate: this.toCalendarDate(item.endDate),
     });
     this.uploadProgress = 0;
     this.showModal = true;
@@ -253,8 +240,8 @@ export class PromotionComponent implements OnInit {
       content: (raw.content ?? '').trim(),
       imageUrl: (raw.imageUrl ?? '').trim(),
       isActive: !!raw.isActive,
-      startDate: this.toIsoDate(raw.startDate ?? ''),
-      endDate: this.toIsoDate(raw.endDate ?? ''),
+      startDate: this.toApiMonthDay(raw.startDate ?? ''),
+      endDate: this.toApiMonthDay(raw.endDate ?? ''),
     };
 
     if (!body.title || !body.content || !body.startDate || !body.endDate) {
@@ -262,9 +249,13 @@ export class PromotionComponent implements OnInit {
       return;
     }
 
-    const endTime = Date.parse(body.endDate);
-    if (!Number.isFinite(endTime) || endTime < Date.now()) {
-      this.showNotification('Ngày kết thúc chỉ được chọn từ thời điểm hiện tại trở đi.', 'warning');
+    if (!this.isValidMonthDay(body.startDate) || !this.isValidMonthDay(body.endDate)) {
+      this.showNotification('Vui lòng chọn ngày bắt đầu và ngày kết thúc.', 'warning');
+      return;
+    }
+
+    if (this.monthDayValue(body.endDate) < this.monthDayValue(this.todayMonthDay())) {
+      this.showNotification('Ngày kết thúc chỉ được chọn từ hôm nay trở đi.', 'warning');
       return;
     }
 
@@ -299,29 +290,62 @@ export class PromotionComponent implements OnInit {
   }
 
   formatDate(value: string): string {
-    const time = Date.parse(value);
-    if (!Number.isFinite(time)) return '-';
-    return new Date(time).toLocaleString('vi-VN');
+    const monthDay = this.toMonthDay(value);
+    if (!monthDay) return '-';
+    const [month, day] = monthDay.split('-');
+    return `${day}-${month}`;
   }
 
-  private toDateTimeLocal(value: string): string {
-    const time = Date.parse(value);
-    if (!Number.isFinite(time)) return '';
-    const d = new Date(time);
+  private todayCalendarDate(): string {
+    const d = new Date();
     const pad = (n: number) => String(n).padStart(2, '0');
-    const yyyy = d.getFullYear();
-    const mm = pad(d.getMonth() + 1);
-    const dd = pad(d.getDate());
-    const hh = pad(d.getHours());
-    const mi = pad(d.getMinutes());
-    return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   }
 
-  private toIsoDate(value: string): string {
-    if (!value) return '';
-    const time = Date.parse(value);
-    if (!Number.isFinite(time)) return '';
-    return new Date(time).toISOString();
+  private toCalendarDate(value: string): string {
+    const monthDay = this.toMonthDay(value);
+    if (!monthDay) return '';
+    const [month, day] = monthDay.split('-');
+    return `${new Date().getFullYear()}-${month}-${day}`;
+  }
+
+  private toApiMonthDay(value: string): string {
+    const v = value.trim();
+    if (!v) return '';
+    const calendar = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+    if (calendar) return `${calendar[2]}-${calendar[3]}`;
+    return this.toMonthDay(v);
+  }
+
+  private todayMonthDay(): string {
+    const d = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  }
+
+  private toMonthDay(value: string): string {
+    const v = value.trim();
+    if (!v) return '';
+    if (/^\d{2}-\d{2}$/.test(v)) return v;
+    const legacy = /^(\d{4})-(\d{2})-(\d{2})/.exec(v);
+    if (legacy) return `${legacy[2]}-${legacy[3]}`;
+    return '';
+  }
+
+  private isValidMonthDay(value: string): boolean {
+    const match = /^(\d{2})-(\d{2})$/.exec(value);
+    if (!match) return false;
+    const month = Number(match[1]);
+    const day = Number(match[2]);
+    if (month < 1 || month > 12 || day < 1 || day > 31) return false;
+    const daysInMonth = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    return day <= daysInMonth[month - 1];
+  }
+
+  private monthDayValue(value: string): number {
+    const match = /^(\d{2})-(\d{2})$/.exec(value);
+    if (!match) return -1;
+    return Number(match[1]) * 100 + Number(match[2]);
   }
 
   private async getPresignedForPromotion(id: number): Promise<UploadPresignedResponse> {
@@ -454,12 +478,5 @@ export class PromotionComponent implements OnInit {
       nextCursor,
       expiredAt: Date.now() + PromotionComponent.CACHE_TTL_MS,
     };
-  }
-
-  private parseFilterDate(value: string, endOfDay = false): number | null {
-    if (!value) return null;
-    const dateValue = endOfDay ? `${value}T23:59:59.999` : `${value}T00:00:00.000`;
-    const parsed = Date.parse(dateValue);
-    return Number.isFinite(parsed) ? parsed : null;
   }
 }
