@@ -317,7 +317,6 @@ export class LoginComponent implements OnDestroy {
       next: (res: { token: string; user: unknown }) => {
         localStorage.setItem('token', res.token);
         localStorage.setItem('user', JSON.stringify(res.user));
-        this.toast.show('Đăng nhập thành công', 'success');
         this.router.navigate(['/dashboard']);
         this.loading = false;
       },
