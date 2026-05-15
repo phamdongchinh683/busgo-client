@@ -60,7 +60,7 @@ export class ApiService {
       body['username'] = input;
     }
 
-    return this.http.post<AuthResponse>(`${constant.baseUrl}/super-admin/login`, body);
+    return this.http.post<AuthResponse>(`${constant.baseUrl}/super-admin/sign-in`, body);
   }
 
   logout(): Observable<unknown> {
