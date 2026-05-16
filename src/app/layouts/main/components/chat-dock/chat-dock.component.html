@@ -1,133 +1,83 @@
 @if (dock.panelOpen()) {
-  <div
-    id="app-chat-messenger"
-    class="messenger"
-    [class.messenger--thread]="view() === 'thread'"
-    [ngStyle]="panelStyle()"
-    role="dialog"
-    aria-label="Tin nhắn"
-  >
+<div id="app-chat-messenger" class="messenger" [class.messenger--thread]="view() === 'thread'" [ngStyle]="panelStyle()" role="dialog" aria-label="Tin nhắn">
     <header class="messenger__top">
-      <div class="messenger__title-block">
-        @if (view() === 'thread') {
-          <span class="messenger__header-avatar">
+        <div class="messenger__title-block">
+            @if (view() === 'thread') {
+            <span class="messenger__header-avatar">
             {{ initials(selectedTitle() || 'Chat') }}
             @if (selectedPeerOnline()) {
-              <span class="messenger__header-avatar-online-dot" aria-hidden="true"></span>
+              <span class="messenger__header-avatar-online-dot" aria-hidden="true"></span> }
+            </span>
             }
-          </span>
-        }
-        <div class="messenger__header-meta">
-          <h2 class="messenger__title" [class.messenger__title--thread]="view() === 'thread'">
-            @if (view() === 'thread') {
-              <span class="messenger__title-primary" [attr.title]="selectedTitle() || 'Chat'">{{ selectedTitle() || 'Chat' }}</span>
-            } @else {
-              Trò chuyện
-            }
-          </h2>
-          @if (view() === 'thread') {
-            <span class="messenger__subtitle">{{ selectedPeerOnline() ? 'Hoạt động' : 'Ngoại tuyến' }}</span>
-          }
+            <div class="messenger__header-meta">
+                <h2 class="messenger__title" [class.messenger__title--thread]="view() === 'thread'">
+                    @if (view() === 'thread') {
+                    <span class="messenger__title-primary" [attr.title]="selectedTitle() || 'Chat'">{{ selectedTitle() || 'Chat' }}</span> } @else { Trò chuyện }
+                </h2>
+                @if (view() === 'thread') {
+                <span class="messenger__subtitle">{{ selectedPeerOnline() ? 'Hoạt động' : 'Ngoại tuyến' }}</span> }
+            </div>
         </div>
-      </div>
-      <div class="messenger__top-actions">
-        @if (view() === 'thread') {
-          <div class="messenger__call-actions" aria-label="Tùy chọn cuộc gọi">
-            <button
-              type="button"
-              class="messenger__icon-btn messenger__call-btn"
-              (click)="toggleMessageSearch()"
-              aria-label="Tìm tin nhắn"
-              title="Tìm tin nhắn"
-            >
+        <div class="messenger__top-actions">
+            @if (view() === 'thread') {
+            <div class="messenger__call-actions" aria-label="Tùy chọn cuộc gọi">
+                <button type="button" class="messenger__icon-btn messenger__call-btn" (click)="toggleMessageSearch()" aria-label="Tìm tin nhắn" title="Tìm tin nhắn">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="11" cy="11" r="8"></circle>
                 <path d="m21 21-4.3-4.3"></path>
               </svg>
             </button>
-            <button
-              type="button"
-              class="messenger__icon-btn messenger__call-btn"
-              (click)="startCall('voice')"
-              aria-label="Gọi thoại"
-              title="Gọi thoại"
-            >
+                <button type="button" class="messenger__icon-btn messenger__call-btn" (click)="startCall('voice')" aria-label="Gọi thoại" title="Gọi thoại">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M22 16.92v2a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 3.2 2 2 0 0 1 4.11 1h2a2 2 0 0 1 2 1.72c.12.9.33 1.79.62 2.64a2 2 0 0 1-.45 2.11L7.09 8.91a16 16 0 0 0 8 8l1.44-1.19a2 2 0 0 1 2.11-.45c.85.29 1.74.5 2.64.62A2 2 0 0 1 22 16.92z" />
               </svg>
             </button>
-            <button
-              type="button"
-              class="messenger__icon-btn messenger__call-btn"
-              (click)="startCall('video')"
-              aria-label="Gọi video"
-              title="Gọi video"
-            >
+                <button type="button" class="messenger__icon-btn messenger__call-btn" (click)="startCall('video')" aria-label="Gọi video" title="Gọi video">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="m22 8-6 4 6 4V8Z" />
                 <rect x="2" y="6" width="14" height="12" rx="2" ry="2" />
               </svg>
             </button>
-          </div>
-        } @else {
-          <button
-            type="button"
-            class="messenger__icon-btn messenger__call-btn"
-            (click)="startNewChat()"
-            aria-label="Tạo cuộc hội thoại mới"
-            title="Hội thoại mới"
-          >
+            </div>
+            } @else {
+            <button type="button" class="messenger__icon-btn messenger__call-btn" (click)="startNewChat()" aria-label="Tạo cuộc hội thoại mới" title="Hội thoại mới">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
               <path d="M12 5v14" />
               <path d="M5 12h14" />
             </svg>
-          </button>
-        }
-        <div class="messenger__window-actions">
-          <button type="button" class="messenger__icon-btn" (click)="dock.closePanel()" aria-label="Đóng" title="Đóng">
+          </button> }
+            <div class="messenger__window-actions">
+                <button type="button" class="messenger__icon-btn" (click)="dock.closePanel()" aria-label="Đóng" title="Đóng">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
           </button>
+            </div>
         </div>
-      </div>
     </header>
 
     <div class="messenger__body">
-      @if (view() === 'list') {
-        <div
-          #boxListScroll
-          class="messenger__list-col"
-          (scroll)="onBoxListScroll($event)"
-        >
-          @if (loadingBoxes() && boxes().length === 0) {
+        @if (view() === 'list') {
+        <div #boxListScroll class="messenger__list-col" (scroll)="onBoxListScroll($event)">
+            @if (loadingBoxes() && boxes().length === 0) {
             <p class="messenger__hint">Đang tải…</p>
-          } @else if (listBoxesError()) {
+            } @else if (listBoxesError()) {
             <p class="messenger__err">{{ listBoxesError() }}</p>
-            <button type="button" class="messenger__retry" (click)="retryLoadBoxes()">Thử lại</button>
-          } @else if (boxes().length === 0) {
+            <button type="button" class="messenger__retry" (click)="retryLoadBoxes()">Thử lại</button> } @else if (boxes().length === 0) {
             <div class="messenger__list-empty">
-              <span class="messenger__list-empty-icon" aria-hidden="true">
+                <span class="messenger__list-empty-icon" aria-hidden="true">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
                   <path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
                 </svg>
               </span>
-              <p class="messenger__list-empty-title">Chưa có cuộc trò chuyện</p>
-              <p class="messenger__list-empty-copy">Tìm người nhận và gửi tin nhắn đầu tiên để bắt đầu.</p>
-              <button type="button" class="messenger__list-empty-cta" (click)="startNewChat()">
+                <p class="messenger__list-empty-title">Chưa có cuộc trò chuyện</p>
+                <p class="messenger__list-empty-copy">Tìm người nhận và gửi tin nhắn đầu tiên để bắt đầu.</p>
+                <button type="button" class="messenger__list-empty-cta" (click)="startNewChat()">
                 Tạo hội thoại mới
               </button>
             </div>
-          } @else {
-            @for (b of boxes(); track trackBox($index, b)) {
-              @let preview = threadPreviewLine(b);
-              @let unread = boxUnreadCount(b);
-              <button
-                type="button"
-                class="messenger__thread-row"
-                [class.messenger__thread-row--unread]="unread > 0"
-                (click)="openThread(b, true)"
-              >
+            } @else { @for (b of boxes(); track trackBox($index, b)) { @let preview = threadPreviewLine(b); @let unread = boxUnreadCount(b);
+            <button type="button" class="messenger__thread-row" [class.messenger__thread-row--unread]="unread > 0" (click)="openThread(b, true)">
                 <span class="messenger__avatar-wrap">
                   @if (unread > 0) {
                     <span class="messenger__avatar-unread-dot" aria-hidden="true"></span>
@@ -146,90 +96,48 @@
                 @if (unread > 0) {
                   <span class="messenger__box-unread-badge">{{ boxUnreadBadgeText(b) }}</span>
                 }
-              </button>
-            }
-            @if (boxesNext() !== null && loadingBoxes()) {
-              <p class="messenger__hint messenger__hint--sm">Đang tải thêm…</p>
-            }
-          }
+              </button> } @if (boxesNext() !== null && loadingBoxes()) {
+            <p class="messenger__hint messenger__hint--sm">Đang tải thêm…</p>
+            } }
         </div>
-      } @else {
-        <div
-          class="messenger__chat-col"
-          [class.messenger__chat-col--dragover]="chatDragOver()"
-          (dragover)="onChatDragOver($event)"
-          (dragleave)="onChatDragLeave($event)"
-          (drop)="onChatDrop($event)"
-        >
-          @if (chatDragOver()) {
+        } @else {
+        <div class="messenger__chat-col" [class.messenger__chat-col--dragover]="chatDragOver()" (dragover)="onChatDragOver($event)" (dragleave)="onChatDragLeave($event)" (drop)="onChatDrop($event)">
+            @if (chatDragOver()) {
             <div class="messenger__drop-hint">Thả ảnh vào đây để gửi</div>
-          }
-          @if (messageSearchOpen()) {
+            } @if (messageSearchOpen()) {
             <div class="messenger__msg-search">
-              <input
-                type="search"
-                class="messenger__msg-search-input"
-                placeholder="Tìm tin nhắn…"
-                title="Enter để tìm trên máy chủ (limit 10/trang, cuộn lên để tải thêm)"
-                [ngModel]="messageSearchDraft()"
-                (ngModelChange)="messageSearchDraft.set($event)"
-                (keydown.enter)="applyMessageSearch($event)"
-                autocomplete="off"
-                aria-label="Tìm trong cuộc trò chuyện trên máy chủ, nhấn Enter để áp dụng"
-              />
-              @if (messageSearchApplied().trim()) {
-                <span class="messenger__msg-search-count">{{ messages().length }} tin</span>
-              }
-              <button
-                type="button"
-                class="messenger__msg-search-close"
-                (click)="toggleMessageSearch()"
-                aria-label="Đóng tìm kiếm"
-                title="Đóng"
-              >
+                <input type="search" class="messenger__msg-search-input" placeholder="Tìm tin nhắn…" title="Enter để tìm trên máy chủ (limit 10/trang, cuộn lên để tải thêm)" [ngModel]="messageSearchDraft()" (ngModelChange)="messageSearchDraft.set($event)" (keydown.enter)="applyMessageSearch($event)"
+                    autocomplete="off" aria-label="Tìm trong cuộc trò chuyện trên máy chủ, nhấn Enter để áp dụng" /> @if (messageSearchApplied().trim()) {
+                <span class="messenger__msg-search-count">{{ messages().length }} tin</span> }
+                <button type="button" class="messenger__msg-search-close" (click)="toggleMessageSearch()" aria-label="Đóng tìm kiếm" title="Đóng">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M18 6 6 18"></path>
                   <path d="m6 6 12 12"></path>
                 </svg>
               </button>
             </div>
-          }
-          <div #messageScroll class="messenger__bubbles" (scroll)="onMessageScroll($event)">
-            @if (loadingOlderMessages()) {
-              <p class="messenger__hint messenger__hint--sm">Đang tải tin cũ…</p>
             }
-            @if (threadMessagesError() && messages().length === 0 && !loadingThreadMessages()) {
-              <p class="messenger__err">{{ threadMessagesError() }}</p>
-              <button type="button" class="messenger__retry" (click)="retryLoadThreadMessages()">Thử lại</button>
-            } @else if (loadingThreadMessages() && messages().length === 0) {
-              <p class="messenger__hint">Đang tải…</p>
-            } @else if (messages().length === 0) {
-              <p class="messenger__hint">Chưa có tin nhắn</p>
-            } @else if (messageSearchApplied().trim() && messages().length === 0) {
-              <p class="messenger__hint">Không có tin nhắn khớp «{{ messageSearchApplied().trim() }}»</p>
-            } @else {
-              @for (m of messages(); track trackMsg($index, m)) {
+            <div #messageScroll class="messenger__bubbles" (scroll)="onMessageScroll($event)">
+                @if (loadingOlderMessages()) {
+                <p class="messenger__hint messenger__hint--sm">Đang tải tin cũ…</p>
+                } @if (threadMessagesError() && messages().length === 0 && !loadingThreadMessages()) {
+                <p class="messenger__err">{{ threadMessagesError() }}</p>
+                <button type="button" class="messenger__retry" (click)="retryLoadThreadMessages()">Thử lại</button> } @else if (loadingThreadMessages() && messages().length === 0) {
+                <p class="messenger__hint">Đang tải…</p>
+                } @else if (messages().length === 0) {
+                <p class="messenger__hint">Chưa có tin nhắn</p>
+                } @else if (messageSearchApplied().trim() && messages().length === 0) {
+                <p class="messenger__hint">Không có tin nhắn khớp «{{ messageSearchApplied().trim() }}»</p>
+                } @else { @for (m of messages(); track trackMsg($index, m)) {
                 <div class="messenger__row" [class.messenger__row--mine]="isMine(m)">
-                  @if (!isMine(m)) {
-                    <span
-                      class="messenger__avatar messenger__avatar--bubble"
-                      [attr.title]="m.fullName || 'Người dùng'"
-                      [attr.aria-label]="m.fullName || 'Người dùng'"
-                    >{{ initials(m.fullName || '?') }}</span>
-                  }
-                  <div class="messenger__bubble-wrap">
-                    <div class="messenger__bubble-line" [class.messenger__bubble-line--mine]="isMine(m)">
-                      @let imageUrl = extractImageUrl(m.message);
-                      @if (canRecallMessage(m)) {
-                        <div class="messenger__row-action">
-                          <button
-                            type="button"
-                            class="messenger__more-btn"
-                            (click)="$event.stopPropagation(); recallMessage(m)"
-                            [disabled]="recallingMessageIds().has(+$any(m.id))"
-                            [attr.aria-label]="recallingMessageIds().has(+$any(m.id)) ? 'Đang thu hồi' : 'Thu hồi tin nhắn'"
-                            [attr.title]="recallingMessageIds().has(+$any(m.id)) ? 'Đang thu hồi' : 'Thu hồi tin nhắn'"
-                          >
+                    @if (!isMine(m)) {
+                    <span class="messenger__avatar messenger__avatar--bubble" [attr.title]="m.fullName || 'Người dùng'" [attr.aria-label]="m.fullName || 'Người dùng'">{{ initials(m.fullName || '?') }}</span> }
+                    <div class="messenger__bubble-wrap">
+                        <div class="messenger__bubble-line" [class.messenger__bubble-line--mine]="isMine(m)">
+                            @let imageUrl = extractImageUrl(m.message); @if (canRecallMessage(m)) {
+                            <div class="messenger__row-action">
+                                <button type="button" class="messenger__more-btn" (click)="$event.stopPropagation(); recallMessage(m)" [disabled]="recallingMessageIds().has(+$any(m.id))" [attr.aria-label]="recallingMessageIds().has(+$any(m.id)) ? 'Đang thu hồi' : 'Thu hồi tin nhắn'"
+                                    [attr.title]="recallingMessageIds().has(+$any(m.id)) ? 'Đang thu hồi' : 'Thu hồi tin nhắn'">
                             @if (recallingMessageIds().has(+$any(m.id))) {
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M21 12a9 9 0 1 1-2.64-6.36"></path>
@@ -245,76 +153,46 @@
                               </svg>
                             }
                           </button>
-                        </div>
-                      }
-                      <div class="messenger__bubble-stack">
-                        <div
-                          class="messenger__bubble"
-                          [class.messenger__bubble--mine]="isMine(m) && !imageUrl"
-                          [class.messenger__bubble--image]="!!imageUrl"
-                        >
-                          @if (imageUrl) {
-                            <button
-                              type="button"
-                              class="messenger__image-btn"
-                              (click)="openImagePreview(imageUrl)"
-                              aria-label="Mở ảnh xem lớn"
-                              title="Xem ảnh"
-                            >
+                            </div>
+                            }
+                            <div class="messenger__bubble-stack">
+                                <div class="messenger__bubble" [class.messenger__bubble--mine]="isMine(m) && !imageUrl" [class.messenger__bubble--image]="!!imageUrl">
+                                    @if (imageUrl) {
+                                    <button type="button" class="messenger__image-btn" (click)="openImagePreview(imageUrl)" aria-label="Mở ảnh xem lớn" title="Xem ảnh">
                               <img class="messenger__bubble-image" [src]="imageUrl" alt="Ảnh đã gửi" loading="lazy" />
                               @if (isPendingUpload(m)) {
                                 <span class="messenger__image-pending">Đang gửi…</span>
                               }
-                            </button>
-                          } @else {
-                            {{ m.message }}
-                          }
+                            </button> } @else { {{ m.message }} }
+                                </div>
+                                <time class="messenger__time messenger__time--bubble-tip" [attr.datetime]="m.createdAt">{{ m.createdAt | date: 'short' }}</time>
+                            </div>
                         </div>
-                        <time class="messenger__time messenger__time--bubble-tip" [attr.datetime]="m.createdAt">{{ m.createdAt | date: 'short' }}</time>
-                      </div>
                     </div>
-                  </div>
                 </div>
-              }
-            }
-          </div>
-          <div class="messenger__composer">
-            @if (sendError()) {
-              <p class="messenger__err">{{ sendError() }}</p>
-            }
-            @if (peerTyping()) {
-              <div class="messenger__typing" aria-live="polite" aria-label="Đối phương đang nhập">
-                <span class="messenger__typing-bubble">
+                } }
+            </div>
+            <div class="messenger__composer">
+                @if (sendError()) {
+                <p class="messenger__err">{{ sendError() }}</p>
+                } @if (peerTyping()) {
+                <div class="messenger__typing" aria-live="polite" aria-label="Đối phương đang nhập">
+                    <span class="messenger__typing-bubble">
                   <span
                     class="messenger__typing-text"
                     [attr.title]="(selectedTitle() || 'Đối phương') + ' đang nhập'"
                     >{{ selectedTitle() || 'Đối phương' }} đang nhập</span>
-                  <span class="messenger__typing-dots" aria-hidden="true">
+                    <span class="messenger__typing-dots" aria-hidden="true">
                     <span class="messenger__typing-dot"></span>
                     <span class="messenger__typing-dot"></span>
                     <span class="messenger__typing-dot"></span>
-                  </span>
-                </span>
-              </div>
-            }
-            <div class="messenger__composer-inner">
-              <input
-                #chatImageInput
-                type="file"
-                accept="image/*"
-                class="messenger__image-input-hidden"
-                aria-label="Chọn ảnh để gửi"
-                title="Chọn ảnh để gửi"
-                (change)="onImagePicked($event)"
-              />
-              <button
-                type="button"
-                class="messenger__send-btn messenger__send-btn--image"
-                (click)="triggerImagePicker()"
-                [disabled]="sendingImage()"
-                aria-label="Chọn ảnh để gửi"
-                title="Gửi ảnh"
-              >
+                    </span>
+                    </span>
+                </div>
+                }
+                <div class="messenger__composer-inner">
+                    <input #chatImageInput type="file" accept="image/*" class="messenger__image-input-hidden" aria-label="Chọn ảnh để gửi" title="Chọn ảnh để gửi" (change)="onImagePicked($event)" />
+                    <button type="button" class="messenger__send-btn messenger__send-btn--image" (click)="triggerImagePicker()" [disabled]="sendingImage()" aria-label="Chọn ảnh để gửi" title="Gửi ảnh">
                 <svg
                   class="messenger__send-icon"
                   width="18"
@@ -329,25 +207,8 @@
                   <path d="m21.44 11.05-9.19 9.19a6 6 0 1 1-8.49-8.49l9.2-9.2a4 4 0 1 1 5.66 5.66l-9.2 9.2a2 2 0 1 1-2.83-2.83l8.48-8.48" />
                 </svg>
               </button>
-              <textarea
-                rows="1"
-                class="messenger__compose-input"
-                placeholder="Nhập tin nhắn…"
-                title="Enter để gửi"
-                [ngModel]="draft()"
-                (ngModelChange)="onComposerInput($event)"
-                (keydown)="onComposerKeydown($event)"
-                [readonly]="sendingMessage() || sendingImage()"
-                [attr.aria-busy]="sendingMessage() || sendingImage()"
-              ></textarea>
-              <button
-                type="button"
-                class="messenger__send-btn"
-                (click)="sendDraft()"
-                [disabled]="!draft().trim() || sendingMessage() || sendingImage()"
-                [attr.aria-label]="sendingMessage() ? 'Đang gửi tin nhắn' : 'Gửi tin nhắn'"
-                title="Gửi tin nhắn"
-              >
+                    <textarea rows="1" class="messenger__compose-input" placeholder="Nhập tin nhắn…" title="Enter để gửi" [ngModel]="draft()" (ngModelChange)="onComposerInput($event)" (keydown)="onComposerKeydown($event)" [readonly]="sendingMessage() || sendingImage()" [attr.aria-busy]="sendingMessage() || sendingImage()"></textarea>
+                    <button type="button" class="messenger__send-btn" (click)="sendDraft()" [disabled]="!draft().trim() || sendingMessage() || sendingImage()" [attr.aria-label]="sendingMessage() ? 'Đang gửi tin nhắn' : 'Gửi tin nhắn'" title="Gửi tin nhắn">
                 <span class="sr-only">{{ sendingMessage() ? 'Đang gửi' : 'Gửi' }}</span>
                 <svg
                   class="messenger__send-icon"
@@ -365,67 +226,37 @@
                   <path d="M22 2 11 13" />
                 </svg>
               </button>
+                </div>
             </div>
-          </div>
         </div>
-      }
+        }
     </div>
-  </div>
-  <app-chat-call-popup
-    [visible]="!!activeCallType() || !!callIncoming()"
-    [status]="callStatusText()"
-    [callType]="callPopupMediaType()"
-    [incoming]="!!callIncoming()"
-    [ongoing]="!!callOutgoing() || inCall()"
-    [title]="selectedTitle()"
-    (accept)="acceptIncomingCall()"
-    (reject)="rejectIncomingCall()"
-    (end)="endCall()"
-  >
+</div>
+<app-chat-call-popup [visible]="!!activeCallType() || !!callIncoming()" [status]="callStatusText()" [callType]="callPopupMediaType()" [incoming]="!!callIncoming()" [ongoing]="!!callOutgoing() || inCall()" [title]="selectedTitle()" (accept)="acceptIncomingCall()"
+    (reject)="rejectIncomingCall()" (end)="endCall()">
     <video remoteVideo #callRemoteVideo class="messenger__call-remote-video" autoplay></video>
-    <video
-      localVideo
-      #callLocalVideo
-      class="messenger__call-local-video"
-      [class.messenger__call-local-video--off]="!callLocalPipVisible()"
-      autoplay
-      muted
-      playsinline
-    ></video>
+    <video localVideo #callLocalVideo class="messenger__call-local-video" [class.messenger__call-local-video--off]="!callLocalPipVisible()" autoplay muted playsinline></video>
     <audio remoteAudio #callRemoteAudio autoplay></audio>
-  </app-chat-call-popup>
+</app-chat-call-popup>
 
-  @if (newChatPopupOpen()) {
-    <div class="messenger__new-popup-backdrop" (click)="closeNewChatPopup()">
-      <div
-        class="messenger__new-popup"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="messenger-new-chat-title"
-        aria-describedby="messenger-new-chat-desc"
-        (click)="$event.stopPropagation()"
-      >
+@if (newChatPopupOpen()) {
+<div class="messenger__new-popup-backdrop" (click)="closeNewChatPopup()">
+    <div class="messenger__new-popup" role="dialog" aria-modal="true" aria-labelledby="messenger-new-chat-title" aria-describedby="messenger-new-chat-desc" (click)="$event.stopPropagation()">
         <header class="messenger__new-popup-head">
-          <div class="messenger__new-popup-intro">
-            <span class="messenger__new-popup-icon" aria-hidden="true">
+            <div class="messenger__new-popup-intro">
+                <span class="messenger__new-popup-icon" aria-hidden="true">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                 <path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
                 <path d="M12 8v4" />
                 <path d="M10 10h4" />
               </svg>
             </span>
-            <div class="messenger__new-popup-copy">
-              <h3 id="messenger-new-chat-title">Hội thoại mới</h3>
-              <p id="messenger-new-chat-desc">Tìm người nhận và gửi tin nhắn đầu tiên.</p>
+                <div class="messenger__new-popup-copy">
+                    <h3 id="messenger-new-chat-title">Hội thoại mới</h3>
+                    <p id="messenger-new-chat-desc">Tìm người nhận và gửi tin nhắn đầu tiên.</p>
+                </div>
             </div>
-          </div>
-          <button
-            type="button"
-            class="messenger__icon-btn messenger__new-popup-close"
-            (click)="closeNewChatPopup()"
-            aria-label="Đóng popup tạo hội thoại"
-            title="Đóng"
-          >
+            <button type="button" class="messenger__icon-btn messenger__new-popup-close" (click)="closeNewChatPopup()" aria-label="Đóng popup tạo hội thoại" title="Đóng">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M18 6 6 18"></path>
               <path d="m6 6 12 12"></path>
@@ -433,16 +264,16 @@
           </button>
         </header>
         <div class="messenger__new-form">
-          <section class="messenger__new-panel">
-            <div class="messenger__new-panel-head">
-              <span class="messenger__new-step">1</span>
-              <div class="messenger__new-panel-copy">
-                <label class="messenger__label" for="messenger-new-chat-recipient">Người nhận</label>
-                <p class="messenger__new-panel-hint">Tìm theo email hoặc số điện thoại.</p>
-              </div>
-            </div>
-            <div class="messenger__search-shell">
-              <span class="messenger__search-field">
+            <section class="messenger__new-panel">
+                <div class="messenger__new-panel-head">
+                    <span class="messenger__new-step">1</span>
+                    <div class="messenger__new-panel-copy">
+                        <label class="messenger__label" for="messenger-new-chat-recipient">Người nhận</label>
+                        <p class="messenger__new-panel-hint">Tìm theo email hoặc số điện thoại.</p>
+                    </div>
+                </div>
+                <div class="messenger__search-shell">
+                    <span class="messenger__search-field">
                 <svg class="messenger__search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                   <circle cx="11" cy="11" r="7"></circle>
                   <path d="m20 20-3.5-3.5"></path>
@@ -458,29 +289,15 @@
                   autocomplete="off"
                 />
               </span>
-              <button
-                type="button"
-                class="messenger__search-submit"
-                (click)="onRecipientSearchSubmit()"
-                aria-label="Tìm người nhận"
-                title="Tìm"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                  <circle cx="11" cy="11" r="7"></circle>
-                  <path d="m20 20-3.5-3.5"></path>
-                </svg>
-              </button>
-            </div>
+                </div>
 
-            @if (searchingUsers()) {
-              <p class="messenger__hint messenger__hint--sm messenger__new-status">Đang tìm…</p>
-            }
-
-            @if (searchResults().length > 0) {
-              <ul class="messenger__searchhits messenger__searchhits--popup">
-                @for (u of searchResults(); track u.id) {
-                  <li>
-                    <button type="button" class="messenger__hit" (click)="pickUser(u)">
+                @if (searchingUsers()) {
+                <p class="messenger__hint messenger__hint--sm messenger__new-status">Đang tìm…</p>
+                } @if (searchResults().length > 0) {
+                <ul class="messenger__searchhits messenger__searchhits--popup">
+                    @for (u of searchResults(); track u.id) {
+                    <li>
+                        <button type="button" class="messenger__hit" (click)="pickUser(u)">
                       <span class="messenger__avatar-wrap messenger__avatar-wrap--hit">
                         @if (userSearchHitOnline(u)) {
                           <span class="messenger__presence-online" aria-label="Đang hoạt động"></span>
@@ -492,95 +309,65 @@
                         <small>{{ u.email }} · {{ u.phone }}</small>
                       </span>
                     </button>
-                  </li>
+                    </li>
+                    }
+                </ul>
                 }
-              </ul>
-            }
-          </section>
+            </section>
 
-          @if (selectedReceiver(); as ru) {
+            @if (selectedReceiver(); as ru) {
             <section class="messenger__new-panel messenger__new-panel--selected">
-              <p class="messenger__new-section-label">Đã chọn</p>
-              <div class="messenger__selected-recipient">
-                <span class="messenger__avatar messenger__avatar--sm">{{ initials(ru.fullName) }}</span>
-                <span class="messenger__selected-recipient-text">
+                <p class="messenger__new-section-label">Đã chọn</p>
+                <div class="messenger__selected-recipient">
+                    <span class="messenger__avatar messenger__avatar--sm">{{ initials(ru.fullName) }}</span>
+                    <span class="messenger__selected-recipient-text">
                   <strong [attr.title]="ru.fullName">{{ ru.fullName }}</strong>
                   <small>{{ ru.email }}</small>
                 </span>
-                <button
-                  type="button"
-                  class="messenger__selected-recipient-clear"
-                  (click)="clearSelectedReceiver()"
-                  aria-label="Bỏ chọn người nhận"
-                >
+                    <button type="button" class="messenger__selected-recipient-clear" (click)="clearSelectedReceiver()" aria-label="Bỏ chọn người nhận">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M18 6 6 18"></path>
                     <path d="m6 6 12 12"></path>
                   </svg>
                 </button>
-              </div>
+                </div>
             </section>
-          }
+            }
 
-          <section class="messenger__new-panel">
-            <div class="messenger__new-panel-head">
-              <span class="messenger__new-step">2</span>
-              <div class="messenger__new-panel-copy">
-                <label class="messenger__label" for="messenger-new-chat-message">Tin nhắn đầu tiên</label>
-                <p class="messenger__new-panel-hint">Nội dung sẽ mở cuộc trò chuyện mới.</p>
-              </div>
-            </div>
-            <textarea
-              id="messenger-new-chat-message"
-              class="messenger__new-message"
-              rows="4"
-              [ngModel]="newMessage()"
-              (ngModelChange)="newMessage.set($event)"
-              placeholder="Nhập nội dung tin nhắn…"
-            ></textarea>
-          </section>
+            <section class="messenger__new-panel">
+                <div class="messenger__new-panel-head">
+                    <span class="messenger__new-step">2</span>
+                    <div class="messenger__new-panel-copy">
+                        <label class="messenger__label" for="messenger-new-chat-message">Tin nhắn đầu tiên</label>
+                        <p class="messenger__new-panel-hint">Nội dung sẽ mở cuộc trò chuyện mới.</p>
+                    </div>
+                </div>
+                <textarea id="messenger-new-chat-message" class="messenger__new-message" rows="4" [ngModel]="newMessage()" (ngModelChange)="newMessage.set($event)" placeholder="Nhập nội dung tin nhắn…"></textarea>
+            </section>
 
-          @if (createError()) {
+            @if (createError()) {
             <p class="messenger__err messenger__new-error" role="alert">{{ createError() }}</p>
-          }
+            }
         </div>
 
         <footer class="messenger__new-popup-foot">
-          <button type="button" class="messenger__new-cancel action-button action-button--ghost" (click)="closeNewChatPopup()">
+            <button type="button" class="messenger__new-cancel action-button action-button--ghost" (click)="closeNewChatPopup()">
             Hủy
           </button>
-          <button
-            type="button"
-            class="messenger__send-lg action-button"
-            (click)="submitNewChat()"
-            [disabled]="creating()"
-          >
+            <button type="button" class="messenger__send-lg action-button" (click)="submitNewChat()" [disabled]="creating()">
             {{ creating() ? 'Đang tạo…' : 'Bắt đầu trò chuyện' }}
           </button>
         </footer>
-      </div>
     </div>
-  }
-
-  @if (imagePreviewUrl(); as previewUrl) {
-    <div class="messenger__image-preview" (click)="closeImagePreview()" role="dialog" aria-label="Xem ảnh">
-      <button
-        type="button"
-        class="messenger__image-preview-close"
-        (click)="closeImagePreview(); $event.stopPropagation()"
-        aria-label="Đóng xem ảnh"
-      >
+</div>
+} @if (imagePreviewUrl(); as previewUrl) {
+<div class="messenger__image-preview" (click)="closeImagePreview()" role="dialog" aria-label="Xem ảnh">
+    <button type="button" class="messenger__image-preview-close" (click)="closeImagePreview(); $event.stopPropagation()" aria-label="Đóng xem ảnh">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M18 6 6 18"></path>
           <path d="m6 6 12 12"></path>
         </svg>
       </button>
-      <img
-        class="messenger__image-preview-img"
-        [src]="previewUrl"
-        alt="Ảnh toàn màn hình"
-        (click)="$event.stopPropagation()"
-      />
-    </div>
-  }
-}
+    <img class="messenger__image-preview-img" [src]="previewUrl" alt="Ảnh toàn màn hình" (click)="$event.stopPropagation()" />
+</div>
+} }
