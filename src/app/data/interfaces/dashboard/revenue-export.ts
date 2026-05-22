@@ -1,4 +1,4 @@
-export type RevenueExportTimeType = 'monthly' | 'year';
+export type RevenueExportTimeType = 'monthly' | 'yearly';
 
 export type RevenueExportMethod = 'vnpay' | 'stripe' | 'cash';
 
