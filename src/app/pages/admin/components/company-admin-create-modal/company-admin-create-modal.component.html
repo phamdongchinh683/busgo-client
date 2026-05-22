@@ -3,11 +3,6 @@
     <h3>Tạo tài khoản Nhà Xe</h3>
     <form class="modal-form" [formGroup]="form" (ngSubmit)="onSubmit()">
       <label class="field">
-        <span class="label">Tên đăng nhập</span>
-        <input class="input" formControlName="username" autocomplete="username" placeholder="nhập tên đăng nhập" />
-        <span class="error" *ngIf="usernameError">{{ usernameError }}</span>
-      </label>
-      <label class="field">
         <span class="label">Họ tên</span>
         <input class="input" formControlName="fullName" placeholder="tối thiểu 7 ký tự" autocomplete="name" />
         <span class="error" *ngIf="fullNameError">{{ fullNameError }}</span>

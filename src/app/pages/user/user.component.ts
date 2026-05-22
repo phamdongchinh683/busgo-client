@@ -102,7 +102,6 @@ export class UserComponent implements OnInit {
   }>;
 
   createForm!: FormGroup<{
-    username: FormControl<string | null>;
     fullName: FormControl<string | null>;
     email: FormControl<string | null>;
     phone: FormControl<string | null>;
@@ -111,7 +110,6 @@ export class UserComponent implements OnInit {
     role: FormControl<(typeof USER_ROLES)[number] | null>;
   }>;
   editForm!: FormGroup<{
-    username: FormControl<string | null>;
     fullName: FormControl<string | null>;
     email: FormControl<string | null>;
     phone: FormControl<string | null>;
@@ -135,7 +133,6 @@ export class UserComponent implements OnInit {
       limit: [DEFAULT_PAGE_LIMIT],
     });
     this.createForm = this.fb.group({
-      username: ['', [Validators.required]],
       fullName: ['', [Validators.required, Validators.minLength(7)]],
       email: ['', [Validators.required, emailValidator()]],
       phone: ['', [Validators.required, phone10DigitsValidator()]],
@@ -144,7 +141,6 @@ export class UserComponent implements OnInit {
       role: ['driver' as (typeof USER_ROLES)[number]],
     });
     this.editForm = this.fb.group({
-      username: ['', [Validators.required]],
       fullName: ['', [Validators.required, Validators.minLength(7)]],
       email: ['', [Validators.required, emailValidator()]],
       phone: ['', [Validators.required, phone10DigitsValidator()]],
@@ -188,7 +184,6 @@ export class UserComponent implements OnInit {
     this.showCreateModal = false;
     this.creatingUser = false;
     this.createForm.reset({
-      username: '',
       fullName: '',
       email: '',
       phone: '',
@@ -201,7 +196,6 @@ export class UserComponent implements OnInit {
   openEditModal(u: User) {
     this.selectedActionUser = u;
     this.editForm.reset({
-      username: u.username,
       fullName: u.fullName,
       email: u.email,
       phone: u.phone,
@@ -284,7 +278,6 @@ export class UserComponent implements OnInit {
     this.creatingUser = true;
     this.userApi
       .createUser({
-        username: (v.username ?? '').trim(),
         fullName: (v.fullName ?? '').trim(),
         email: (v.email ?? '').trim(),
         phone: (v.phone ?? '').trim(),
@@ -331,7 +324,6 @@ export class UserComponent implements OnInit {
   private getCreateFormErrorMessage(): string {
     const controls = this.createForm.controls;
 
-    if (controls.username.errors?.['required']) return 'Tên đăng nhập là bắt buộc.';
     if (controls.fullName.errors?.['required']) return 'Họ tên là bắt buộc.';
     if (controls.fullName.errors?.['minlength']) return 'Họ tên phải có ít nhất 7 ký tự.';
     if (controls.email.errors?.['required']) return 'Địa chỉ email là bắt buộc.';
@@ -357,7 +349,6 @@ export class UserComponent implements OnInit {
     this.editingUserLoading = true;
     this.userApi
       .updateUser(this.selectedActionUser.id, {
-        username: (v.username ?? '').trim(),
         fullName: (v.fullName ?? '').trim(),
         email: (v.email ?? '').trim(),
         phone: (v.phone ?? '').trim(),
@@ -379,7 +370,6 @@ export class UserComponent implements OnInit {
   private getEditFormErrorMessage(): string {
     const controls = this.editForm.controls;
 
-    if (controls.username.errors?.['required']) return 'Tên đăng nhập là bắt buộc.';
     if (controls.fullName.errors?.['required']) return 'Họ tên là bắt buộc.';
     if (controls.fullName.errors?.['minlength']) return 'Họ tên phải có ít nhất 7 ký tự.';
     if (controls.email.errors?.['required']) return 'Địa chỉ email là bắt buộc.';

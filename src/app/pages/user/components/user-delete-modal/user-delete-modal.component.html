@@ -2,7 +2,7 @@
   <div class="modal modal--sm" (click)="stopPropagation($event)">
     <h3>Xóa người dùng</h3>
     <p>
-      Bạn có chắc chắn muốn xóa <strong>{{ user?.username }}</strong
+      Bạn có chắc chắn muốn xóa <strong>{{ user?.fullName || user?.email || user?.phone }}</strong
       >?
     </p>
     <div class="modal-actions">

@@ -54,10 +54,8 @@ export class ApiService {
 
     if (isDigitsOnly(input)) {
       body['phone'] = input;
-    } else if (input.includes('@')) {
-      body['email'] = input;
     } else {
-      body['username'] = input;
+      body['email'] = input;
     }
 
     return this.http.post<AuthResponse>(`${constant.baseUrl}/super-admin/sign-in`, body);

@@ -12,7 +12,6 @@
   <table class="table">
     <thead>
       <tr>
-        <th>Tên đăng nhập</th>
         <th>Họ tên</th>
         <th>Địa chỉ email</th>
         <th>Số điện thoại</th>
@@ -24,7 +23,6 @@
     <tbody>
       @for (a of admins; track a.id) {
         <tr>
-          <td>{{ a.username }}</td>
           <td>{{ a.fullName }}</td>
           <td class="col-email">
             <span class="email-text" [title]="a.email">{{ a.email }}</span>

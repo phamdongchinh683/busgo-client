@@ -27,7 +27,6 @@ export class CompanyAdminCreateModalComponent implements OnChanges {
   showPassword = false;
 
   form = this.fb.group({
-    username: ['', [Validators.required]],
     fullName: ['', [Validators.required, Validators.minLength(7)]],
     email: ['', [Validators.required, emailValidator()]],
     phone: ['', [Validators.required, companyAdminEditPhoneValidator()]],
@@ -48,7 +47,6 @@ export class CompanyAdminCreateModalComponent implements OnChanges {
   reset() {
     this.showPassword = false;
     this.form.reset({
-      username: '',
       fullName: '',
       email: '',
       phone: '',
@@ -72,7 +70,6 @@ export class CompanyAdminCreateModalComponent implements OnChanges {
     if (companyId === null || companyId === undefined) return;
 
     this.submitted.emit({
-      username: (v.username ?? '').trim(),
       fullName: (v.fullName ?? '').trim(),
       contactInfo: {
         email: (v.email ?? '').trim(),
@@ -85,7 +82,6 @@ export class CompanyAdminCreateModalComponent implements OnChanges {
 
   private firstFormErrorMessage(): string {
     const c = this.form.controls;
-    if (c.username.errors?.['required']) return 'Tên đăng nhập là bắt buộc.';
     if (c.fullName.errors?.['required']) return 'Họ tên là bắt buộc.';
     if (c.fullName.errors?.['minlength']) return 'Họ tên phải có ít nhất 7 ký tự.';
     if (c.email.errors?.['required']) return 'Địa chỉ email là bắt buộc.';
@@ -100,13 +96,6 @@ export class CompanyAdminCreateModalComponent implements OnChanges {
 
   private showFieldError(control: AbstractControl): boolean {
     return control.touched || control.dirty;
-  }
-
-  get usernameError(): string | null {
-    const c = this.form.controls.username;
-    if (!this.showFieldError(c)) return null;
-    if (c.errors?.['required']) return 'Tên đăng nhập là bắt buộc.';
-    return null;
   }
 
   get fullNameError(): string | null {

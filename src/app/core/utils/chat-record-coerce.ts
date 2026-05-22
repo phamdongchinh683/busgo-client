@@ -23,9 +23,8 @@ export function viewerFullNameFromStorage(): string {
   try {
     const u = JSON.parse(localStorage.getItem('user') ?? '{}') as {
       fullName?: string;
-      username?: string;
     };
-    return u.fullName?.trim() || u.username?.trim() || '';
+    return u.fullName?.trim() || '';
   } catch {
     return '';
   }

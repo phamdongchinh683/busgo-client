@@ -103,13 +103,12 @@ export class MainLayoutComponent implements OnInit {
     try {
       const user = JSON.parse(raw) as {
         fullName?: string;
-        username?: string;
         email?: string;
         staffProfileRole?: string;
         role?: string;
       };
       const rawRole = (user.staffProfileRole || user.role || '').trim();
-      this.userName = user.fullName || user.username || '';
+      this.userName = user.fullName || '';
       this.userEmail = user.email || '';
       this.userRole = rawRole ? staffProfileRoleLabel(rawRole) : '';
       this.userInitial = this.userName.charAt(0).toUpperCase();

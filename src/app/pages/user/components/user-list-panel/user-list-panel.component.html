@@ -8,7 +8,6 @@
     <table class="table">
       <thead>
         <tr>
-          <th>Tên đăng nhập</th>
           <th>Họ tên</th>
           <th>Địa chỉ email</th>
           <th>Số điện thoại</th>
@@ -20,7 +19,6 @@
       <tbody>
         @for (u of users; track u.id) {
           <tr>
-            <td>{{ u.username }}</td>
             <td>{{ u.fullName }}</td>
             <td>{{ u.email }}</td>
             <td>{{ u.phone }}</td>

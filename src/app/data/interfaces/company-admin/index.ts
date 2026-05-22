@@ -2,7 +2,6 @@ export type CompanyAdminStatus = 'active' | 'inactive' | 'banned';
 
 export interface CompanyAdmin {
   id: number;
-  username: string;
   fullName: string;
   email: string;
   phone: string;
@@ -18,7 +17,6 @@ export interface CompanyAdminListResponse {
 }
 
 export interface CreateCompanyAdminBody {
-  username: string;
   fullName: string;
   contactInfo: { email: string; phone: string };
   password: string;

@@ -11,11 +11,11 @@
     </div>
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
       <app-input
-        label="Tên đăng nhập/ Email/ Số điện thoại"
+        label="Email / Số điện thoại"
         type="text"
         formControlName="text"
         name="text"
-        placeholder="Nhập tên đăng nhập, email hoặc số điện thoại"
+        placeholder="Nhập email hoặc số điện thoại"
         [disabled]="loading"
       ></app-input>
 

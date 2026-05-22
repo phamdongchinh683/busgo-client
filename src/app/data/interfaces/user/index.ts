@@ -3,7 +3,6 @@ export type UserRole = 'driver' | 'customer' | 'operator';
 
 export interface User {
   id: number;
-  username: string;
   fullName: string;
   email: string;
   phone: string;
@@ -18,7 +17,6 @@ export interface UserListResponse {
 }
 
 export interface CreateUserBody {
-  username: string;
   fullName: string;
   email: string;
   phone: string;
@@ -33,7 +31,6 @@ export interface CreateUserResponse {
 }
 
 export interface UpdateUserBody {
-  username: string;
   fullName: string;
   email: string;
   phone: string;

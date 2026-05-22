@@ -69,8 +69,7 @@ export class LoginComponent implements OnDestroy {
       if (text.length < 10) return 'Số điện thoại phải có ít nhất 10 chữ số.';
       return null;
     }
-    if (text.length < 5) return 'Tên đăng nhập phải có ít nhất 5 ký tự.';
-    return null;
+    return 'Vui lòng nhập email hợp lệ hoặc số điện thoại từ 10 chữ số.';
   }
 
   private parseForgotAccount(raw: string): { field: 'email' | 'phone'; value: string } | null {

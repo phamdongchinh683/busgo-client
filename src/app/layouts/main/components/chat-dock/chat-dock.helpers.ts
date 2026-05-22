@@ -34,8 +34,7 @@ export function clientFilterUsers(users: User[], term: string): User[] {
     (u) =>
       u.fullName.toLowerCase().includes(q) ||
       u.email.toLowerCase().includes(q) ||
-      u.phone.replace(/\D/g, '').includes(q.replace(/\D/g, '')) ||
-      u.username.toLowerCase().includes(q),
+      u.phone.replace(/\D/g, '').includes(q.replace(/\D/g, '')),
   );
 }
 

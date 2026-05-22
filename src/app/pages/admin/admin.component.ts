@@ -226,7 +226,6 @@ export class AdminComponent implements OnInit {
 
     return {
       id: -Date.now(),
-      username: body.username,
       fullName: body.fullName,
       email: body.contactInfo.email,
       phone: body.contactInfo.phone,

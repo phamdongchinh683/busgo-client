@@ -14,7 +14,6 @@ export function mapCompanyAdminRow(raw: Record<string, unknown>): CompanyAdmin {
   const phoneSource = String(contact?.phone ?? raw['phone'] ?? '');
   return {
     id: Number(raw['id']),
-    username: String(raw['username'] ?? ''),
     fullName: String(raw['fullName'] ?? ''),
     email: String(contact?.email ?? raw['email'] ?? ''),
     phone: digitsOnlyPhone(phoneSource) || phoneSource.trim(),
