@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { finalize, shareReplay, tap } from 'rxjs/operators';
 import { constant } from '../../constants';
 import { UploadPresignedResponse } from '../../interfaces/upload';
 
@@ -14,18 +15,55 @@ type PrepareUploadOptions = {
   quality?: number;
 };
 
+type PresignedCacheEntry = {
+  value: UploadPresignedResponse;
+  expiresAt: number;
+};
+
+const PRESIGNED_CACHE_TTL_MS = 50 * 1000;
+
 @Injectable({ providedIn: 'root' })
 export class ApiService {
+  private readonly presignedCache = new Map<string, PresignedCacheEntry>();
+  private readonly presignedInflight = new Map<string, Observable<UploadPresignedResponse>>();
+
   constructor(private readonly http: HttpClient) {}
 
   getPresigned(folder: string, id: number): Observable<UploadPresignedResponse> {
-    return this.http.get<UploadPresignedResponse>(`${constant.baseUrl}/file/upload/super-admin/presigned`, {
-      params: { folder, id: String(id) },
-    });
+    const cacheKey = this.presignedCacheKey(folder, id);
+    const cached = this.presignedCache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) {
+      return of(cached.value);
+    }
+
+    const inflight = this.presignedInflight.get(cacheKey);
+    if (inflight) return inflight;
+
+    const request$ = this.http
+      .get<UploadPresignedResponse>(`${constant.baseUrl}/file/upload/super-admin/presigned`, {
+        params: { folder, id: String(id) },
+      })
+      .pipe(
+        tap((res) => {
+          this.presignedCache.set(cacheKey, {
+            value: res,
+            expiresAt: Date.now() + PRESIGNED_CACHE_TTL_MS,
+          });
+        }),
+        finalize(() => this.presignedInflight.delete(cacheKey)),
+        shareReplay({ bufferSize: 1, refCount: false }),
+      );
+
+    this.presignedInflight.set(cacheKey, request$);
+    return request$;
   }
 
   getChatBoxPresigned(boxId: number): Observable<UploadPresignedResponse> {
     return this.getPresigned('chat', boxId);
+  }
+
+  private presignedCacheKey(folder: string, id: number): string {
+    return `${folder}:${id}`;
   }
 
   uploadImageToCloudinary(file: File, config: UploadPresignedResponse): Promise<string> {

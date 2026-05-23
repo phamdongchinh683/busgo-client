@@ -44,10 +44,8 @@ export class PromotionComponent implements OnInit {
   uploading = false;
   uploadProgress = 0;
   editingPromotion: PromotionItem | null = null;
-  pendingCreateImageFile: File | null = null;
-  pendingCreateImagePreviewUrl = '';
-  pendingCreateUploadedUrl = '';
-  pendingCreateUploadTask: Promise<string> | null = null;
+  selectedImageFile: File | null = null;
+  selectedImagePreviewUrl = '';
 
   readonly form = this.fb.group({
     title: ['', [Validators.required]],
@@ -72,7 +70,7 @@ export class PromotionComponent implements OnInit {
   }
 
   get currentImagePreview(): string {
-    return this.pendingCreateImagePreviewUrl || (this.form.controls.imageUrl.value ?? '').trim();
+    return this.selectedImagePreviewUrl || (this.form.controls.imageUrl.value ?? '').trim();
   }
 
   get minEndCalendarDate(): string {
@@ -149,11 +147,9 @@ export class PromotionComponent implements OnInit {
       startDate: '',
       endDate: '',
     });
-    this.pendingCreateImageFile = null;
+    this.selectedImageFile = null;
     this.uploadProgress = 0;
-    this.pendingCreateUploadedUrl = '';
-    this.pendingCreateUploadTask = null;
-    this.revokePendingPreview();
+    this.revokeSelectedPreview();
     this.showModal = true;
   }
 
@@ -168,6 +164,8 @@ export class PromotionComponent implements OnInit {
       endDate: this.toCalendarDate(item.endDate),
     });
     this.uploadProgress = 0;
+    this.selectedImageFile = null;
+    this.revokeSelectedPreview();
     this.showModal = true;
   }
 
@@ -177,10 +175,8 @@ export class PromotionComponent implements OnInit {
     this.uploading = false;
     this.uploadProgress = 0;
     this.editingPromotion = null;
-    this.pendingCreateImageFile = null;
-    this.pendingCreateUploadedUrl = '';
-    this.pendingCreateUploadTask = null;
-    this.revokePendingPreview();
+    this.selectedImageFile = null;
+    this.revokeSelectedPreview();
   }
 
   async onPickImage(input: HTMLInputElement): Promise<void> {
@@ -192,35 +188,17 @@ export class PromotionComponent implements OnInit {
     const file = input.files?.[0];
     input.value = '';
     if (!file) return;
-    if (!this.editingPromotion) {
-      this.pendingCreateImageFile = file;
-      this.setPendingPreview(file);
-      this.startPendingCreateImageUpload(file);
+    if (!file.type.startsWith('image/')) {
+      this.toast.show('Chỉ hỗ trợ tệp ảnh.', 'warning');
       return;
     }
 
-    this.uploading = true;
+    this.selectedImageFile = file;
+    this.setSelectedPreview(file);
     this.uploadProgress = 0;
-    try {
-      const secureUrl = await this.uploadPromotionImage(this.editingPromotion.id, file);
-      this.form.patchValue({ imageUrl: secureUrl });
-      this.revokePendingPreview();
-      this.toast.show('Tải ảnh lên thành công.', 'success');
-    } catch (err: unknown) {
-      let message = 'Tải ảnh lên thất bại.';
-      if (err instanceof HttpErrorResponse) {
-        message = (err.error as { message?: string })?.message ?? err.message ?? message;
-      } else if (err instanceof Error) {
-        message = err.message;
-      }
-      this.toast.show(message, 'error');
-    } finally {
-      this.uploading = false;
-      this.uploadProgress = 0;
-    }
   }
 
-  submit(): void {
+  async submit(): Promise<void> {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       this.toast.show('Vui lòng điền đầy đủ thông tin.', 'warning');
@@ -253,33 +231,18 @@ export class PromotionComponent implements OnInit {
     }
 
     this.submitting = true;
-    if (this.editingPromotion) {
-      const editing = this.editingPromotion;
-      this.api.updatePromotion(this.editingPromotion.id, body).subscribe({
-        next: (res) => {
-          const updated = this.pickUpsertItem(res, editing, body);
-          this.promotions = this.promotions.map((x) => (x.id === updated.id ? updated : x));
-          this.updateListCache(this.promotions, this.nextCursor);
-          this.applyPromotionFilters();
-          this.toast.show('Cập nhật khuyến mãi thành công.', 'success');
-          this.closeModal();
-        },
-        error: () => {
-          this.submitting = false;
-          this.toast.show('Cập nhật khuyến mãi thất bại.', 'error');
-        },
-      });
-      return;
+    try {
+      if (this.editingPromotion) {
+        await this.updatePromotionWithBody(body);
+        return;
+      }
+      await this.createPromotionWithBody(body);
+    } catch (err: unknown) {
+      this.submitting = false;
+      this.uploading = false;
+      this.uploadProgress = 0;
+      this.toast.show(this.getUploadErrorMessage(err, 'Lưu khuyến mãi thất bại.'), 'error');
     }
-
-    const selectedImage = this.pendingCreateImageFile;
-    const createBody: PromotionUpsertBody = {
-      ...body,
-      imageUrl: body.imageUrl || this.pendingCreateUploadedUrl,
-    };
-    const uploadTask =
-      !this.editingPromotion && !createBody.imageUrl && selectedImage ? this.pendingCreateUploadTask : null;
-    this.createPromotionWithBody(createBody, uploadTask);
   }
 
   formatDate(value: string): string {
@@ -342,7 +305,7 @@ export class PromotionComponent implements OnInit {
   }
 
   private async getPresignedForPromotion(id: number): Promise<UploadPresignedResponse> {
-      return await firstValueFrom(this.uploadApi.getPresigned('promotion-new', id));
+    return await firstValueFrom(this.uploadApi.getPresigned('promotion-new', id));
   }
 
   private async uploadPromotionImage(id: number, file: File): Promise<string> {
@@ -361,15 +324,15 @@ export class PromotionComponent implements OnInit {
     });
   }
 
-  private setPendingPreview(file: File): void {
-    this.revokePendingPreview();
-    this.pendingCreateImagePreviewUrl = URL.createObjectURL(file);
+  private setSelectedPreview(file: File): void {
+    this.revokeSelectedPreview();
+    this.selectedImagePreviewUrl = URL.createObjectURL(file);
   }
 
-  private revokePendingPreview(): void {
-    if (!this.pendingCreateImagePreviewUrl) return;
-    URL.revokeObjectURL(this.pendingCreateImagePreviewUrl);
-    this.pendingCreateImagePreviewUrl = '';
+  private revokeSelectedPreview(): void {
+    if (!this.selectedImagePreviewUrl) return;
+    URL.revokeObjectURL(this.selectedImagePreviewUrl);
+    this.selectedImagePreviewUrl = '';
   }
 
   private pickUpsertItem(
@@ -389,80 +352,127 @@ export class PromotionComponent implements OnInit {
     };
   }
 
-  private createPromotionWithBody(
-    body: PromotionUpsertBody,
-    pendingUploadTask: Promise<string> | null = null,
-  ): void {
-    this.api.createPromotion(body).subscribe({
-      next: (res) => {
-        const created = this.pickUpsertItem(res, null, body);
-        this.promotions = [created, ...this.promotions];
-        this.updateListCache(this.promotions, this.nextCursor);
-        this.applyPromotionFilters();
-        const createdId = Number(created.id);
-        if (
-          pendingUploadTask &&
-          Number.isFinite(createdId) &&
-          createdId > 0 &&
-          !created.imageUrl
-        ) {
-          this.toast.show('Đã tạo tin. Ảnh đang được đồng bộ nền...', 'info');
-          pendingUploadTask
-            .then((secureUrl) => {
-              if (!secureUrl) return;
-              const updateBody: PromotionUpsertBody = {
-                ...body,
-                imageUrl: secureUrl,
-              };
-              this.api.updatePromotion(createdId, updateBody).subscribe({
-                next: (uRes) => {
-                  const updated = this.pickUpsertItem(
-                    uRes,
-                    { ...created, imageUrl: secureUrl },
-                    updateBody,
-                  );
-                  this.promotions = this.promotions.map((x) => (x.id === createdId ? updated : x));
-                  this.updateListCache(this.promotions, this.nextCursor);
-                  this.applyPromotionFilters();
-                },
-              });
-            })
-            .catch(() => {
-              this.toast.show('Tải ảnh lên thất bại sau khi tạo. Bạn có thể sửa lại để tải lại.', 'warning');
-            });
-        } else {
-          this.toast.show('Tạo khuyến mãi thành công.', 'success');
-        }
-        this.closeModal();
-      },
-      error: () => {
-        this.submitting = false;
-        this.toast.show('Tạo khuyến mãi thất bại.', 'error');
-      },
-    });
+  private async updatePromotionWithBody(body: PromotionUpsertBody): Promise<void> {
+    const editing = this.editingPromotion;
+    if (!editing) return;
+
+    const hasSelectedUpload = !!this.selectedImageFile && !!this.selectedImagePreviewUrl;
+    const updateBody: PromotionUpsertBody = hasSelectedUpload ? { ...body, imageUrl: editing.imageUrl ?? '' } : body;
+    const res = await firstValueFrom(this.api.updatePromotion(editing.id, updateBody));
+    const selectedUpload = hasSelectedUpload ? this.takeSelectedImageUpload() : null;
+    const updated = this.pickUpsertItem(res, editing, updateBody);
+    const visibleItem = selectedUpload ? { ...updated, imageUrl: selectedUpload.previewUrl } : updated;
+    this.replacePromotionInList(visibleItem);
+    this.toast.show(
+      selectedUpload ? 'Cập nhật khuyến mãi thành công. Ảnh đang được tải nền...' : 'Cập nhật khuyến mãi thành công.',
+      'success',
+    );
+    this.closeModal();
+    if (selectedUpload) {
+      this.uploadPromotionImageInBackground({
+        id: updated.id,
+        body,
+        file: selectedUpload.file,
+        previewUrl: selectedUpload.previewUrl,
+        fallbackImageUrl: editing.imageUrl ?? '',
+        successMessage: 'Ảnh khuyến mãi đã được cập nhật.',
+        failureMessage: 'Cập nhật nội dung thành công nhưng tải ảnh lên thất bại.',
+      });
+    }
   }
 
-  private startPendingCreateImageUpload(file: File): void {
+  private async createPromotionWithBody(body: PromotionUpsertBody): Promise<void> {
+    const hasSelectedUpload = !!this.selectedImageFile && !!this.selectedImagePreviewUrl;
+    const createBody: PromotionUpsertBody = hasSelectedUpload ? { ...body, imageUrl: '' } : body;
+    const res = await firstValueFrom(this.api.createPromotion(createBody));
+    const selectedUpload = hasSelectedUpload ? this.takeSelectedImageUpload() : null;
+    let created = this.pickUpsertItem(res, null, createBody);
+    const createdId = Number(created.id);
+
+    if (selectedUpload && Number.isFinite(createdId) && createdId > 0) {
+      created = { ...created, imageUrl: selectedUpload.previewUrl };
+    }
+
+    this.promotions = [created, ...this.promotions];
+    this.updateListCache(this.promotions, this.nextCursor);
+    this.applyPromotionFilters();
+    this.toast.show(
+      selectedUpload ? 'Tạo khuyến mãi thành công. Ảnh đang được tải nền...' : 'Tạo khuyến mãi thành công.',
+      'success',
+    );
+    this.closeModal();
+    if (selectedUpload && Number.isFinite(createdId) && createdId > 0) {
+      this.uploadPromotionImageInBackground({
+        id: createdId,
+        body,
+        file: selectedUpload.file,
+        previewUrl: selectedUpload.previewUrl,
+        fallbackImageUrl: '',
+        successMessage: 'Ảnh khuyến mãi đã được tải lên.',
+        failureMessage: 'Đã tạo tin nhưng tải ảnh lên thất bại.',
+      });
+    } else if (selectedUpload) {
+      URL.revokeObjectURL(selectedUpload.previewUrl);
+      this.toast.show('Đã tạo tin nhưng không nhận được ID để tải ảnh.', 'warning');
+    }
+  }
+
+  private takeSelectedImageUpload(): { file: File; previewUrl: string } | null {
+    const file = this.selectedImageFile;
+    const previewUrl = this.selectedImagePreviewUrl;
+    if (!file || !previewUrl) return null;
+    this.selectedImageFile = null;
+    this.selectedImagePreviewUrl = '';
+    return { file, previewUrl };
+  }
+
+  private replacePromotionInList(item: PromotionItem): void {
+    this.promotions = this.promotions.map((x) => (x.id === item.id ? item : x));
+    this.updateListCache(this.promotions, this.nextCursor);
+    this.applyPromotionFilters();
+  }
+
+  private uploadPromotionImageInBackground(options: {
+    id: number;
+    body: PromotionUpsertBody;
+    file: File;
+    previewUrl: string;
+    fallbackImageUrl: string;
+    successMessage: string;
+    failureMessage: string;
+  }): void {
     this.uploading = true;
     this.uploadProgress = 0;
-    this.pendingCreateUploadedUrl = '';
-    const uploadTask = this.uploadPromotionImage(Date.now(), file);
-    this.pendingCreateUploadTask = uploadTask;
-    uploadTask
+    this.uploadPromotionImage(options.id, options.file)
       .then((secureUrl) => {
-        this.pendingCreateUploadedUrl = secureUrl;
-        this.form.patchValue({ imageUrl: secureUrl });
+        const updateBody: PromotionUpsertBody = { ...options.body, imageUrl: secureUrl };
+        return firstValueFrom(this.api.updatePromotion(options.id, updateBody)).then((res) => {
+          const fallback = this.promotions.find((item) => item.id === options.id) ?? null;
+          const updated = this.pickUpsertItem(res, fallback, updateBody);
+          this.replacePromotionInList(updated);
+          this.toast.show(options.successMessage, 'success');
+        });
       })
-      .catch(() => {
-        this.pendingCreateUploadTask = null;
-        this.pendingCreateUploadedUrl = '';
-        this.form.patchValue({ imageUrl: '' });
-        this.toast.show('Tải ảnh lên thất bại. Bạn vẫn có thể tạo tin và tải lại sau.', 'warning');
+      .catch((err: unknown) => {
+        const current = this.promotions.find((item) => item.id === options.id);
+        if (current) {
+          this.replacePromotionInList({ ...current, imageUrl: options.fallbackImageUrl });
+        }
+        this.toast.show(this.getUploadErrorMessage(err, options.failureMessage), 'warning');
       })
       .finally(() => {
+        URL.revokeObjectURL(options.previewUrl);
         this.uploading = false;
         this.uploadProgress = 0;
       });
+  }
+
+  private getUploadErrorMessage(err: unknown, fallback: string): string {
+    if (err instanceof HttpErrorResponse) {
+      return (err.error as { message?: string })?.message ?? err.message ?? fallback;
+    }
+    if (err instanceof Error) return err.message || fallback;
+    return fallback;
   }
 
   private updateListCache(items: PromotionItem[], nextCursor: number | null): void {

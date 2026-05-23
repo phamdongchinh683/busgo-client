@@ -1,7 +1,8 @@
 import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { company } from '../../data/services/index';
+import { firstValueFrom } from 'rxjs';
+import { company, upload } from '../../data/services/index';
 import { Company } from '../../data/interfaces/company';
 import { AppCompanyListComponent } from '@app/shared/components/app-company-list/app-company-list.component';
 import { PageToastHostComponent } from '@app/shared/components/page-toast-host/page-toast-host.component';
@@ -12,6 +13,7 @@ import { PAGE_LIMITS, DEFAULT_PAGE_LIMIT, type PageLimit } from '../../data/cons
 import { CompanyToolbarComponent } from './components/company-toolbar/company-toolbar.component';
 import { CompanyFormModalComponent } from './components/company-form-modal/company-form-modal.component';
 import { CompanyDeleteModalComponent } from './components/company-delete-modal/company-delete-modal.component';
+import { imageUploadPresets } from '../../data/services/upload/image-upload-presets';
 
 @Component({
   selector: 'app-company',
@@ -43,6 +45,10 @@ export class CompanyComponent implements OnInit {
   editingCompany: Company | null = null;
   companyForm: FormGroup;
   submitting = false;
+  uploadingLogo = false;
+  uploadLogoProgress = 0;
+  selectedLogoFile: File | null = null;
+  selectedLogoPreviewUrl = '';
 
   showDeleteConfirm = false;
   deletingCompany: Company | null = null;
@@ -54,6 +60,7 @@ export class CompanyComponent implements OnInit {
 
   constructor(
     private readonly api: company.ApiService,
+    private readonly uploadApi: upload.ApiService,
     private readonly fb: FormBuilder,
   ) {
     this.companyForm = this.fb.group({
@@ -116,12 +123,16 @@ export class CompanyComponent implements OnInit {
 
   openCreateModal() {
     this.editingCompany = null;
+    this.selectedLogoFile = null;
+    this.revokeSelectedLogoPreview();
     this.companyForm.reset({ name: '', hotline: '', logoUrl: '', address: '', latitude: null, longitude: null });
     this.showModal = true;
   }
 
   onEdit(c: Company) {
     this.editingCompany = c;
+    this.selectedLogoFile = null;
+    this.revokeSelectedLogoPreview();
     this.companyForm.patchValue({
       name: c.name,
       hotline: c.hotline,
@@ -136,11 +147,15 @@ export class CompanyComponent implements OnInit {
   closeModal() {
     this.showModal = false;
     this.editingCompany = null;
+    this.selectedLogoFile = null;
+    this.revokeSelectedLogoPreview();
+    this.uploadingLogo = false;
+    this.uploadLogoProgress = 0;
   }
 
   private readonly NAME_REGEX = /^[a-zA-ZÀ-ỹ\s]{5,}$/;
 
-  onSubmit() {
+  async onSubmit(): Promise<void> {
     const { name: rawName, hotline: rawHotline, logoUrl: rawLogo, address: rawAddress, latitude: rawLatitude, longitude: rawLongitude } =
       this.companyForm.getRawValue();
     const name = (rawName ?? '').trim();
@@ -194,31 +209,63 @@ export class CompanyComponent implements OnInit {
     this.submitting = true;
 
     if (this.editingCompany) {
+      const editing = this.editingCompany;
+      const selectedLogoUpload = this.takeSelectedLogoUpload();
       const data: Partial<{ name: string; hotline: string; logoUrl: string; address: string; latitude: number | null; longitude: number | null }> =
         {};
-      if (name !== this.editingCompany.name) data['name'] = name;
-      if (hotline !== this.editingCompany.hotline) data['hotline'] = hotline;
-      if (logoUrl !== this.editingCompany.logoUrl) data['logoUrl'] = logoUrl;
+      if (name !== editing.name) data['name'] = name;
+      if (hotline !== editing.hotline) data['hotline'] = hotline;
+      if (!selectedLogoUpload && logoUrl !== editing.logoUrl) {
+        data['logoUrl'] = logoUrl;
+      }
       if (address !== originalAddress) data['address'] = address;
-      const originalLatitude = this.toNullableNumber(this.editingCompany.latitude);
-      const originalLongitude = this.toNullableNumber(this.editingCompany.longitude);
+      const originalLatitude = this.toNullableNumber(editing.latitude);
+      const originalLongitude = this.toNullableNumber(editing.longitude);
       if (latitude !== originalLatitude) data['latitude'] = latitude;
       if (longitude !== originalLongitude) data['longitude'] = longitude;
-      if (Object.keys(data).length === 0) {
+      const hasProfileChanges = Object.keys(data).length > 0;
+      if (!hasProfileChanges && !selectedLogoUpload) {
         this.toast.show('Không có thay đổi để cập nhật.', 'info');
         this.submitting = false;
         return;
       }
 
-      this.api.updateCompany(this.editingCompany.id, data).subscribe({
+      const finishUpdate = (baseCompany: Company) => {
+        const visibleCompany = selectedLogoUpload
+          ? { ...baseCompany, logoUrl: selectedLogoUpload.previewUrl }
+          : baseCompany;
+        this.companies = this.companies.map((c) => (c.id === visibleCompany.id ? visibleCompany : c));
+        this.toast.show(
+          selectedLogoUpload ? 'Cập nhật nhà xe thành công. Logo đang được tải nền...' : 'Cập nhật nhà xe thành công!',
+          'success',
+        );
+        this.closeModal();
+        this.submitting = false;
+        this.cdr.markForCheck();
+        if (selectedLogoUpload) {
+          this.uploadCompanyLogoInBackground({
+            companyId: editing.id,
+            file: selectedLogoUpload.file,
+            previewUrl: selectedLogoUpload.previewUrl,
+            fallbackLogoUrl: editing.logoUrl ?? '',
+          });
+        }
+      };
+
+      if (!hasProfileChanges) {
+        finishUpdate(editing);
+        return;
+      }
+
+      this.api.updateCompany(editing.id, data).subscribe({
         next: (res) => {
-          this.companies = this.companies.map((c) => (c.id === res.company.id ? res.company : c));
-          this.toast.show('Cập nhật nhà xe thành công!', 'success');
-          this.closeModal();
-          this.submitting = false;
-          this.cdr.markForCheck();
+          finishUpdate(res.company);
         },
         error: (err: unknown) => {
+          if (selectedLogoUpload) {
+            this.selectedLogoFile = selectedLogoUpload.file;
+            this.selectedLogoPreviewUrl = selectedLogoUpload.previewUrl;
+          }
           this.toast.show(getApiErrorMessage(err, 'Cập nhật thất bại.'), 'error');
           this.submitting = false;
         },
@@ -244,6 +291,84 @@ export class CompanyComponent implements OnInit {
     if (value === null || value === undefined || value === '') return null;
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  onLogoSelected(file: File | null) {
+    this.revokeSelectedLogoPreview();
+    this.selectedLogoFile = file;
+    if (file) {
+      this.selectedLogoPreviewUrl = URL.createObjectURL(file);
+    }
+  }
+
+  private async uploadCompanyLogo(companyId: number, file: File): Promise<string> {
+    this.uploadingLogo = true;
+    this.uploadLogoProgress = 0;
+    this.cdr.markForCheck();
+    try {
+      const presigned = await firstValueFrom(this.uploadApi.getPresigned('company', companyId));
+      const prefersWebp = presigned.acceptedMimeTypes?.includes('image/webp');
+      const p = imageUploadPresets.companyLogo;
+      const uploadFile = await this.uploadApi.prepareImageForUpload(file, presigned, {
+        maxBytes: p.maxBytes,
+        minResizeBytes: p.minResizeBytes,
+        maxDimension: p.maxDimension,
+        preferredOutputType: prefersWebp ? 'image/webp' : 'image/jpeg',
+        quality: prefersWebp ? p.qualityWebp : p.qualityJpeg,
+      });
+      return await this.uploadApi.uploadImageToCloudinaryWithProgress(uploadFile, presigned, (percent) => {
+        this.uploadLogoProgress = percent;
+        this.cdr.markForCheck();
+      });
+    } finally {
+      this.uploadingLogo = false;
+      this.uploadLogoProgress = 0;
+      this.cdr.markForCheck();
+    }
+  }
+
+  private getUploadErrorMessage(err: unknown, fallback: string): string {
+    return err instanceof Error ? err.message || fallback : fallback;
+  }
+
+  private takeSelectedLogoUpload(): { file: File; previewUrl: string } | null {
+    const file = this.selectedLogoFile;
+    const previewUrl = this.selectedLogoPreviewUrl;
+    if (!file || !previewUrl) return null;
+    this.selectedLogoFile = null;
+    this.selectedLogoPreviewUrl = '';
+    return { file, previewUrl };
+  }
+
+  private revokeSelectedLogoPreview(): void {
+    if (!this.selectedLogoPreviewUrl) return;
+    URL.revokeObjectURL(this.selectedLogoPreviewUrl);
+    this.selectedLogoPreviewUrl = '';
+  }
+
+  private uploadCompanyLogoInBackground(options: {
+    companyId: number;
+    file: File;
+    previewUrl: string;
+    fallbackLogoUrl: string;
+  }): void {
+    this.uploadCompanyLogo(options.companyId, options.file)
+      .then((secureUrl) => firstValueFrom(this.api.updateCompany(options.companyId, { logoUrl: secureUrl })))
+      .then((res) => {
+        this.companies = this.companies.map((c) => (c.id === res.company.id ? res.company : c));
+        this.toast.show('Logo nhà xe đã được cập nhật.', 'success');
+        this.cdr.markForCheck();
+      })
+      .catch((err: unknown) => {
+        this.companies = this.companies.map((c) =>
+          c.id === options.companyId ? { ...c, logoUrl: options.fallbackLogoUrl } : c,
+        );
+        this.toast.show(this.getUploadErrorMessage(err, 'Cập nhật thông tin thành công nhưng tải logo lên thất bại.'), 'warning');
+        this.cdr.markForCheck();
+      })
+      .finally(() => {
+        URL.revokeObjectURL(options.previewUrl);
+      });
   }
 
   onDelete(c: Company) {

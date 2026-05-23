@@ -1,12 +1,10 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { HttpErrorResponse } from '@angular/common/http';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { firstValueFrom } from 'rxjs';
 import { Company } from '../../../../data/interfaces/company';
-import { upload, vnLocation } from '../../../../data/services';
-import { imageUploadPresets } from '../../../../data/services/upload/image-upload-presets';
+import { vnLocation } from '../../../../data/services';
 
 @Component({
   selector: 'app-company-form-modal',
@@ -21,17 +19,18 @@ export class CompanyFormModalComponent implements OnChanges {
   @Input({ required: true }) form!: FormGroup;
   @Input() editingCompany: Company | null = null;
   @Input() submitting = false;
+  @Input() uploadingLogo = false;
+  @Input() uploadLogoProgress = 0;
 
   @Output() closed = new EventEmitter<void>();
   @Output() submitted = new EventEmitter<void>();
   @Output() logoUploadError = new EventEmitter<string>();
+  @Output() logoSelected = new EventEmitter<File | null>();
 
-  uploadingLogo = false;
-  uploadLogoProgress = 0;
   resolvingFromAddress = false;
+  private pendingLogoPreviewUrl = '';
 
   constructor(
-    private readonly uploadApi: upload.ApiService,
     private readonly vnLocationApi: vnLocation.ApiService,
     private readonly sanitizer: DomSanitizer,
     private readonly cdr: ChangeDetectorRef,
@@ -39,7 +38,14 @@ export class CompanyFormModalComponent implements OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['open']?.currentValue === true) {
+      this.revokePendingLogoPreview();
       this.syncCoordinateControls();
+    }
+    if (changes['open']?.previousValue === true && changes['open']?.currentValue === false) {
+      this.revokePendingLogoPreview();
+    }
+    if (changes['editingCompany'] && !changes['editingCompany'].firstChange) {
+      this.revokePendingLogoPreview();
     }
   }
 
@@ -48,6 +54,7 @@ export class CompanyFormModalComponent implements OnChanges {
   }
 
   get logoPreviewUrl(): string {
+    if (this.pendingLogoPreviewUrl) return this.pendingLogoPreviewUrl;
     const v = this.form?.get('logoUrl')?.value;
     return typeof v === 'string' ? v.trim() : '';
   }
@@ -122,39 +129,25 @@ export class CompanyFormModalComponent implements OnChanges {
     input.value = '';
     if (!file || !this.editingCompany) return;
 
-    this.uploadingLogo = true;
-    this.uploadLogoProgress = 0;
-    this.cdr.markForCheck();
-
-    try {
-      const presigned = await firstValueFrom(this.uploadApi.getPresigned('company', this.editingCompany.id));
-      const prefersWebp = presigned.acceptedMimeTypes?.includes('image/webp');
-      const p = imageUploadPresets.companyLogo;
-      const uploadFile = await this.uploadApi.prepareImageForUpload(file, presigned, {
-        maxBytes: p.maxBytes,
-        minResizeBytes: p.minResizeBytes,
-        maxDimension: p.maxDimension,
-        preferredOutputType: prefersWebp ? 'image/webp' : 'image/jpeg',
-        quality: prefersWebp ? p.qualityWebp : p.qualityJpeg,
-      });
-      const secureUrl = await this.uploadApi.uploadImageToCloudinaryWithProgress(uploadFile, presigned, (percent) => {
-        this.uploadLogoProgress = percent;
-        this.cdr.markForCheck();
-      });
-      this.form.patchValue({ logoUrl: secureUrl });
-    } catch (e: unknown) {
-      let message = 'Logo upload failed.';
-      if (e instanceof HttpErrorResponse) {
-        message = (e.error as { message?: string })?.message ?? e.message ?? message;
-      } else if (e instanceof Error) {
-        message = e.message;
-      }
-      this.logoUploadError.emit(message);
-    } finally {
-      this.uploadingLogo = false;
-      this.uploadLogoProgress = 0;
-      this.cdr.markForCheck();
+    if (!file.type.startsWith('image/')) {
+      this.logoUploadError.emit('Chỉ hỗ trợ tệp ảnh.');
+      return;
     }
+
+    this.setPendingLogoPreview(file);
+    this.logoSelected.emit(file);
+    this.cdr.markForCheck();
+  }
+
+  private setPendingLogoPreview(file: File): void {
+    this.revokePendingLogoPreview();
+    this.pendingLogoPreviewUrl = URL.createObjectURL(file);
+  }
+
+  private revokePendingLogoPreview(): void {
+    if (!this.pendingLogoPreviewUrl) return;
+    URL.revokeObjectURL(this.pendingLogoPreviewUrl);
+    this.pendingLogoPreviewUrl = '';
   }
 
   private syncCoordinateControls(): void {

@@ -49,8 +49,11 @@
   [form]="companyForm"
   [editingCompany]="editingCompany"
   [submitting]="submitting"
+  [uploadingLogo]="uploadingLogo"
+  [uploadLogoProgress]="uploadLogoProgress"
   (closed)="closeModal()"
   (submitted)="onSubmit()"
+  (logoSelected)="onLogoSelected($event)"
   (logoUploadError)="toast.show($event, 'error')"
 ></app-company-form-modal>
 
