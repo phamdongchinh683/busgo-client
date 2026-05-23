@@ -1,33 +1,25 @@
 .chart-card {
   background: transparent;
   border: none;
-  border-radius: 12px;
+  border-radius: 0;
   padding: 0;
   box-shadow: none;
 }
 
 .chart-card__title {
-  margin: 0 0 12px;
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--color-text-dark, #111827);
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 760;
+  letter-spacing: 0;
+  color: var(--color-text-dark, #243244);
 }
 
 .chart-card__canvas {
   position: relative;
-  height: 300px;
-  padding: 8px 4px 0;
-  border-radius: 12px;
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--color-primary, #15803d) 4%, #ffffff) 0%, #ffffff 28%),
-    repeating-linear-gradient(
-      90deg,
-      color-mix(in srgb, var(--color-border, #e5e7eb) 35%, transparent) 0,
-      color-mix(in srgb, var(--color-border, #e5e7eb) 35%, transparent) 1px,
-      transparent 1px,
-      transparent 56px
-    );
+  height: 292px;
+  padding: 6px 0 0;
+  border-top: 1px solid #e2eaf1;
+  background: #ffffff;
 }
 
 .chart-card__canvas--dim {
@@ -40,16 +32,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: color-mix(in srgb, var(--color-surface, #fff) 72%, transparent);
-  border-radius: 12px;
-  backdrop-filter: blur(2px);
+  background: rgba(255, 255, 255, 0.76);
+  backdrop-filter: blur(1px);
 }
 
 .chart-card__spinner {
-  width: 28px;
-  height: 28px;
-  border: 3px solid var(--color-border, #e5e7eb);
-  border-top-color: var(--color-primary, #15803d);
+  width: 26px;
+  height: 26px;
+  border: 3px solid #d8e2ea;
+  border-top-color: #2563eb;
   border-radius: 50%;
   animation: chart-spin 0.75s linear infinite;
 }

@@ -21,7 +21,6 @@ import {
   userRoleLabel,
 } from '@app/shared/utils/domain-labels';
 import { buildYearOptions } from '@app/shared/utils/year-options';
-import { PageHeaderIntroComponent } from '@app/shared/components/page-header-intro/page-header-intro.component';
 import { DashboardStatsGridComponent } from './components/dashboard-stats-grid/dashboard-stats-grid.component';
 import { DashboardChartsToolbarComponent } from './components/dashboard-charts-toolbar/dashboard-charts-toolbar.component';
 import { DashboardTrendChartPanelComponent } from './components/dashboard-trend-chart-panel/dashboard-trend-chart-panel.component';
@@ -44,7 +43,6 @@ import {
     CommonModule,
     FormsModule,
     PageToastHostComponent,
-    PageHeaderIntroComponent,
     DashboardStatsGridComponent,
     DashboardChartsToolbarComponent,
     DashboardTrendChartPanelComponent,

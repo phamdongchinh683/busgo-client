@@ -8,11 +8,17 @@
 
   <div *ngIf="!loading && overview" class="dashboard__body">
     <header class="dashboard__hero">
-      <app-page-header-intro
-        title="Tổng quan"
-        subtitle="Theo dõi người dùng, đặt vé, doanh thu và nhà xe."
-        badge="Thống kê"
-      />
+      <div class="dashboard__title-block">
+        <span class="dashboard__kicker">VẬN HÀNH BUSGO</span>
+        <h1>Trung tâm điều hành</h1>
+        <p>Số liệu vận hành hệ thống đặt vé, thanh toán và nhà xe.</p>
+      </div>
+
+      <div class="dashboard__meta-strip" aria-label="Ngữ cảnh thống kê">
+        <span>Quản trị hệ thống</span>
+        <span>{{ chartType === 'monthly' ? 'Theo tháng' : 'Theo năm' }}</span>
+        <span *ngIf="chartType === 'monthly'">{{ selectedYear }}</span>
+      </div>
     </header>
 
     <app-dashboard-stats-grid [overview]="overview"></app-dashboard-stats-grid>

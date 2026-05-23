@@ -1,113 +1,152 @@
 .chart-block {
-  padding: 16px 16px 12px;
-  border: 1px solid color-mix(in srgb, var(--color-border) 82%, #ffffff);
-  border-radius: 16px;
-  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+  min-height: 100%;
+  padding: 14px;
+  border: 1px solid #d8e2ea;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.chart-block__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e2eaf1;
+}
+
+.chart-block__title {
+  min-width: 0;
+}
+
+.chart-block__title span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--color-text-muted, #64748b);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.chart-block__title h3 {
+  margin: 0;
+  color: var(--color-text-dark, #243244);
+  font-size: 16px;
+  font-weight: 760;
+  letter-spacing: 0;
 }
 
 .chart-block__summary {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-  padding: 10px 14px;
-  border-radius: 12px;
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--color-primary, #15803d) 8%, #ffffff) 0%,
-    color-mix(in srgb, var(--color-primary, #15803d) 3%, #ffffff) 100%
-  );
-  border: 1px solid color-mix(in srgb, var(--color-primary, #15803d) 16%, var(--color-border, #e5e7eb));
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  min-width: 124px;
+  padding: 0 0 2px;
 }
 
 .chart-block__summary-label {
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-text-muted, #6b7280);
+  letter-spacing: 0;
+  color: var(--color-text-muted, #64748b);
 }
 
 .chart-block__summary-value {
   font-size: 20px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--color-text-dark, #111827);
+  font-weight: 760;
+  letter-spacing: 0;
+  color: var(--color-text-dark, #243244);
   font-variant-numeric: tabular-nums;
+  text-align: right;
+  overflow-wrap: anywhere;
 }
 
 .chart-block__summary-value--currency {
-  font-size: 17px;
+  font-size: 16px;
 }
 
 ::ng-deep .chart-block__filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 14px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--color-border) 82%, #ffffff);
-  background: #f8fafc;
+  align-items: flex-end;
+  gap: 10px;
+  min-width: 0;
+  margin: 0 0 12px;
+  padding: 0 0 12px;
+  border-bottom: 1px solid #edf2f7;
 }
 
 ::ng-deep .chart-block__filters .filter {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  font-size: 10px;
+  gap: 5px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-text-muted, #6b7280);
+  letter-spacing: 0;
+  color: var(--color-text-muted, #64748b);
 }
 
 ::ng-deep .chart-block__filters .select {
-  min-width: 148px;
-  height: 36px;
+  min-width: 134px;
+  height: 34px;
   padding: 0 12px;
-  border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--color-border) 88%, #ffffff);
+  border-radius: 6px;
+  border: 1px solid #cfdbe6;
   background: #ffffff;
-  color: var(--color-text-dark);
+  color: var(--color-text-dark, #243244);
   font-size: 13px;
   font-weight: 600;
 }
 
 ::ng-deep .chart-block__filters .select:hover {
-  border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+  border-color: #9fb2c3;
 }
 
 ::ng-deep .chart-block__filters .select:focus {
   outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 16%, transparent);
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
 ::ng-deep .chart-block .chart-card {
   border: none;
-  border-radius: 12px;
+  border-radius: 0;
   padding: 0;
   box-shadow: none;
   background: transparent;
 }
 
 ::ng-deep .chart-block .chart-card__title {
-  margin-bottom: 10px;
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  display: none;
+  margin-bottom: 0;
+  font-size: 15px;
+  font-weight: 760;
+  letter-spacing: 0;
 }
 
 ::ng-deep .chart-block .chart-card__canvas {
-  height: 300px;
+  height: 292px;
 }
 
 @media (max-width: 720px) {
   .chart-block {
-    padding: 14px 12px 10px;
+    padding: 12px;
+  }
+
+  .chart-block__header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .chart-block__summary {
+    align-items: flex-start;
   }
 
   ::ng-deep .chart-block__filters .filter {

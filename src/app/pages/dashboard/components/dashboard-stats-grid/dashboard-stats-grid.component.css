@@ -2,33 +2,219 @@
   display: block;
 }
 
-.metrics-section {
-  margin: 0 0 20px;
+.metrics-ledger {
+  margin: 0 0 18px;
+  border: 1px solid #cfdbe6;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
-.section-heading {
-  margin: 0 0 14px;
+.metrics-ledger__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px 14px;
+  border-bottom: 1px solid #e2eaf1;
+}
+
+.metrics-ledger__eyebrow {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted, #64748b);
+}
+
+.metrics-ledger h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 760;
+  letter-spacing: 0;
+  color: var(--color-text-dark, #243244);
+}
+
+.metrics-ledger__source {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid #d8e2ea;
+  border-radius: 6px;
+  background: #f6f8fb;
+  color: var(--color-text-subtle, #6a7b90);
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
+  white-space: nowrap;
 }
 
-.cards-grid {
+.metrics-ledger__body {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
+  grid-template-columns: minmax(240px, 0.34fr) minmax(0, 1fr);
+  min-height: 288px;
 }
 
-@media (max-width: 1080px) {
-  .cards-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+.metrics-ledger__revenue {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 9px;
+  padding: 20px 22px;
+  border-right: 1px solid #e2eaf1;
+  background: #fbfcfe;
+}
+
+.metrics-ledger__label {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  color: var(--color-text-muted, #64748b);
+}
+
+.metrics-ledger__revenue strong {
+  color: var(--color-text-dark, #243244);
+  font-size: 30px;
+  font-weight: 760;
+  line-height: 1.08;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.metrics-ledger__revenue small {
+  max-width: 28ch;
+  color: var(--color-text-muted, #64748b);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.metrics-ledger__table-wrap {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.metrics-ledger__table {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: collapse;
+}
+
+.metrics-ledger__table th {
+  height: 42px;
+  padding: 0 16px;
+  border-bottom: 1px solid #e2eaf1;
+  background: #fbfcfe;
+  color: var(--color-text-muted, #64748b);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.metrics-ledger__table td {
+  height: 60px;
+  padding: 10px 16px;
+  border-bottom: 1px solid #edf2f7;
+  color: var(--color-text-body, #4e5f74);
+  font-size: 13px;
+  font-weight: 650;
+  vertical-align: middle;
+}
+
+.metrics-ledger__table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.metrics-ledger__table tbody tr:hover td {
+  background: #f8fafc;
+}
+
+.metrics-ledger__table td:first-child {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.metrics-ledger__table td:first-child strong {
+  display: block;
+  color: var(--color-text-dark, #243244);
+  font-size: 14px;
+  font-weight: 760;
+}
+
+.metrics-ledger__table td:first-child small {
+  display: block;
+  margin-top: 3px;
+  color: var(--color-text-muted, #64748b);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.metrics-ledger__value-col {
+  color: var(--color-text-dark, #243244);
+  font-size: 18px;
+  font-weight: 760;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+th.metrics-ledger__value-col {
+  color: var(--color-text-muted, #64748b);
+  font-size: 11px;
+}
+
+.metrics-ledger__mark {
+  display: inline-block;
+  width: 9px;
+  height: 34px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+
+.metrics-ledger__mark--users {
+  background: #2563eb;
+}
+
+.metrics-ledger__mark--bookings {
+  background: #059669;
+}
+
+.metrics-ledger__mark--revenue {
+  background: #d97706;
+}
+
+.metrics-ledger__mark--companies {
+  background: #0f766e;
+}
+
+@media (max-width: 960px) {
+  .metrics-ledger__body {
+    grid-template-columns: 1fr;
+  }
+
+  .metrics-ledger__revenue {
+    border-right: none;
+    border-bottom: 1px solid #e2eaf1;
   }
 }
 
-@media (max-width: 560px) {
-  .cards-grid {
-    grid-template-columns: 1fr;
+@media (max-width: 640px) {
+  .metrics-ledger__header {
+    flex-direction: column;
+    padding: 14px;
+  }
+
+  .metrics-ledger__revenue {
+    padding: 16px 14px;
+  }
+
+  .metrics-ledger__revenue strong {
+    font-size: 24px;
   }
 }

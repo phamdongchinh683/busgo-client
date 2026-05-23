@@ -14,7 +14,10 @@ import type { DashboardTrendChartKind } from '../../../../data/interfaces/dashbo
 
 Chart.register(...registerables);
 
-const PALETTE = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16'];
+const PALETTE = ['#2563eb', '#059669', '#d97706', '#7c3aed', '#dc2626', '#0891b2', '#4f46e5', '#65a30d'];
+const GRID_COLOR = '#e7eef5';
+const AXIS_TEXT_COLOR = '#64748b';
+const TOOLTIP_BG = '#243244';
 
 @Component({
   selector: 'app-dashboard-chart',
@@ -70,14 +73,15 @@ export class DashboardChartComponent implements AfterViewInit, OnChanges, OnDest
     if (this.datasets.length === 1) {
       const d0 = this.datasets[0];
       return {
-        labels: this.labels.length ? this.labels : d0.data.map((_, i) => `Item ${i + 1}`),
+        labels: this.labels.length ? this.labels : d0.data.map((_, i) => `Mục ${i + 1}`),
         datasets: [
           {
-            label: d0.label || 'Total',
+            label: d0.label || 'Tổng',
             data: d0.data.map((v) => Number(v ?? 0)),
             backgroundColor: d0.data.map((_, i) => d0.backgroundColor ?? PALETTE[i % PALETTE.length]),
-            borderWidth: 2,
+            borderWidth: 1,
             borderColor: '#ffffff',
+            hoverBorderColor: '#ffffff',
           },
         ],
       };
@@ -89,11 +93,12 @@ export class DashboardChartComponent implements AfterViewInit, OnChanges, OnDest
       labels: arcLabels,
       datasets: [
         {
-          label: 'Share',
+          label: 'Tỷ trọng',
           data: sums,
           backgroundColor: arcLabels.map((_, i) => PALETTE[i % PALETTE.length]),
-          borderWidth: 2,
+          borderWidth: 1,
           borderColor: '#ffffff',
+          hoverBorderColor: '#ffffff',
         },
       ],
     };
@@ -114,10 +119,25 @@ export class DashboardChartComponent implements AfterViewInit, OnChanges, OnDest
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        ...(type === 'doughnut' ? { cutout: '58%' } : {}),
+        ...(type === 'doughnut' ? { cutout: '64%' } : {}),
+        layout: { padding: { top: 8, right: 8, bottom: 0, left: 8 } },
         plugins: {
-          legend: { position: 'bottom' },
+          legend: {
+            position: 'bottom',
+            labels: {
+              boxWidth: 10,
+              boxHeight: 10,
+              color: AXIS_TEXT_COLOR,
+              padding: 14,
+              usePointStyle: true,
+              pointStyle: 'rectRounded',
+            },
+          },
           tooltip: {
+            backgroundColor: TOOLTIP_BG,
+            borderColor: 'rgba(255, 255, 255, 0.12)',
+            borderWidth: 1,
+            padding: 10,
             callbacks: {
               label: (ctx) => {
                 const raw = ctx.raw;
@@ -151,9 +171,14 @@ export class DashboardChartComponent implements AfterViewInit, OnChanges, OnDest
       data: d.data,
       backgroundColor: d.backgroundColor ?? PALETTE[i % PALETTE.length],
       borderColor: d.backgroundColor ?? PALETTE[i % PALETTE.length],
-      borderWidth: kind === 'line' ? 2 : 1,
+      borderWidth: kind === 'line' ? 2 : 0,
       tension: kind === 'line' ? 0.25 : undefined,
       fill: kind === 'line' ? false : undefined,
+      pointRadius: kind === 'line' ? 2 : undefined,
+      pointHoverRadius: kind === 'line' ? 4 : undefined,
+      borderRadius: kind === 'bar' ? 4 : undefined,
+      borderSkipped: kind === 'bar' ? false : undefined,
+      maxBarThickness: kind === 'bar' ? 34 : undefined,
     }));
 
     const stackedBar = kind === 'bar' && this.stacked;
@@ -164,9 +189,25 @@ export class DashboardChartComponent implements AfterViewInit, OnChanges, OnDest
         responsive: true,
         maintainAspectRatio: false,
         interaction: { mode: 'index', intersect: false },
+        layout: { padding: { top: 8, right: 8, bottom: 0, left: 4 } },
         plugins: {
-          legend: { position: 'bottom' },
+          legend: {
+            position: 'bottom',
+            align: 'start',
+            labels: {
+              boxWidth: 10,
+              boxHeight: 10,
+              color: AXIS_TEXT_COLOR,
+              padding: 14,
+              usePointStyle: true,
+              pointStyle: 'rectRounded',
+            },
+          },
           tooltip: {
+            backgroundColor: TOOLTIP_BG,
+            borderColor: 'rgba(255, 255, 255, 0.12)',
+            borderWidth: 1,
+            padding: 10,
             callbacks: {
               label: (ctx) => {
                 const raw = ctx.parsed;
@@ -181,10 +222,26 @@ export class DashboardChartComponent implements AfterViewInit, OnChanges, OnDest
           },
         },
         scales: {
-          x: { stacked: stackedBar },
+          x: {
+            stacked: stackedBar,
+            border: { display: false },
+            grid: { display: false },
+            ticks: {
+              color: AXIS_TEXT_COLOR,
+              maxRotation: 0,
+              autoSkipPadding: 18,
+            },
+          },
           y: {
             stacked: stackedBar,
+            border: { display: false },
+            grid: {
+              color: GRID_COLOR,
+              drawTicks: false,
+            },
             ticks: {
+              color: AXIS_TEXT_COLOR,
+              padding: 8,
               callback: (val) => {
                 const n = Number(val);
                 if (this.yFormat === 'currency') {
