@@ -1219,7 +1219,7 @@
     dotenv-expand "^10.0.0"
     find-up "^5.0.0"
 
-"@dotenv-run/webpack@^1.5.2":
+"@dotenv-run/webpack@^1.5.1":
   version "1.5.2"
   resolved "https://registry.yarnpkg.com/@dotenv-run/webpack/-/webpack-1.5.2.tgz#d44f14795952d6b5188b5c4ad0fa35682df70fe3"
   integrity sha512-dAWppLrRbYM1ollo266PrHvfD6JoJ+uOvbkeOl4DwluL0QFq92qB2V+TXysYNhzjDe0Rtp91Ztv3PCz9Tnm5jA==
@@ -2466,14 +2466,13 @@
   resolved "https://registry.npmjs.org/@ngtools/webpack/-/webpack-19.2.23.tgz"
   integrity sha512-RpA0ukuAcpvblXDEo702JWjblLXNrfr6BHjf/aVwujSM2yJSRQ5hZyauX9spCXMb8h3p+0dor62o6VDAQ5rAcQ==
 
-"@ngx-env/builder@^21.0.1":
-  version "21.0.1"
-  resolved "https://registry.yarnpkg.com/@ngx-env/builder/-/builder-21.0.1.tgz#6362dde28566b74d73b5607d32f7907894a2435f"
-  integrity sha512-bcdiXCzGMikL8qx8xKpC52q2rITSzxP+NMWrbngzFTMA0XdeU1l4sqZFmRgxSXAp+RWaf22Twl0sH9M2MmR4Xg==
+"@ngx-env/builder@19":
+  version "19.1.0"
+  resolved "https://registry.yarnpkg.com/@ngx-env/builder/-/builder-19.1.0.tgz#c6cf2884f090bb8df5e149a872f249c8350b67a6"
+  integrity sha512-dAEFb2Ns63sR2XT71cJkmE3GAl3sCYKADMZrWxGNDRxQSosw25qW+U6yrgSrAxw8ls1TMaiU6rXeFLsk92cpdQ==
   dependencies:
+    "@dotenv-run/webpack" "^1.5.1"
     glob "^10.4.5"
-  optionalDependencies:
-    "@dotenv-run/webpack" "^1.5.2"
 
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
