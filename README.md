@@ -84,7 +84,7 @@ npm run build
 Build output:
 
 ```text
-dist/ticketing-system-client
+dist/busgo
 ```
 
 ## Scripts
@@ -100,7 +100,7 @@ This repository currently does not define dedicated test or lint scripts in `pac
 ## Project Structure
 
 ```text
-ticketing-system-client/
+busgo-client/
 ├── public/
 │   └── firebase-messaging-sw.js
 ├── src/
