@@ -2,7 +2,9 @@
   display: block;
   height: 100vh;
   overflow: hidden;
-  background: linear-gradient(180deg, #f8fbf9 0%, #f4f7f5 100%);
+  background:
+    radial-gradient(circle at 7% 8%, rgba(8, 122, 46, 0.08), transparent 30%),
+    linear-gradient(180deg, #fbfdfb 0%, #f4faf6 100%);
 }
 
 .layout {
@@ -17,6 +19,7 @@
   flex-direction: column;
   overflow: hidden;
   background: transparent;
+  min-width: 0;
 }
 
 .page-content {
@@ -24,15 +27,17 @@
   flex: 1;
   overflow-y: auto;
   background: transparent;
+  scroll-padding-top: 20px;
 }
 
 .layout-footer {
-  border-top: 1px solid #c5ddce;
-  background: var(--color-surface);
+  border-top: 1px solid rgba(220, 231, 222, 0.72);
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(12px);
 }
 
 .layout-footer__inner {
-  padding: 12px 20px;
+  padding: 10px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -43,9 +48,9 @@
 .layout-footer__brand {
   margin: 0;
   font-size: 12px;
-  color: #3f5f52;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  color: #6b776d;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .layout-footer__meta {
@@ -53,15 +58,15 @@
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: #507464;
-  letter-spacing: 0.04em;
+  color: #6b776d;
+  letter-spacing: 0;
 }
 
 .layout-footer__dot {
-  width: 3px;
-  height: 3px;
+  width: 4px;
+  height: 4px;
   border-radius: 0;
-  background: #059669;
+  background: var(--color-primary);
 }
 
 .layout-footer__meta a {

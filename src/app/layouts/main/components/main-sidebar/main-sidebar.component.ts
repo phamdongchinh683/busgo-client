@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
@@ -19,15 +19,41 @@ export interface MainNavItem {
 })
 export class MainSidebarComponent {
   @Input({ required: true }) items: MainNavItem[] = [];
-  @Input() currentUrl = '';
+  @Input()
+  set currentUrl(value: string) {
+    this._currentUrl = value || '';
+    this.activeRoute = this._currentUrl;
+  }
+
+  get currentUrl(): string {
+    return this._currentUrl;
+  }
+
   @Input() userInitial = 'U';
   @Input() userName = 'Người dùng';
   @Input() userRole = '';
   @Input() userEmail = '';
+  @Output() signOut = new EventEmitter<void>();
+
+  activeRoute = '';
+  private _currentUrl = '';
 
   constructor(private readonly sanitizer: DomSanitizer) {}
 
   asSafeIcon(icon: string): SafeHtml {
     return this.sanitizer.bypassSecurityTrustHtml(icon);
+  }
+
+  activateImmediately(route: string): void {
+    this.activeRoute = route;
+  }
+
+  isActive(route: string): boolean {
+    const activePath = this.pathOnly(this.activeRoute || this.currentUrl);
+    return activePath === route || activePath.startsWith(`${route}/`);
+  }
+
+  private pathOnly(url: string): string {
+    return url.split(/[?#]/)[0] || '';
   }
 }

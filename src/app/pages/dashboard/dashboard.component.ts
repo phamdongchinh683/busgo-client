@@ -53,6 +53,7 @@ import {
 export class DashboardComponent implements OnInit {
   overview: DashboardOverview | null = null;
   loading = true;
+  dashboardGreetingName = 'Quản trị viên';
 
   userChartLoading = false;
   bookingChartLoading = false;
@@ -98,6 +99,7 @@ export class DashboardComponent implements OnInit {
   constructor(private api: dashboard.ApiService) { }
 
   ngOnInit() {
+    this.dashboardGreetingName = this.resolveGreetingName();
     this.yearOptions = buildYearOptions();
 
     this.api.getDashboard().subscribe({
@@ -228,5 +230,19 @@ export class DashboardComponent implements OnInit {
         label: localizeDashboardDatasetLabel(dataset.label),
       })),
     };
+  }
+
+  private resolveGreetingName(): string {
+    const raw = localStorage.getItem('user');
+    if (!raw) return 'Quản trị viên';
+
+    try {
+      const user = JSON.parse(raw) as { fullName?: string; name?: string; email?: string };
+      const displayName = (user.fullName || user.name || '').trim();
+      if (displayName) return displayName;
+      return user.email?.split('@')[0] || 'Quản trị viên';
+    } catch {
+      return 'Quản trị viên';
+    }
   }
 }

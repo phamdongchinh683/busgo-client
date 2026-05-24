@@ -1,50 +1,35 @@
 <div class="dashboard">
-  <app-page-toast-host />
+    <app-page-toast-host />
 
-  <div *ngIf="loading" class="loading-container">
-    <div class="spinner-large"></div>
-    <p>Đang tải trang tổng quan...</p>
-  </div>
+    <div *ngIf="loading" class="loading-container">
+        <div class="spinner-large"></div>
+        <p>Đang tải trang tổng quan...</p>
+    </div>
 
-  <div *ngIf="!loading && overview" class="dashboard__body">
-    <header class="dashboard__hero">
-      <div class="dashboard__title-block">
-        <span class="dashboard__kicker">VẬN HÀNH BUSGO</span>
-        <h1>Trung tâm điều hành</h1>
-        <p>Số liệu vận hành hệ thống đặt vé, thanh toán và nhà xe.</p>
-      </div>
+    <div *ngIf="!loading && overview" class="dashboard__body">
+        <header class="dashboard__hero">
+            <div class="dashboard__title-block">
+                <h1>Xin chào, {{ dashboardGreetingName }}</h1>
+                <p>Tổng quan nhanh về nhà xe, người dùng, đặt vé và doanh thu vận hành.</p>
+            </div>
 
-      <div class="dashboard__meta-strip" aria-label="Ngữ cảnh thống kê">
-        <span>Quản trị hệ thống</span>
-        <span>{{ chartType === 'monthly' ? 'Theo tháng' : 'Theo năm' }}</span>
-        <span *ngIf="chartType === 'monthly'">{{ selectedYear }}</span>
-      </div>
-    </header>
+            <div class="dashboard__meta-strip" aria-label="Ngữ cảnh thống kê">
+                <span>Hệ thống đang hoạt động</span>
+                <span>{{ chartType === 'monthly' ? 'Theo tháng' : 'Theo năm' }}</span>
+                <span *ngIf="chartType === 'monthly'">{{ selectedYear }}</span>
+            </div>
+        </header>
 
-    <app-dashboard-stats-grid [overview]="overview"></app-dashboard-stats-grid>
+        <app-dashboard-stats-grid [overview]="overview"></app-dashboard-stats-grid>
 
-    <section class="charts-section" aria-labelledby="dashboard-trends-heading">
-      <app-dashboard-charts-toolbar
-        [chartType]="chartType"
-        [selectedYear]="selectedYear"
-        [yearOptions]="yearOptions"
-        (chartTypeChange)="onChartTypeUpdated($event)"
-        (selectedYearChange)="onSelectedYearUpdated($event)"
-      />
+        <section class="charts-section" aria-labelledby="dashboard-trends-heading">
+            <app-dashboard-charts-toolbar [chartType]="chartType" [selectedYear]="selectedYear" [yearOptions]="yearOptions" (chartTypeChange)="onChartTypeUpdated($event)" (selectedYearChange)="onSelectedYearUpdated($event)" />
 
-      <div class="charts-stack">
-        <app-dashboard-trend-chart-panel
-          chartTitle="Người dùng theo thời gian"
-          [labels]="userChart.labels"
-          [datasets]="userChart.datasets"
-          [loading]="userChartLoading"
-          [chartKind]="userChartKind"
-          [stacked]="userChartKind === 'bar' && userChart.datasets.length > 1"
-          [total]="trendTotal(userChart)"
-          summaryFormat="number"
-        >
-          <div class="chart-block__filters">
-            <label class="filter">
+            <div class="charts-stack">
+                <app-dashboard-trend-chart-panel chartTitle="Người dùng theo thời gian" [labels]="userChart.labels" [datasets]="userChart.datasets" [loading]="userChartLoading" [chartKind]="userChartKind" [stacked]="userChartKind === 'bar' && userChart.datasets.length > 1"
+                    [total]="trendTotal(userChart)" summaryFormat="number">
+                    <div class="chart-block__filters">
+                        <label class="filter">
               <span>Trạng thái</span>
               <select class="select" [(ngModel)]="userStatusFilter" (ngModelChange)="onUserChartFiltersChange()">
                 <option [ngValue]="''">Tất cả</option>
@@ -53,7 +38,7 @@
                 }
               </select>
             </label>
-            <label class="filter">
+                        <label class="filter">
               <span>Vai trò</span>
               <select class="select" [(ngModel)]="userRoleFilter" (ngModelChange)="onUserChartFiltersChange()">
                 <option [ngValue]="''">Tất cả</option>
@@ -62,7 +47,7 @@
                 }
               </select>
             </label>
-            <label class="filter">
+                        <label class="filter">
               <span>Loại biểu đồ</span>
               <select class="select" [(ngModel)]="userChartKind">
                 @for (opt of chartKindOptions; track opt.value) {
@@ -70,21 +55,13 @@
                 }
               </select>
             </label>
-          </div>
-        </app-dashboard-trend-chart-panel>
+                    </div>
+                </app-dashboard-trend-chart-panel>
 
-        <app-dashboard-trend-chart-panel
-          chartTitle="Lượt đặt vé theo thời gian"
-          [labels]="bookingChart.labels"
-          [datasets]="bookingChart.datasets"
-          [loading]="bookingChartLoading"
-          [chartKind]="bookingChartKind"
-          [stacked]="bookingChartKind === 'bar' && bookingChart.datasets.length > 1"
-          [total]="trendTotal(bookingChart)"
-          summaryFormat="number"
-        >
-          <div class="chart-block__filters">
-            <label class="filter">
+                <app-dashboard-trend-chart-panel chartTitle="Lượt đặt vé theo thời gian" [labels]="bookingChart.labels" [datasets]="bookingChart.datasets" [loading]="bookingChartLoading" [chartKind]="bookingChartKind" [stacked]="bookingChartKind === 'bar' && bookingChart.datasets.length > 1"
+                    [total]="trendTotal(bookingChart)" summaryFormat="number">
+                    <div class="chart-block__filters">
+                        <label class="filter">
               <span>Trạng thái đặt vé</span>
               <select class="select" [(ngModel)]="bookingStatusFilter" (ngModelChange)="onBookingChartFiltersChange()">
                 <option [ngValue]="''">Tất cả</option>
@@ -93,7 +70,7 @@
                 }
               </select>
             </label>
-            <label class="filter">
+                        <label class="filter">
               <span>Loại biểu đồ</span>
               <select class="select" [(ngModel)]="bookingChartKind">
                 @for (opt of chartKindOptions; track opt.value) {
@@ -101,21 +78,13 @@
                 }
               </select>
             </label>
-          </div>
-        </app-dashboard-trend-chart-panel>
+                    </div>
+                </app-dashboard-trend-chart-panel>
 
-        <app-dashboard-trend-chart-panel
-          chartTitle="Doanh thu theo thời gian"
-          [labels]="revenueChart.labels"
-          [datasets]="revenueChart.datasets"
-          [loading]="revenueChartLoading"
-          [chartKind]="revenueChartKind"
-          [stacked]="revenueChartKind === 'bar' && revenueChart.datasets.length > 1"
-          [total]="trendTotal(revenueChart)"
-          summaryFormat="currency"
-        >
-          <div class="chart-block__filters">
-            <label class="filter">
+                <app-dashboard-trend-chart-panel chartTitle="Doanh thu theo thời gian" [labels]="revenueChart.labels" [datasets]="revenueChart.datasets" [loading]="revenueChartLoading" [chartKind]="revenueChartKind" [stacked]="revenueChartKind === 'bar' && revenueChart.datasets.length > 1"
+                    [total]="trendTotal(revenueChart)" summaryFormat="currency">
+                    <div class="chart-block__filters">
+                        <label class="filter">
               <span>Phương thức thanh toán</span>
               <select class="select" [(ngModel)]="revenueMethodFilter" (ngModelChange)="onRevenueChartFiltersChange()">
                 <option [ngValue]="''">Tất cả</option>
@@ -124,7 +93,7 @@
                 }
               </select>
             </label>
-            <label class="filter">
+                        <label class="filter">
               <span>Trạng thái thanh toán</span>
               <select class="select" [(ngModel)]="revenueStatusFilter" (ngModelChange)="onRevenueChartFiltersChange()">
                 <option [ngValue]="''">Tất cả</option>
@@ -133,7 +102,7 @@
                 }
               </select>
             </label>
-            <label class="filter">
+                        <label class="filter">
               <span>Loại biểu đồ</span>
               <select class="select" [(ngModel)]="revenueChartKind">
                 @for (opt of chartKindOptions; track opt.value) {
@@ -141,9 +110,9 @@
                 }
               </select>
             </label>
-          </div>
-        </app-dashboard-trend-chart-panel>
-      </div>
-    </section>
-  </div>
+                    </div>
+                </app-dashboard-trend-chart-panel>
+            </div>
+        </section>
+    </div>
 </div>

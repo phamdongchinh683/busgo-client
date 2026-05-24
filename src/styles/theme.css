@@ -1,29 +1,29 @@
-@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');
 
 :root {
   --font-family-base: 'Be Vietnam Pro', sans-serif;
   --font-family-title: 'Be Vietnam Pro', sans-serif;
   --font-family-mono: 'Be Vietnam Pro', sans-serif;
-  --letter-spacing-title: -0.01em;
+  --letter-spacing-title: 0;
   --font-weight-semibold: 600;
-  --font-weight-title: 620;
+  --font-weight-title: 700;
 
-  --color-bg: #ffffff;
-  --color-text: #4b5563;
+  --color-bg: #f5faf7;
+  --color-text: #435144;
   --color-surface: #ffffff;
 
-  --color-text-dark: #243244;
+  --color-text-dark: #151b18;
   --color-text-light: #d1fae5;
-  --color-text-muted: #64748b;
+  --color-text-muted: #5f6b61;
   --color-text-inverse: #ffffff;
-  --color-text-title: #263548;
-  --color-text-body: #4e5f74;
-  --color-text-subtle: #6a7b90;
-  --color-text-placeholder: #94a3b8;
+  --color-text-title: #161d1a;
+  --color-text-body: #475448;
+  --color-text-subtle: #748075;
+  --color-text-placeholder: #9ba79d;
 
-  --color-primary: #059669;
-  --color-primary-light: #10b981;
-  --color-primary-bg: rgba(5, 150, 105, 0.08);
+  --color-primary: #087a2e;
+  --color-primary-light: #17a65a;
+  --color-primary-bg: rgba(8, 122, 46, 0.09);
   --color-btn-danger-text: var(--color-primary);
   --color-btn-danger-bg: #ffffff;
   --color-btn-danger-border: var(--color-border);
@@ -34,12 +34,12 @@
   --color-primary-disabled-hover-bg: color-mix(in srgb, var(--color-primary) 6%, #ffffff);
   --color-primary-disabled-hover-border: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
 
-  --color-blue: #15803d;
-  --color-blue-bg: #dcfce7;
-  --color-green: #2e7d32;
-  --color-green-bg: #e8f5e9;
-  --color-orange: #e65100;
-  --color-orange-bg: #fff3e0;
+  --color-blue: #0f7cb5;
+  --color-blue-bg: #e6f4fb;
+  --color-green: #087a2e;
+  --color-green-bg: #e8f5ec;
+  --color-orange: #b95a00;
+  --color-orange-bg: #fff4df;
   --color-red: #dc2626;
   --color-red-bg: #fef2f2;
   --color-red-border: #fca5a5;
@@ -47,12 +47,12 @@
   --color-warning-text: #9a5a1a;
   --color-danger-text: #9f1d1d;
 
-  --color-border: #bfd5c6;
+  --color-border: #dce7de;
 
-  --shadow-sm: 0 2px 6px rgba(15, 23, 42, 0.1);
+  --shadow-sm: 0 1px 2px rgba(21, 27, 24, 0.06);
   --shadow-md:
-    0 10px 22px rgba(15, 23, 42, 0.12),
-    0 2px 8px rgba(15, 23, 42, 0.08);
+    0 16px 32px rgba(21, 27, 24, 0.08),
+    0 2px 8px rgba(21, 27, 24, 0.05);
   --motion-fast: 200ms;
   --motion-base: 280ms;
   --motion-slow: 420ms;
@@ -60,37 +60,31 @@
   --ease-emphasis: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-flow: cubic-bezier(0.22, 0.61, 0.36, 1);
 
-  --radius-sm: 0;
-  --radius-md: 0;
-  --radius-lg: 0;
-  --radius-xl: 0;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 8px;
+  --radius-xl: 8px;
 
-  --sidebar-bg: #ffffff;
-  --sidebar-border: #bfd5c6;
-  --sidebar-hover: #edf7f1;
-  --sidebar-hover-bg: #edf7f1;
-  --sidebar-active-bg: #e1f4eb;
-  --sidebar-active-border: #059669;
-  --sidebar-text: #059669;
-  --sidebar-text-hover: #047857;
-  --sidebar-text-active: #065f46;
-  --sidebar-text-muted: #3f7f66;
-  --sidebar-width: 236px;
+  --sidebar-bg: #eef7f1;
+  --sidebar-border: #d7e6db;
+  --sidebar-hover: #e5f3ea;
+  --sidebar-hover-bg: #e5f3ea;
+  --sidebar-active-bg: #087a2e;
+  --sidebar-active-border: #087a2e;
+  --sidebar-text: #405144;
+  --sidebar-text-hover: #087a2e;
+  --sidebar-text-active: #ffffff;
+  --sidebar-text-muted: #68796d;
+  --sidebar-width: 248px;
   --sidebar-collapsed: 72px;
-  --topbar-bg: linear-gradient(180deg, #f7fcf9 0%, #f0f8f3 100%);
-  --topbar-border: #bfd5c6;
+  --topbar-bg: rgba(250, 253, 251, 0.82);
+  --topbar-border: rgba(220, 231, 222, 0.72);
 
   --layer-topbar: 120;
   --layer-topbar-menu: 2400;
   --layer-modal: 9997;
   --layer-notification-menu: 9998;
   --layer-toast: 9999;
-}
-
-*,
-*::before,
-*::after {
-  border-radius: 0;
 }
 
 body {

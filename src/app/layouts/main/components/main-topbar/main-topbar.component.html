@@ -1,31 +1,21 @@
 <header class="topbar">
-  <div class="topbar__actions">
-    <div class="chat-launch">
-      <button
-        #chatButton
-        type="button"
-        class="btn-chat"
-        [class.btn-chat--open]="chatDock.panelOpen()"
-        [attr.aria-expanded]="chatDock.panelOpen()"
-        aria-label="Mở chat"
-        (click)="onChatButtonClick(chatButton)"
-      >
+    <div class="topbar__context">
+        <span class="topbar__eyebrow">BusGo</span>
+        <span class="topbar__title">{{ pageTitle || 'Tổng quan' }}</span>
+    </div>
+
+    <div class="topbar__actions">
+        <div class="chat-launch">
+            <button #chatButton type="button" class="btn-chat" [class.btn-chat--open]="chatDock.panelOpen()" [attr.aria-expanded]="chatDock.panelOpen()" aria-label="Mở chat" (click)="onChatButtonClick(chatButton)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
         </svg>
         <span *ngIf="chatDock.unreadCount() > 0" class="chat-badge">{{ chatDock.unreadCount() }}</span>
       </button>
-    </div>
+        </div>
 
-    <div class="notification" #notificationRoot [class.notification--open]="isNotificationOpen">
-      <button
-        type="button"
-        class="btn-notification"
-        [class.btn-notification--open]="isNotificationOpen"
-        [attr.aria-expanded]="isNotificationOpen"
-        aria-label="Mở thông báo"
-        (click)="toggleNotifications()"
-      >
+        <div class="notification" #notificationRoot [class.notification--open]="isNotificationOpen">
+            <button type="button" class="btn-notification" [class.btn-notification--open]="isNotificationOpen" [attr.aria-expanded]="isNotificationOpen" aria-label="Mở thông báo" (click)="toggleNotifications()">
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -40,60 +30,32 @@
         <span *ngIf="unreadCount > 0" class="notification-badge">{{ unreadCount }}</span>
       </button>
 
-      <div
-        #notificationMenu
-        class="notification-menu"
-        [class.notification-menu--open]="isNotificationOpen"
-        [attr.aria-hidden]="!isNotificationOpen"
-        (scroll)="onNotificationScroll($event)"
-      >
-        <div class="notification-menu__header">
-          <div class="notification-menu__header-main">
-            <span class="notification-menu__title">Thông báo</span>
-            <span class="notification-menu__count" *ngIf="unreadCount > 0">{{ unreadCount }} mới</span>
-          </div>
-          <div class="notification-menu__filters" aria-label="Lọc thông báo">
-            <button
-              type="button"
-              class="notification-filter-btn"
-              [class.notification-filter-btn--active]="selectedNotificationStatus === null"
-              (click)="setNotificationStatusFilter(null)"
-            >
+            <div #notificationMenu class="notification-menu" [class.notification-menu--open]="isNotificationOpen" [attr.aria-hidden]="!isNotificationOpen" (scroll)="onNotificationScroll($event)">
+                <div class="notification-menu__header">
+                    <div class="notification-menu__header-main">
+                        <span class="notification-menu__title">Thông báo</span>
+                        <span class="notification-menu__count" *ngIf="unreadCount > 0">{{ unreadCount }} mới</span>
+                    </div>
+                    <div class="notification-menu__filters" aria-label="Lọc thông báo">
+                        <button type="button" class="notification-filter-btn" [class.notification-filter-btn--active]="selectedNotificationStatus === null" (click)="setNotificationStatusFilter(null)">
               Tất cả
             </button>
-            <button
-              type="button"
-              class="notification-filter-btn"
-              [class.notification-filter-btn--active]="selectedNotificationStatus === 0"
-              (click)="setNotificationStatusFilter(0)"
-            >
+                        <button type="button" class="notification-filter-btn" [class.notification-filter-btn--active]="selectedNotificationStatus === 0" (click)="setNotificationStatusFilter(0)">
               Chưa đọc
             </button>
-            <button
-              type="button"
-              class="notification-filter-btn"
-              [class.notification-filter-btn--active]="selectedNotificationStatus === 1"
-              (click)="setNotificationStatusFilter(1)"
-            >
+                        <button type="button" class="notification-filter-btn" [class.notification-filter-btn--active]="selectedNotificationStatus === 1" (click)="setNotificationStatusFilter(1)">
               Đã đọc
             </button>
-          </div>
-        </div>
+                    </div>
+                </div>
 
-        <div *ngIf="isLoadingNotifications" class="notification-state notification-state--loading">
-          <p class="notification-state__message">Đang tải thông báo...</p>
-        </div>
+                <div *ngIf="isLoadingNotifications" class="notification-state notification-state--loading">
+                    <p class="notification-state__message">Đang tải thông báo...</p>
+                </div>
 
-        <ng-container *ngIf="!isLoadingNotifications">
-          <div class="notification-menu__list" *ngIf="notifications.length > 0">
-            <button
-              type="button"
-              class="notification-item"
-              [class.notification-item--unread]="!noti.isRead"
-              *ngFor="let noti of notifications; trackBy: trackByNotificationId"
-              [class.notification-item--new]="isNewNotification(noti)"
-              (click)="onNotificationClick($event, noti)"
-            >
+                <ng-container *ngIf="!isLoadingNotifications">
+                    <div class="notification-menu__list" *ngIf="notifications.length > 0">
+                        <button type="button" class="notification-item" [class.notification-item--unread]="!noti.isRead" *ngFor="let noti of notifications; trackBy: trackByNotificationId" [class.notification-item--new]="isNewNotification(noti)" (click)="onNotificationClick($event, noti)">
               <span class="notification-item__avatar-wrap">
                 <span class="notification-item__avatar-unread-dot" *ngIf="!noti.isRead" aria-hidden="true"></span>
                 <span class="notification-item__avatar" aria-hidden="true">
@@ -111,72 +73,46 @@
               </span>
               <span class="notification-item__unread-badge" *ngIf="!noti.isRead">Mới</span>
             </button>
-          </div>
+                    </div>
 
-          <div *ngIf="notifications.length === 0" class="notification-state notification-state--empty">
-            <span class="notification-state__icon" aria-hidden="true">
+                    <div *ngIf="notifications.length === 0" class="notification-state notification-state--empty">
+                        <span class="notification-state__icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
                 <path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8" />
                 <path d="M13.73 21a2 2 0 0 1-3.46 0" />
               </svg>
             </span>
-            <p class="notification-state__title">Không có thông báo</p>
-            <p class="notification-state__copy">Thông báo mới sẽ hiển thị tại đây.</p>
-          </div>
+                        <p class="notification-state__title">Không có thông báo</p>
+                        <p class="notification-state__copy">Thông báo mới sẽ hiển thị tại đây.</p>
+                    </div>
 
-          <div class="notification-load-more-action" *ngIf="nextCursor !== null && !isLoadingMore">
-            <button type="button" class="notification-load-more-btn" (click)="onLoadMoreNotificationsClick($event)">
+                    <div class="notification-load-more-action" *ngIf="nextCursor !== null && !isLoadingMore">
+                        <button type="button" class="notification-load-more-btn" (click)="onLoadMoreNotificationsClick($event)">
               Tải thêm
             </button>
-          </div>
-          <p *ngIf="isLoadingMore" class="notification-state notification-state--loading-more">Đang tải thêm...</p>
-        </ng-container>
-      </div>
+                    </div>
+                    <p *ngIf="isLoadingMore" class="notification-state notification-state--loading-more">Đang tải thêm...</p>
+                </ng-container>
+            </div>
+        </div>
     </div>
-
-    <button type="button" class="btn-logout" (click)="signOut.emit()" aria-label="Đăng xuất">
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-        <polyline points="16 17 21 12 16 7" />
-        <line x1="21" y1="12" x2="9" y2="12" />
-      </svg>
-    </button>
-  </div>
 </header>
 
-<div
-  class="verify-dialog-backdrop"
-  [class.verify-dialog-backdrop--open]="isVerifyDialogOpen"
-  [attr.aria-hidden]="!isVerifyDialogOpen"
-  (click)="closeVerifyDialog()"
->
-  <section class="verify-dialog" (click)="$event.stopPropagation()">
-    <div class="verify-dialog__head">
-      <span class="verify-dialog__icon" aria-hidden="true">
+<div class="verify-dialog-backdrop" [class.verify-dialog-backdrop--open]="isVerifyDialogOpen" [attr.aria-hidden]="!isVerifyDialogOpen" (click)="closeVerifyDialog()">
+    <section class="verify-dialog" (click)="$event.stopPropagation()">
+        <div class="verify-dialog__head">
+            <span class="verify-dialog__icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 3l7 4v5c0 5-3.5 8.5-7 9-3.5-.5-7-4-7-9V7l7-4z" />
           <path d="m9 12 2 2 4-4" />
         </svg>
       </span>
-      <div>
-        <h3 class="verify-dialog__title">Thông báo</h3>
-        <p class="verify-dialog__subtitle">Chi tiết thông báo hệ thống.</p>
-      </div>
+            <div>
+                <h3 class="verify-dialog__title">Thông báo</h3>
+                <p class="verify-dialog__subtitle">Chi tiết thông báo hệ thống.</p>
+            </div>
 
-      <button
-      type="button"
-      class="verify-dialog__close-top"
-      aria-label="Đóng hộp thoại"
-      [disabled]="isVerifyingAccount"
-      (click)="closeVerifyDialog()"
-    >
+            <button type="button" class="verify-dialog__close-top" aria-label="Đóng hộp thoại" [disabled]="isVerifyingAccount" (click)="closeVerifyDialog()">
       <svg
         viewBox="0 0 24 24"
         fill="none"
@@ -190,38 +126,31 @@
         <path d="m6 6 12 12" />
       </svg>
     </button>
-    </div>
-  
-    <div class="verify-dialog__meta-row">
-      <span class="verify-dialog__badge">Thông báo hệ thống</span>
-      <span class="verify-dialog__badge verify-dialog__badge--verify" *ngIf="canShowVerifyActions(selectedNotification)">
+        </div>
+
+        <div class="verify-dialog__meta-row">
+            <span class="verify-dialog__badge">Thông báo hệ thống</span>
+            <span class="verify-dialog__badge verify-dialog__badge--verify" *ngIf="canShowVerifyActions(selectedNotification)">
         Yêu cầu xác minh
       </span>
-    </div>
-
-    <div class="verify-dialog__content">
-      <div class="verify-dialog__field" *ngIf="selectedNotification?.title">
-        <div class="verify-dialog__field-label">Tiêu đề</div>
-        <div class="verify-dialog__field-value">{{ selectedNotification?.title }}</div>
-      </div>
-      <div class="verify-dialog__field">
-        <div class="verify-dialog__field-label">Nội dung</div>
-        <div class="verify-dialog__field-value">
-          {{ selectedNotification?.body || selectedNotification?.title || 'Không có nội dung' }}
         </div>
-      </div>
-    </div>
 
-    <div class="verify-dialog__actions" *ngIf="canShowVerifyActions(selectedNotification)">
-      <p class="verify-dialog__action-hint">Chọn trạng thái tài khoản cần xác minh</p>
-      <button
-        type="button"
-        class="verify-btn verify-btn--active"
-        title="Đặt trạng thái hoạt động"
-        aria-label="Đặt tài khoản hoạt động"
-        [disabled]="isVerifyingAccount"
-        (click)="submitVerifyAccount('active')"
-      >
+        <div class="verify-dialog__content">
+            <div class="verify-dialog__field" *ngIf="selectedNotification?.title">
+                <div class="verify-dialog__field-label">Tiêu đề</div>
+                <div class="verify-dialog__field-value">{{ selectedNotification?.title }}</div>
+            </div>
+            <div class="verify-dialog__field">
+                <div class="verify-dialog__field-label">Nội dung</div>
+                <div class="verify-dialog__field-value">
+                    {{ selectedNotification?.body || selectedNotification?.title || 'Không có nội dung' }}
+                </div>
+            </div>
+        </div>
+
+        <div class="verify-dialog__actions" *ngIf="canShowVerifyActions(selectedNotification)">
+            <p class="verify-dialog__action-hint">Chọn trạng thái tài khoản cần xác minh</p>
+            <button type="button" class="verify-btn verify-btn--active" title="Đặt trạng thái hoạt động" aria-label="Đặt tài khoản hoạt động" [disabled]="isVerifyingAccount" (click)="submitVerifyAccount('active')">
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -235,14 +164,7 @@
         </svg>
         <span class="verify-btn__label">Hoạt động</span>
       </button>
-      <button
-        type="button"
-        class="verify-btn verify-btn--inactive"
-        title="Đặt trạng thái tạm ngưng"
-        aria-label="Đặt tài khoản tạm ngưng"
-        [disabled]="isVerifyingAccount"
-        (click)="submitVerifyAccount('inactive')"
-      >
+            <button type="button" class="verify-btn verify-btn--inactive" title="Đặt trạng thái tạm ngưng" aria-label="Đặt tài khoản tạm ngưng" [disabled]="isVerifyingAccount" (click)="submitVerifyAccount('inactive')">
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -257,14 +179,7 @@
         </svg>
         <span class="verify-btn__label">Tạm ngưng</span>
       </button>
-      <button
-        type="button"
-        class="verify-btn verify-btn--banner"
-        title="Đặt trạng thái cấm"
-        aria-label="Đặt tài khoản cấm"
-        [disabled]="isVerifyingAccount"
-        (click)="submitVerifyAccount('banned')"
-      >
+            <button type="button" class="verify-btn verify-btn--banner" title="Đặt trạng thái cấm" aria-label="Đặt tài khoản cấm" [disabled]="isVerifyingAccount" (click)="submitVerifyAccount('banned')">
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -280,7 +195,7 @@
         </svg>
         <span class="verify-btn__label">Cấm</span>
       </button>
-    </div>
-    <p *ngIf="verifyErrorMessage" class="verify-dialog__error">{{ verifyErrorMessage }}</p>
-  </section>
+        </div>
+        <p *ngIf="verifyErrorMessage" class="verify-dialog__error">{{ verifyErrorMessage }}</p>
+    </section>
 </div>

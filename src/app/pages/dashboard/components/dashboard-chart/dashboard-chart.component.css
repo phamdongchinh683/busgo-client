@@ -9,16 +9,16 @@
 .chart-card__title {
   margin: 0 0 10px;
   font-size: 15px;
-  font-weight: 760;
+  font-weight: 700;
   letter-spacing: 0;
   color: var(--color-text-dark, #243244);
 }
 
 .chart-card__canvas {
   position: relative;
-  height: 292px;
+  height: 252px;
   padding: 6px 0 0;
-  border-top: 1px solid #e2eaf1;
+  border-top: 1px solid #e8eee9;
   background: #ffffff;
 }
 
@@ -39,8 +39,8 @@
 .chart-card__spinner {
   width: 26px;
   height: 26px;
-  border: 3px solid #d8e2ea;
-  border-top-color: #2563eb;
+  border: 3px solid #dce7de;
+  border-top-color: var(--color-primary);
   border-radius: 50%;
   animation: chart-spin 0.75s linear infinite;
 }

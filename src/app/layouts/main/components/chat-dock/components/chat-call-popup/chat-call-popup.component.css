@@ -9,6 +9,7 @@
   justify-content: center;
   padding: 20px;
   background: linear-gradient(165deg, var(--call-overlay-grad-a), var(--call-overlay-grad-b));
+  font-family: var(--font-family-base);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
 }

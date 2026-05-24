@@ -1,20 +1,21 @@
 .chart-block {
   min-height: 100%;
-  padding: 14px;
-  border: 1px solid #d8e2ea;
-  border-radius: 8px;
-  background: #ffffff;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow:
+    0 1px 2px rgba(21, 27, 24, 0.05),
+    0 12px 30px rgba(21, 27, 24, 0.04);
 }
 
 .chart-block__header {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #e2eaf1;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e8eee9;
 }
 
 .chart-block__title {
@@ -24,18 +25,18 @@
 .chart-block__title span {
   display: block;
   margin-bottom: 4px;
-  color: var(--color-text-muted, #64748b);
+  color: var(--color-primary);
   font-size: 10px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .chart-block__title h3 {
   margin: 0;
-  color: var(--color-text-dark, #243244);
-  font-size: 16px;
-  font-weight: 760;
+  color: var(--color-text-dark, #151b18);
+  font-size: 14px;
+  font-weight: 700;
   letter-spacing: 0;
 }
 
@@ -45,41 +46,41 @@
   flex-direction: column;
   align-items: flex-end;
   gap: 3px;
-  min-width: 124px;
+  min-width: 96px;
   padding: 0 0 2px;
 }
 
 .chart-block__summary-label {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0;
-  color: var(--color-text-muted, #64748b);
+  color: var(--color-text-muted, #5f6b61);
 }
 
 .chart-block__summary-value {
-  font-size: 20px;
-  font-weight: 760;
+  font-size: 16px;
+  font-weight: 700;
   letter-spacing: 0;
-  color: var(--color-text-dark, #243244);
+  color: var(--color-text-dark, #151b18);
   font-variant-numeric: tabular-nums;
   text-align: right;
   overflow-wrap: anywhere;
 }
 
 .chart-block__summary-value--currency {
-  font-size: 16px;
+  font-size: 13px;
 }
 
 ::ng-deep .chart-block__filters {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
-  margin: 0 0 12px;
-  padding: 0 0 12px;
-  border-bottom: 1px solid #edf2f7;
+  margin: 0 0 10px;
+  padding: 0 0 10px;
+  border-bottom: 1px solid #edf2ed;
 }
 
 ::ng-deep .chart-block__filters .filter {
@@ -90,29 +91,28 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0;
-  color: var(--color-text-muted, #64748b);
+  color: var(--color-text-muted, #5f6b61);
 }
 
 ::ng-deep .chart-block__filters .select {
   min-width: 134px;
   height: 34px;
-  padding: 0 12px;
-  border-radius: 6px;
-  border: 1px solid #cfdbe6;
+  padding: 0 10px;
+  border: 1px solid var(--color-border);
   background: #ffffff;
-  color: var(--color-text-dark, #243244);
-  font-size: 13px;
+  color: var(--color-text-dark, #151b18);
+  font-size: 12px;
   font-weight: 600;
 }
 
 ::ng-deep .chart-block__filters .select:hover {
-  border-color: #9fb2c3;
+  border-color: rgba(8, 122, 46, 0.3);
 }
 
 ::ng-deep .chart-block__filters .select:focus {
   outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(8, 122, 46, 0.12);
 }
 
 ::ng-deep .chart-block .chart-card {
@@ -127,12 +127,12 @@
   display: none;
   margin-bottom: 0;
   font-size: 15px;
-  font-weight: 760;
+  font-weight: 700;
   letter-spacing: 0;
 }
 
 ::ng-deep .chart-block .chart-card__canvas {
-  height: 292px;
+  height: 252px;
 }
 
 @media (max-width: 720px) {

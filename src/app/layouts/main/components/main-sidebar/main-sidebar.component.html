@@ -1,31 +1,48 @@
 <aside class="sidebar">
-  <div class="sidebar__brand">
-    <img src="https://res.cloudinary.com/dinvm5h7g/image/upload/v1776836282/logo/ChatGPT_Image_Apr_22_2026_12_37_40_PM_melvlj.png" alt="BusGo" class="brand-icon" />
-    <span class="brand-text">BusGo</span>
-  </div>
-
-  <nav class="sidebar__nav">
-    @for (item of items; track item.route) {
-      <a
-        class="nav-item"
-        [class.nav-item--active]="currentUrl === item.route"
-        [routerLink]="item.route"
-        [title]="item.label"
-      >
-        <span class="nav-item__icon" [innerHTML]="asSafeIcon(item.icon)"></span>
-        <span class="nav-item__label">{{ item.label }}</span>
-      </a>
-    }
-  </nav>
-
-  <div class="sidebar__footer">
-    <div class="user-block">
-      <div class="user-avatar">{{ userInitial }}</div>
-      <div class="user-info">
-        <span class="user-name">{{ userRole  }}</span>
-        <span class="user-email">{{ userEmail }}</span>
-        <span class="user-role">{{ userName }}</span>
-      </div>
+    <div class="sidebar__brand">
+        <div class="brand-icon-wrap">
+            <img src="https://res.cloudinary.com/dinvm5h7g/image/upload/v1776836282/logo/ChatGPT_Image_Apr_22_2026_12_37_40_PM_melvlj.png" alt="BusGo" class="brand-icon" />
+        </div>
+        <div class="brand-copy">
+            <span class="brand-text">BusGo</span>
+        </div>
     </div>
-  </div>
+
+    <div class="sidebar__section-label"></div>
+
+    <nav class="sidebar__nav">
+        @for (item of items; track item.route) {
+        <a class="nav-item" [class.nav-item--active]="isActive(item.route)" [routerLink]="item.route" [title]="item.label" (pointerdown)="activateImmediately(item.route)" (click)="activateImmediately(item.route)">
+            <span class="nav-item__icon" [innerHTML]="asSafeIcon(item.icon)"></span>
+            <span class="nav-item__label">{{ item.label }}</span>
+        </a>
+        }
+    </nav>
+
+    <div class="sidebar__footer">
+        <div class="user-block">
+            <div class="user-avatar">{{ userInitial }}</div>
+            <div class="user-info">
+                <span class="user-name">{{ userName || 'Người dùng' }}</span>
+                <span class="user-email">{{ userEmail || 'Chưa có email' }}</span>
+                <span class="user-role">{{ userRole || 'Quản trị hệ thống' }}</span>
+            </div>
+        </div>
+        <button type="button" class="sidebar-logout" (click)="signOut.emit()">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+        <polyline points="16 17 21 12 16 7" />
+        <line x1="21" y1="12" x2="9" y2="12" />
+      </svg>
+      <span>Đăng xuất</span>
+    </button>
+    </div>
 </aside>
