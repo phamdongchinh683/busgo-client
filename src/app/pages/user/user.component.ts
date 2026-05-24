@@ -67,7 +67,7 @@ export class UserComponent implements OnInit {
   selectedCompany: Company | null = null;
   private companyNextCursor: number | null = null;
   private companySearchTerm = '';
-  private readonly COMPANY_PAGE_LIMIT = 10;
+  private readonly COMPANY_PAGE_LIMIT = DEFAULT_PAGE_LIMIT;
 
   users: User[] = [];
   nextCursor: number | null = null;
@@ -454,7 +454,6 @@ export class UserComponent implements OnInit {
       return;
     }
     this.loading = true;
-    this.users = [];
     this.nextCursor = null;
 
     const v = this.filters.getRawValue();

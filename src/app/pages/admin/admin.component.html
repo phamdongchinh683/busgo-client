@@ -34,10 +34,14 @@
       (notifyClick)="openNotificationModal($event)"
     ></app-company-admin-table>
 
-    <div class="pagination" *ngIf="!loading && admins.length > 0">
-      <button class="btn-load-more" [disabled]="nextCursor === null || loadingMore" type="button" (click)="loadMore()">
-        {{ nextCursor !== null ? (loadingMore ? 'Đang tải...' : 'Tiếp theo') : 'Không còn dữ liệu' }}
+    <div class="pagination" *ngIf="admins.length > 0">
+      <button class="btn-load-more" [disabled]="loading || nextCursor === null || loadingMore" type="button" (click)="loadMore()">
+        {{ nextCursor !== null ? 'Tiếp theo' : 'Không còn dữ liệu' }}
       </button>
+    </div>
+
+    <div *ngIf="loadingMore" class="load-more-inline">
+      <span class="data-loading-line data-loading-line--md" aria-hidden="true"></span>
     </div>
   </div>
 </div>
@@ -46,6 +50,14 @@
   [open]="showCreate"
   (openChange)="onCreateOpenChange($event)"
   [companies]="createCompanies"
+  [companiesLoading]="createCompaniesLoading"
+  [companiesLoadingMore]="createCompaniesLoadingMore"
+  [dropdownOpen]="createCompanyDropdownOpen"
+  (dropdownOpenChange)="onCreateCompanyDropdownOpenChange($event)"
+  [companySearchValue]="createCompanySearch.value ?? ''"
+  (companySearchValueChange)="onCreateCompanySearchValueChange($event)"
+  (companyDropdownScroll)="onCreateCompanyDropdownScroll($event)"
+  (companySelected)="selectCreateCompany($event)"
   [submitting]="createSubmitting"
   (submitted)="onCreateSubmit($event)"
   (validateFailed)="onCreateValidateFailed($event)"

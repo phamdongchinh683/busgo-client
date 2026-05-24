@@ -90,7 +90,6 @@ export class CompanyComponent implements OnInit {
 
   private fetch() {
     this.loading = true;
-    this.companies = [];
     this.nextCursor = null;
 
     this.api.getCompanies(this.limit, undefined, this.searchName || undefined).subscribe({

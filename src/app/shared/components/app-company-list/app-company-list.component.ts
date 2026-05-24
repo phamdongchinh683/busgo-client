@@ -11,8 +11,11 @@ import { Company } from '@app/data/interfaces/company';
 })
 export class AppCompanyListComponent {
   @Input() companies: Company[] = [];
+  @Input() loading = false;
   @Output() editCompany = new EventEmitter<Company>();
   @Output() deleteCompany = new EventEmitter<Company>();
+
+  readonly skeletonRows = Array.from({ length: 6 });
 
   displayReviewCount(v: number | string | undefined): string {
     if (v === undefined || v === null || v === '') return '-';

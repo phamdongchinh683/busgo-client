@@ -23,6 +23,7 @@ export class UserListPanelComponent {
   @Output() deleteUser = new EventEmitter<User>();
   @Output() notifyUser = new EventEmitter<User>();
 
+  readonly skeletonRows = Array.from({ length: 6 });
   displayStatus = userStatusLabel;
   displayRole = userRoleLabel;
 }

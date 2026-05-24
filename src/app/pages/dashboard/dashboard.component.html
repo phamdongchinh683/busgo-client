@@ -1,9 +1,55 @@
 <div class="dashboard">
     <app-page-toast-host />
 
-    <div *ngIf="loading" class="loading-container">
-        <div class="spinner-large"></div>
-        <p>Đang tải trang tổng quan...</p>
+    <div *ngIf="loading" class="dashboard__body dashboard-skeleton" aria-hidden="true">
+        <header class="dashboard__hero dashboard-skeleton__hero">
+            <div class="dashboard-skeleton__title">
+                <span class="api-skeleton-line api-skeleton-line--lg"></span>
+                <span class="api-skeleton-line api-skeleton-line--md"></span>
+            </div>
+            <div class="dashboard-skeleton__meta">
+                <span class="api-skeleton-line api-skeleton-line--sm"></span>
+                <span class="api-skeleton-line api-skeleton-line--sm"></span>
+                <span class="api-skeleton-line api-skeleton-line--sm"></span>
+            </div>
+        </header>
+
+        <section class="dashboard-skeleton__stats">
+            @for (_ of [1, 2, 3, 4]; track $index) {
+                <div class="api-skeleton-card dashboard-skeleton__stat-card">
+                    <span class="api-skeleton-line api-skeleton-line--sm"></span>
+                    <span class="api-skeleton-line api-skeleton-line--lg"></span>
+                    <span class="api-skeleton-line api-skeleton-line--md"></span>
+                </div>
+            }
+        </section>
+
+        <section class="dashboard-skeleton__panels">
+            <div class="api-skeleton-card dashboard-skeleton__panel">
+                <span class="api-skeleton-line api-skeleton-line--sm"></span>
+                <span class="api-skeleton-line api-skeleton-line--md"></span>
+                <span class="api-skeleton-line api-skeleton-line--lg"></span>
+                <span class="api-skeleton-line"></span>
+            </div>
+            <div class="api-skeleton-card dashboard-skeleton__panel">
+                <span class="api-skeleton-line api-skeleton-line--sm"></span>
+                <span class="api-skeleton-line api-skeleton-line--md"></span>
+                <span class="api-skeleton-line api-skeleton-line--lg"></span>
+                <span class="api-skeleton-line"></span>
+            </div>
+        </section>
+
+        <section class="dashboard-skeleton__charts">
+            @for (_ of [1, 2, 3]; track $index) {
+                <div class="api-skeleton-card dashboard-skeleton__chart">
+                    <span class="api-skeleton-line api-skeleton-line--sm"></span>
+                    <span class="api-skeleton-line api-skeleton-line--md"></span>
+                    <span class="api-skeleton-line dashboard-skeleton__chart-line"></span>
+                    <span class="api-skeleton-line dashboard-skeleton__chart-line"></span>
+                    <span class="api-skeleton-line dashboard-skeleton__chart-line"></span>
+                </div>
+            }
+        </section>
     </div>
 
     <div *ngIf="!loading && overview" class="dashboard__body">

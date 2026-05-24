@@ -96,28 +96,33 @@ td {
 
 .pill {
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
   padding: 3px 8px;
-  border-radius: 0;
-  border: 1px solid currentColor;
-  font-size: 11px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md) !important;
+  font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  line-height: 1.2;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
 }
 
 .pill--active {
-  background: rgba(5, 150, 105, 0.16);
-  color: #059669;
+  background: #dcfce7;
+  color: #166534;
 }
 
 .pill--inactive {
-  background: rgba(245, 158, 11, 0.12);
-  color: #b45309;
+  background: #fef3c7;
+  color: #92400e;
 }
 
 .pill--banned {
-  background: rgba(239, 68, 68, 0.12);
-  color: #dc2626;
+  background: #fee2e2;
+  color: #991b1b;
 }
 
 .btn-update {

@@ -1,5 +1,9 @@
 <div class="company-list">
-  <div class="company-table-wrap">
+  <div
+    class="company-table-wrap"
+    [class.company-table-wrap--busy]="loading && companies.length > 0"
+    [attr.aria-busy]="loading"
+  >
     <table class="company-table">
       <thead>
         <tr>
@@ -13,7 +17,20 @@
         </tr>
       </thead>
       <tbody>
-        @for (company of companies; track company.id) {
+        @if (loading && companies.length === 0) {
+          @for (_ of skeletonRows; track $index) {
+            <tr class="company-skeleton-row">
+              <td><span class="company-skeleton-logo"></span></td>
+              <td><span class="company-skeleton-line company-skeleton-line--lg"></span></td>
+              <td><span class="company-skeleton-line"></span></td>
+              <td><span class="company-skeleton-line company-skeleton-line--lg"></span></td>
+              <td><span class="company-skeleton-line company-skeleton-line--sm"></span></td>
+              <td><span class="company-skeleton-line company-skeleton-line--sm"></span></td>
+              <td><span class="company-skeleton-line"></span></td>
+            </tr>
+          }
+        } @else {
+          @for (company of companies; track company.id) {
           <tr>
             <td>
               <div class="company-logo">
@@ -83,27 +100,35 @@
               </div>
             </td>
           </tr>
-        } @empty {
-          <tr>
-            <td colspan="7">
-              <div class="empty-state">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                  <polyline points="9 22 9 12 15 12 15 22" />
-                </svg>
-                <p>Không tìm thấy nhà xe</p>
-              </div>
-            </td>
-          </tr>
+          } @empty {
+            <tr>
+              <td colspan="7">
+                <div class="empty-state">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                    <polyline points="9 22 9 12 15 12 15 22" />
+                  </svg>
+                  <p>Không tìm thấy nhà xe</p>
+                </div>
+              </td>
+            </tr>
+          }
         }
       </tbody>
     </table>
+    <div class="data-loading-overlay" *ngIf="loading && companies.length > 0">
+      <span class="data-loading-card" aria-hidden="true">
+        <span class="data-loading-line data-loading-line--sm"></span>
+        <span class="data-loading-line data-loading-line--lg"></span>
+        <span class="data-loading-line data-loading-line--md"></span>
+      </span>
+    </div>
   </div>
 </div>

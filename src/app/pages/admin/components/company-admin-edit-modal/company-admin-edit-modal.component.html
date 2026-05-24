@@ -1,4 +1,4 @@
-<div *ngIf="open && admin" class="modal-overlay" (click)="close()">
+<div *ngIf="open && admin" class="modal-overlay modal-overlay--open" aria-hidden="false" (click)="close()">
   <div class="modal" (click)="$event.stopPropagation()">
     <h3>Cập nhật {{ admin.fullName }}</h3>
     <form class="modal-form" [formGroup]="form" (ngSubmit)="onSubmit()">

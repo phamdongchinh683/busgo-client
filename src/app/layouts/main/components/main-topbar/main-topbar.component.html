@@ -49,8 +49,16 @@
                     </div>
                 </div>
 
-                <div *ngIf="isLoadingNotifications" class="notification-state notification-state--loading">
-                    <p class="notification-state__message">Đang tải thông báo...</p>
+                <div *ngIf="isLoadingNotifications" class="notification-state notification-state--loading notification-skeleton" aria-hidden="true">
+                    @for (_ of [1, 2, 3]; track $index) {
+                        <div class="api-skeleton-row notification-skeleton__row">
+                            <span class="api-skeleton-avatar"></span>
+                            <span class="api-skeleton-row__content">
+                                <span class="api-skeleton-line api-skeleton-line--md"></span>
+                                <span class="api-skeleton-line api-skeleton-line--lg"></span>
+                            </span>
+                        </div>
+                    }
                 </div>
 
                 <ng-container *ngIf="!isLoadingNotifications">
@@ -91,7 +99,9 @@
               Tải thêm
             </button>
                     </div>
-                    <p *ngIf="isLoadingMore" class="notification-state notification-state--loading-more">Đang tải thêm...</p>
+                    <div *ngIf="isLoadingMore" class="notification-state notification-state--loading-more" aria-hidden="true">
+                        <span class="data-loading-line data-loading-line--md"></span>
+                    </div>
                 </ng-container>
             </div>
         </div>

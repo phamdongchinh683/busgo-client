@@ -60,7 +60,17 @@
         @if (view() === 'list') {
         <div #boxListScroll class="messenger__list-col" (scroll)="onBoxListScroll($event)">
             @if (loadingBoxes() && boxes().length === 0) {
-            <p class="messenger__hint">Đang tải…</p>
+            <div class="messenger__thread-skeleton-list" aria-hidden="true">
+                @for (_ of [1, 2, 3, 4]; track $index) {
+                <div class="api-skeleton-row messenger__thread-skeleton-row">
+                    <span class="api-skeleton-avatar"></span>
+                    <span class="api-skeleton-row__content">
+                        <span class="api-skeleton-line api-skeleton-line--md"></span>
+                        <span class="api-skeleton-line api-skeleton-line--lg"></span>
+                    </span>
+                </div>
+                }
+            </div>
             } @else if (listBoxesError()) {
             <p class="messenger__err">{{ listBoxesError() }}</p>
             <button type="button" class="messenger__retry" (click)="retryLoadBoxes()">Thử lại</button> } @else if (boxes().length === 0) {
@@ -97,7 +107,9 @@
                   <span class="messenger__box-unread-badge">{{ boxUnreadBadgeText(b) }}</span>
                 }
               </button> } @if (boxesNext() !== null && loadingBoxes()) {
-            <p class="messenger__hint messenger__hint--sm">Đang tải thêm…</p>
+            <div class="messenger__inline-skeleton" aria-hidden="true">
+                <span class="data-loading-line data-loading-line--md"></span>
+            </div>
             } }
         </div>
         } @else {
@@ -119,11 +131,20 @@
             }
             <div #messageScroll class="messenger__bubbles" (scroll)="onMessageScroll($event)">
                 @if (loadingOlderMessages()) {
-                <p class="messenger__hint messenger__hint--sm">Đang tải tin cũ…</p>
+                <div class="messenger__inline-skeleton" aria-hidden="true">
+                    <span class="data-loading-line data-loading-line--md"></span>
+                </div>
                 } @if (threadMessagesError() && messages().length === 0 && !loadingThreadMessages()) {
                 <p class="messenger__err">{{ threadMessagesError() }}</p>
                 <button type="button" class="messenger__retry" (click)="retryLoadThreadMessages()">Thử lại</button> } @else if (loadingThreadMessages() && messages().length === 0) {
-                <p class="messenger__hint">Đang tải…</p>
+                <div class="messenger__message-skeleton-list" aria-hidden="true">
+                    @for (_ of [1, 2, 3, 4, 5]; track $index) {
+                    <div class="messenger__message-skeleton" [class.messenger__message-skeleton--mine]="$index % 2 === 1">
+                        <span class="api-skeleton-line messenger__message-skeleton-line"></span>
+                        <span class="api-skeleton-line messenger__message-skeleton-line messenger__message-skeleton-line--short"></span>
+                    </div>
+                    }
+                </div>
                 } @else if (messages().length === 0) {
                 <p class="messenger__hint">Chưa có tin nhắn</p>
                 } @else if (messageSearchApplied().trim() && messages().length === 0) {

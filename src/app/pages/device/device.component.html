@@ -41,12 +41,25 @@
     </div>
   </div>
 
-  <div *ngIf="loading" class="state card-surface">Đang tải token...</div>
+  <div *ngIf="loading && tokens.length === 0" class="page-body">
+    <div class="table-skeleton device-skeleton" aria-hidden="true">
+      <div class="table-skeleton__row">
+        <span class="table-skeleton__bar table-skeleton__bar--md"></span>
+        <span class="table-skeleton__bar table-skeleton__bar--sm"></span>
+      </div>
+      @for (_ of [1, 2, 3, 4, 5]; track $index) {
+        <div class="table-skeleton__row">
+          <span class="table-skeleton__bar table-skeleton__bar--lg"></span>
+          <span class="table-skeleton__bar table-skeleton__bar--sm"></span>
+        </div>
+      }
+    </div>
+  </div>
 
   <div *ngIf="!loading && tokens.length === 0" class="state card-surface">Không tìm thấy token thiết bị.</div>
 
-  <div *ngIf="!loading && tokens.length > 0" class="page-body">
-    <div class="table-wrap">
+  <div *ngIf="tokens.length > 0" class="page-body">
+    <div class="table-wrap" [class.table-wrap--busy]="loading" [attr.aria-busy]="loading">
     <table>
       <thead>
         <tr>
@@ -84,6 +97,13 @@
         </tr>
       </tbody>
     </table>
+      <div class="data-loading-overlay" *ngIf="loading">
+        <span class="data-loading-card" aria-hidden="true">
+          <span class="data-loading-line data-loading-line--sm"></span>
+          <span class="data-loading-line data-loading-line--lg"></span>
+          <span class="data-loading-line data-loading-line--md"></span>
+        </span>
+      </div>
     </div>
   </div>
 </div>

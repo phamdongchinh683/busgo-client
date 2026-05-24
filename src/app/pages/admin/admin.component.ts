@@ -39,15 +39,21 @@ export class AdminComponent implements OnInit {
 
   admins: CompanyAdmin[] = [];
   createCompanies: Company[] = [];
+  createCompaniesLoading = false;
+  createCompaniesLoadingMore = false;
+  createCompanyDropdownOpen = false;
+  createCompanySearch = new FormControl('');
   filterCompanies: Company[] = [];
   companiesLoading = false;
   companiesLoadingMore = false;
   companyDropdownOpen = false;
   selectedCompany: Company | null = null;
+  private createCompanyNextCursor: number | null = null;
+  private createCompanySearchTerm = '';
   companySearch = new FormControl('');
   private companyNextCursor: number | null = null;
   private companySearchTerm = '';
-  private readonly COMPANY_PAGE_LIMIT = 10;
+  private readonly COMPANY_PAGE_LIMIT = DEFAULT_PAGE_LIMIT;
   private readonly destroyRef = inject(DestroyRef);
   nextCursor: number | null = null;
   loading = false;
@@ -74,7 +80,7 @@ export class AdminComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.loadCreateCompanies();
+    this.fetchCreateCompanies('');
     this.fetchFilterCompanies('');
 
     this.companySearch.valueChanges
@@ -86,11 +92,21 @@ export class AdminComponent implements OnInit {
         this.companyDropdownOpen = true;
       });
 
+    this.createCompanySearch.valueChanges
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
+      .subscribe((name) => {
+        const term = (name ?? '').toString().trim();
+        this.createCompanySearchTerm = term;
+        this.fetchCreateCompanies(term);
+        this.createCompanyDropdownOpen = true;
+      });
+
     const onClick = (event: MouseEvent) => {
       const target = event.target as HTMLElement | null;
       if (!target) return;
       if (target.closest('.dropdown') || target.closest('.field--company .input')) return;
       this.companyDropdownOpen = false;
+      this.createCompanyDropdownOpen = false;
     };
     window.addEventListener('click', onClick);
     this.destroyRef.onDestroy(() => window.removeEventListener('click', onClick));
@@ -116,18 +132,45 @@ export class AdminComponent implements OnInit {
     this.fetchMoreFilterCompanies();
   }
 
+  onCreateCompanySearchValueChange(value: string) {
+    this.createCompanySearch.setValue(value);
+  }
+
+  onCreateCompanyDropdownOpenChange(open: boolean) {
+    this.createCompanyDropdownOpen = open;
+    if (open && this.createCompanies.length === 0 && !this.createCompaniesLoading) {
+      this.fetchCreateCompanies(this.createCompanySearchTerm);
+    }
+  }
+
+  selectCreateCompany(company: Company | null) {
+    this.createCompanySearch.setValue(company?.name ?? '', { emitEvent: false });
+    this.createCompanyDropdownOpen = false;
+  }
+
+  onCreateCompanyDropdownScroll(event: Event) {
+    const el = event.target as HTMLElement;
+    const reachedBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 16;
+    if (!reachedBottom) return;
+    this.fetchMoreCreateCompanies();
+  }
+
   onLimitChange(value: PageLimit) {
     this.limit = value;
     this.fetch();
   }
 
   openCreate() {
+    this.resetCreateCompanyPicker();
     this.showCreate = true;
   }
 
   onCreateOpenChange(open: boolean) {
     this.showCreate = open;
-    if (!open) this.createSubmitting = false;
+    if (!open) {
+      this.createSubmitting = false;
+      this.resetCreateCompanyPicker();
+    }
   }
 
   onCreateValidateFailed(msg: string) {
@@ -237,7 +280,6 @@ export class AdminComponent implements OnInit {
 
   private fetch() {
     this.loading = true;
-    this.admins = [];
     this.nextCursor = null;
     this.fetchAdmins(undefined, true);
   }
@@ -289,17 +331,6 @@ export class AdminComponent implements OnInit {
       });
   }
 
-  private loadCreateCompanies() {
-    this.publicCompanies.getCompanies(50).subscribe({
-      next: (r) => {
-        this.createCompanies = r.companies ?? [];
-      },
-      error: () => {
-        this.createCompanies = [];
-      },
-    });
-  }
-
   private fetchMoreFilterCompanies() {
     if (this.companyNextCursor === null) return;
     if (this.companiesLoading || this.companiesLoadingMore) return;
@@ -320,6 +351,58 @@ export class AdminComponent implements OnInit {
           this.companiesLoadingMore = false;
         },
       });
+  }
+
+  private fetchMoreCreateCompanies() {
+    if (this.createCompanyNextCursor === null) return;
+    if (this.createCompaniesLoading || this.createCompaniesLoadingMore) return;
+
+    this.createCompaniesLoadingMore = true;
+    this.publicCompanies
+      .getCompanies(this.COMPANY_PAGE_LIMIT, this.createCompanyNextCursor, this.createCompanySearchTerm || undefined)
+      .subscribe({
+        next: (res: CompanyListResponse) => {
+          const incoming = res.companies ?? [];
+          const existingIds = new Set(this.createCompanies.map((company) => company.id));
+          const merged = incoming.filter((company) => !existingIds.has(company.id));
+          this.createCompanies = [...this.createCompanies, ...merged];
+          this.createCompanyNextCursor = res.next ?? null;
+          this.createCompaniesLoadingMore = false;
+        },
+        error: () => {
+          this.createCompaniesLoadingMore = false;
+        },
+      });
+  }
+
+  private fetchCreateCompanies(name: string) {
+    this.createCompaniesLoading = true;
+    this.createCompanies = [];
+    this.createCompanyNextCursor = null;
+
+    this.publicCompanies.getCompanies(this.COMPANY_PAGE_LIMIT, undefined, name || undefined).subscribe({
+      next: (res: CompanyListResponse) => {
+        this.createCompanies = res.companies ?? [];
+        this.createCompanyNextCursor = res.next ?? null;
+        this.createCompaniesLoading = false;
+        this.createCompaniesLoadingMore = false;
+      },
+      error: () => {
+        this.createCompanies = [];
+        this.createCompanyNextCursor = null;
+        this.createCompaniesLoading = false;
+        this.createCompaniesLoadingMore = false;
+      },
+    });
+  }
+
+  private resetCreateCompanyPicker(): void {
+    this.createCompanyDropdownOpen = false;
+    this.createCompanySearch.setValue('', { emitEvent: false });
+    if (this.createCompanySearchTerm) {
+      this.createCompanySearchTerm = '';
+      this.fetchCreateCompanies('');
+    }
   }
 
   private fetchFilterCompanies(name: string) {

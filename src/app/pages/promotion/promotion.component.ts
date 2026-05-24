@@ -102,7 +102,6 @@ export class PromotionComponent implements OnInit {
     }
 
     this.loading = true;
-    this.promotions = [];
     this.nextCursor = null;
     this.api.getPublicPromotions(10).subscribe({
       next: (res) => {

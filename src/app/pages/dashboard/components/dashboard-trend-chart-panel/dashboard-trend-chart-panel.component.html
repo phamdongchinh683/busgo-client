@@ -10,7 +10,7 @@
         class="chart-block__summary-value"
         [class.chart-block__summary-value--currency]="summaryFormat === 'currency'"
       >
-        <ng-container *ngIf="loading">...</ng-container>
+        <span *ngIf="loading" class="api-skeleton-line chart-block__summary-skeleton" aria-hidden="true"></span>
         <ng-container *ngIf="!loading && summaryFormat === 'currency'">{{
           total | currency: 'VND' : 'symbol' : '1.0-0'
         }}</ng-container>

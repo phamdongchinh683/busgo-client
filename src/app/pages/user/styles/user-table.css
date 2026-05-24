@@ -85,31 +85,37 @@ td:nth-child(5) {
 .pill {
   display: inline-flex;
   align-items: center;
-  padding: 4px 10px;
-  border-radius: 999px;
+  justify-content: center;
+  min-height: 24px;
+  padding: 3px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md) !important;
   font-size: 12px;
   font-weight: 600;
-  text-transform: capitalize;
+  line-height: 1.2;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
 }
 
 .pill--active {
-  background: rgba(16, 185, 129, 0.14);
-  color: #059669;
+  background: #dcfce7;
+  color: #166534;
 }
 
 .pill--inactive {
-  background: rgba(245, 158, 11, 0.14);
-  color: #b45309;
+  background: #fef3c7;
+  color: #92400e;
 }
 
 .pill--banned {
-  background: rgba(239, 68, 68, 0.14);
-  color: #dc2626;
+  background: #fee2e2;
+  color: #991b1b;
 }
 
 .pill--neutral {
-  background: rgba(22, 163, 74, 0.14);
-  color: var(--color-primary);
+  background: #f1f5f9;
+  color: #475569;
 }
 
 .empty {

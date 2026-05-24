@@ -16,5 +16,6 @@ export class CompanyAdminTableComponent {
   @Output() updateClick = new EventEmitter<CompanyAdmin>();
   @Output() notifyClick = new EventEmitter<CompanyAdmin>();
 
+  readonly skeletonRows = Array.from({ length: 6 });
   displayStatus = userStatusLabel;
 }

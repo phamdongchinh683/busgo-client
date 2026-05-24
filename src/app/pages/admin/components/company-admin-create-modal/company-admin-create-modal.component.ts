@@ -12,19 +12,28 @@ import { companyAdminEditPhoneValidator } from '../../utils/company-admin-edit.v
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './company-admin-create-modal.component.html',
-  styleUrl: './company-admin-create-modal.component.css',
+  styleUrls: ['../../../user/styles/user-shared.css', './company-admin-create-modal.component.css'],
 })
 export class CompanyAdminCreateModalComponent implements OnChanges {
   private readonly fb = inject(FormBuilder);
 
   @Input() open = false;
   @Input() companies: Company[] = [];
+  @Input() companiesLoading = false;
+  @Input() companiesLoadingMore = false;
+  @Input() dropdownOpen = false;
+  @Input() companySearchValue = '';
   @Input() submitting = false;
   @Output() openChange = new EventEmitter<boolean>();
   @Output() submitted = new EventEmitter<CreateCompanyAdminBody>();
   @Output() validateFailed = new EventEmitter<string>();
+  @Output() dropdownOpenChange = new EventEmitter<boolean>();
+  @Output() companySearchValueChange = new EventEmitter<string>();
+  @Output() companyDropdownScroll = new EventEmitter<Event>();
+  @Output() companySelected = new EventEmitter<Company | null>();
 
   showPassword = false;
+  selectedCompany: Company | null = null;
 
   form = this.fb.group({
     fullName: ['', [Validators.required, Validators.minLength(7)]],
@@ -46,6 +55,7 @@ export class CompanyAdminCreateModalComponent implements OnChanges {
 
   reset() {
     this.showPassword = false;
+    this.selectedCompany = null;
     this.form.reset({
       fullName: '',
       email: '',
@@ -57,6 +67,33 @@ export class CompanyAdminCreateModalComponent implements OnChanges {
 
   togglePassword() {
     this.showPassword = !this.showPassword;
+  }
+
+  onCompanyFocus() {
+    this.dropdownOpenChange.emit(true);
+  }
+
+  onCompanyInput(value: string) {
+    if (this.selectedCompany && value !== this.selectedCompany.name) {
+      this.selectedCompany = null;
+      this.form.controls.companyId.setValue(null);
+    }
+
+    this.companySearchValueChange.emit(value);
+    this.dropdownOpenChange.emit(true);
+  }
+
+  onCompanyScroll(event: Event) {
+    this.companyDropdownScroll.emit(event);
+  }
+
+  selectCompany(company: Company | null) {
+    this.selectedCompany = company;
+    this.form.controls.companyId.setValue(company?.id ?? null);
+    this.form.controls.companyId.markAsDirty();
+    this.form.controls.companyId.markAsTouched();
+    this.companySelected.emit(company);
+    this.dropdownOpenChange.emit(false);
   }
 
   onSubmit() {

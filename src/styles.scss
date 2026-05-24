@@ -145,7 +145,7 @@ textarea {
 }
 
 /* Nút popup cuộc gọi: thêm class .call-ui-btn + palette trong styles/call-theme.css (tránh !important global ghi đè gradient). */
-button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):not(.promotion-action):not(.action-button):not(.call-ui-btn),
+button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):not(.promotion-action):not(.action-button):not(.call-ui-btn):not(.dropdown-item),
 input[type='button'],
 input[type='submit'],
 input[type='reset'],
@@ -165,7 +165,7 @@ input[type='reset'],
     box-shadow var(--motion-base) var(--ease-standard);
 }
 
-button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):not(.promotion-action):not(.action-button):not(.call-ui-btn)::after,
+button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):not(.promotion-action):not(.action-button):not(.call-ui-btn):not(.dropdown-item)::after,
 input[type='button']::after,
 input[type='submit']::after,
 input[type='reset']::after,
@@ -186,7 +186,7 @@ input[type='reset']::after,
   transform: translate3d(-140%, 0, 0);
 }
 
-button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):not(.promotion-action):not(.action-button):not(.call-ui-btn):hover,
+button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):not(.promotion-action):not(.action-button):not(.call-ui-btn):not(.dropdown-item):hover,
 .btn:hover,
 .app-btn:hover,
 [class*='btn-']:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.btn-forgot-back):not(.notification-filter-btn):hover {
@@ -196,7 +196,7 @@ button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
 
-button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):not(.promotion-action):not(.action-button):not(.call-ui-btn):hover::after,
+button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):not(.promotion-action):not(.action-button):not(.call-ui-btn):not(.dropdown-item):hover::after,
 input[type='button']:hover::after,
 input[type='submit']:hover::after,
 input[type='reset']:hover::after,
@@ -206,7 +206,7 @@ input[type='reset']:hover::after,
   animation: none;
 }
 
-button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):not(.promotion-action):not(.action-button):not(.call-ui-btn):disabled:hover,
+button:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.forgot-toggle):not(.btn-forgot-back):not(.promotion-action):not(.action-button):not(.call-ui-btn):not(.dropdown-item):disabled:hover,
 .btn:disabled:hover,
 .app-btn:disabled:hover,
 [class*='btn-']:not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.btn-forgot-back):not(.notification-filter-btn):disabled:hover {
@@ -354,7 +354,7 @@ button:focus-visible {
   outline-offset: 2px;
 }
 
-button:not(:disabled):not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.promotion-action):not(.action-button):not(.call-ui-btn):active,
+button:not(:disabled):not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.promotion-action):not(.action-button):not(.call-ui-btn):not(.dropdown-item):active,
 .btn:not(:disabled):active,
 .app-btn:not(:disabled):active,
 [class*='btn-']:not(:disabled):not(.btn-chat):not(.btn-notification):not(.btn-logout):not(.btn-password-toggle):not(.btn-eye):not(.btn-forgot-back):not(.notification-filter-btn):active {

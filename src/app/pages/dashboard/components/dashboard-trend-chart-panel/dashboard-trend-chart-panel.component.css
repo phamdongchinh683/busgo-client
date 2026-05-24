@@ -72,6 +72,11 @@
   font-size: 13px;
 }
 
+.chart-block__summary-skeleton {
+  width: 84px;
+  height: 18px;
+}
+
 ::ng-deep .chart-block__filters {
   display: flex;
   flex-wrap: wrap;

@@ -1,6 +1,20 @@
-<div *ngIf="loading" class="loading">
-  <div class="spinner"></div>
-  <p>Đang tải...</p>
+<div *ngIf="loading && admins.length === 0" class="table-skeleton" aria-hidden="true">
+  <div class="table-skeleton__row">
+    <span class="table-skeleton__bar table-skeleton__bar--md"></span>
+    <span class="table-skeleton__bar table-skeleton__bar--lg"></span>
+    <span class="table-skeleton__bar table-skeleton__bar--sm"></span>
+    <span class="table-skeleton__bar table-skeleton__bar--md"></span>
+    <span class="table-skeleton__bar table-skeleton__bar--sm"></span>
+  </div>
+  @for (_ of skeletonRows; track $index) {
+    <div class="table-skeleton__row">
+      <span class="table-skeleton__bar table-skeleton__bar--lg"></span>
+      <span class="table-skeleton__bar table-skeleton__bar--md"></span>
+      <span class="table-skeleton__bar"></span>
+      <span class="table-skeleton__bar table-skeleton__bar--lg"></span>
+      <span class="table-skeleton__bar table-skeleton__bar--sm"></span>
+    </div>
+  }
 </div>
 
 <div *ngIf="!loading && admins.length === 0" class="empty">
@@ -8,7 +22,7 @@
   <p>Hãy thử điều chỉnh tìm kiếm hoặc tạo tài khoản mới.</p>
 </div>
 
-<div *ngIf="!loading && admins.length > 0" class="table-wrap">
+<div *ngIf="admins.length > 0" class="table-wrap" [class.table-wrap--busy]="loading" [attr.aria-busy]="loading">
   <table class="table">
     <thead>
       <tr>
@@ -73,4 +87,11 @@
       }
     </tbody>
   </table>
+  <div class="data-loading-overlay" *ngIf="loading">
+    <span class="data-loading-card" aria-hidden="true">
+      <span class="data-loading-line data-loading-line--sm"></span>
+      <span class="data-loading-line data-loading-line--lg"></span>
+      <span class="data-loading-line data-loading-line--md"></span>
+    </span>
+  </div>
 </div>

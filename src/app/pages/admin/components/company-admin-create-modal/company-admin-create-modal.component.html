@@ -33,7 +33,7 @@
             placeholder="Abcd12345#"
           />
           <button
-            class="btn-eye"
+            class="btn-password-toggle"
             type="button"
             (click)="togglePassword()"
             [attr.aria-label]="showPassword ? 'Ẩn' : 'Hiện'"
@@ -51,14 +51,36 @@
         </div>
         <span class="error" *ngIf="passwordError">{{ passwordError }}</span>
       </label>
-      <label class="field field--full">
+      <label class="field field--full field--company">
         <span class="label">Công ty</span>
-        <select class="select" formControlName="companyId">
-          <option [ngValue]="null">Chọn công ty</option>
+        <input type="hidden" formControlName="companyId" />
+        <input
+          #companyInput
+          class="input"
+          [value]="companySearchValue"
+          placeholder="Tìm công ty theo tên..."
+          autocomplete="off"
+          aria-label="Tìm công ty theo tên"
+          (focus)="onCompanyFocus()"
+          (input)="onCompanyInput(companyInput.value)"
+        />
+        <div class="dropdown" *ngIf="dropdownOpen" (scroll)="onCompanyScroll($event)">
+          <div class="dropdown-loading" *ngIf="companiesLoading">Đang tải công ty...</div>
+
           @for (c of companies; track c.id) {
-            <option [ngValue]="c.id">{{ c.name }}</option>
+            <button class="dropdown-item" type="button" (click)="selectCompany(c)">
+              <span class="company-name">{{ c.name }}</span>
+              <span class="company-hotline">{{ c.hotline || 'Chưa có hotline' }}</span>
+            </button>
           }
-        </select>
+
+          <div class="dropdown-empty" *ngIf="!companiesLoading && companies.length === 0">Không có công ty</div>
+          <div class="dropdown-loading" *ngIf="companiesLoadingMore">Đang tải thêm...</div>
+        </div>
+        <div class="hint" *ngIf="selectedCompany">
+          Đã chọn: <strong>{{ selectedCompany.name }}</strong>
+          <button class="btn-link" type="button" (click)="selectCompany(null)">xóa chọn</button>
+        </div>
         <span class="error" *ngIf="companyError">{{ companyError }}</span>
       </label>
       <div class="modal-actions">

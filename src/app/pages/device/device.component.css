@@ -71,6 +71,10 @@
   color: var(--color-text-muted);
 }
 
+.device-skeleton .table-skeleton__row {
+  grid-template-columns: minmax(0, 1fr) 92px;
+}
+
 .token {
   display: inline-block;
   width: 100%;

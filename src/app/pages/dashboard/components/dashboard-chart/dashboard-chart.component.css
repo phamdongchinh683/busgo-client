@@ -36,17 +36,13 @@
   backdrop-filter: blur(1px);
 }
 
-.chart-card__spinner {
-  width: 26px;
-  height: 26px;
-  border: 3px solid #dce7de;
-  border-top-color: var(--color-primary);
-  border-radius: 50%;
-  animation: chart-spin 0.75s linear infinite;
+.chart-card__skeleton {
+  width: min(520px, 86%);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-@keyframes chart-spin {
-  to {
-    transform: rotate(360deg);
-  }
+.chart-card__skeleton-line {
+  height: 18px;
 }

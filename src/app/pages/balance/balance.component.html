@@ -199,9 +199,24 @@
       </label>
     </div>
 
-    <div class="payout-table-wrap">
-      <div class="payout-loading-overlay" *ngIf="payoutLoading">
-        <span>Đang tải lịch sử giao dịch...</span>
+    <div class="payout-table-wrap" [class.payout-table-wrap--busy]="payoutLoading && payouts.length > 0" [attr.aria-busy]="payoutLoading">
+      <div *ngIf="payoutLoading && payouts.length === 0" class="table-skeleton payout-skeleton" aria-hidden="true">
+        <div class="table-skeleton__row">
+          <span class="table-skeleton__bar table-skeleton__bar--md"></span>
+          <span class="table-skeleton__bar table-skeleton__bar--lg"></span>
+          <span class="table-skeleton__bar table-skeleton__bar--sm"></span>
+          <span class="table-skeleton__bar table-skeleton__bar--md"></span>
+          <span class="table-skeleton__bar table-skeleton__bar--sm"></span>
+        </div>
+        @for (_ of [1, 2, 3, 4, 5]; track $index) {
+          <div class="table-skeleton__row">
+            <span class="table-skeleton__bar table-skeleton__bar--lg"></span>
+            <span class="table-skeleton__bar table-skeleton__bar--md"></span>
+            <span class="table-skeleton__bar table-skeleton__bar--sm"></span>
+            <span class="table-skeleton__bar"></span>
+            <span class="table-skeleton__bar table-skeleton__bar--sm"></span>
+          </div>
+        }
       </div>
       <table class="payout-table" *ngIf="payouts.length; else payoutEmptyState">
         <thead>
@@ -227,8 +242,15 @@
           </tr>
         </tbody>
       </table>
+      <div class="data-loading-overlay" *ngIf="payoutLoading && payouts.length > 0">
+        <span class="data-loading-card" aria-hidden="true">
+          <span class="data-loading-line data-loading-line--sm"></span>
+          <span class="data-loading-line data-loading-line--lg"></span>
+          <span class="data-loading-line data-loading-line--md"></span>
+        </span>
+      </div>
       <ng-template #payoutEmptyState>
-        <div class="payout-empty">Chưa có giao dịch nào.</div>
+        <div *ngIf="!payoutLoading" class="payout-empty">Chưa có giao dịch nào.</div>
       </ng-template>
     </div>
 
@@ -240,8 +262,12 @@
         [disabled]="payoutLoadingMore"
         (click)="loadMorePayouts()"
       >
-        {{ payoutLoadingMore ? 'Đang tải thêm...' : 'Tải thêm' }}
+        Tải thêm
       </button>
+    </div>
+
+    <div *ngIf="payoutLoadingMore" class="load-more-inline">
+      <span class="data-loading-line data-loading-line--md" aria-hidden="true"></span>
     </div>
 
     <div class="modal-actions">

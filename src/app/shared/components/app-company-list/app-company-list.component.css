@@ -180,3 +180,45 @@
   margin: 0;
   font-size: 14px;
 }
+
+.company-skeleton-row td {
+  height: 66px;
+}
+
+.company-skeleton-logo,
+.company-skeleton-line {
+  display: block;
+  background: linear-gradient(90deg, #e2e8f0 20%, #f1f5f9 40%, #e2e8f0 60%);
+  background-size: 220% 100%;
+  animation: company-skeleton-shimmer 1.2s ease-in-out infinite;
+}
+
+.company-skeleton-logo {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-lg) !important;
+}
+
+.company-skeleton-line {
+  width: 70%;
+  height: 12px;
+  border-radius: 999px !important;
+}
+
+.company-skeleton-line--sm {
+  width: 38%;
+}
+
+.company-skeleton-line--lg {
+  width: 72%;
+  height: 22px;
+}
+
+@keyframes company-skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -20% 0;
+  }
+}

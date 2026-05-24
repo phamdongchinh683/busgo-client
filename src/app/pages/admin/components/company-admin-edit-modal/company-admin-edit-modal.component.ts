@@ -16,7 +16,7 @@ import { companyAdminEditPhoneValidator } from '../../utils/company-admin-edit.v
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './company-admin-edit-modal.component.html',
-  styleUrl: './company-admin-edit-modal.component.css',
+  styleUrls: ['../../../user/styles/user-shared.css', './company-admin-edit-modal.component.css'],
 })
 export class CompanyAdminEditModalComponent implements OnChanges {
   private readonly fb = inject(FormBuilder);

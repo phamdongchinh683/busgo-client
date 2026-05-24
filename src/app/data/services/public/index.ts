@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { constant } from '../../constants';
+import { constant, DEFAULT_PAGE_LIMIT } from '../../constants';
 import { CompanyListResponse } from '../../interfaces/company';
 import { buildCacheKey, CacheEntry, readCache, SHORT_READ_CACHE_TTL_MS, writeCache } from '../cache-utils';
 
@@ -12,7 +12,7 @@ export class ApiService {
 
   constructor(private http: HttpClient) {}
 
-  getCompanies(limit: number, next?: number, name?: string): Observable<CompanyListResponse> {
+  getCompanies(limit = DEFAULT_PAGE_LIMIT, next?: number, name?: string): Observable<CompanyListResponse> {
     const params: Record<string, string> = { limit: String(limit) };
     if (next !== undefined && next !== null) params['next'] = String(next);
     if (name) params['name'] = name;

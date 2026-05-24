@@ -224,6 +224,9 @@ select.limit-select option:checked {
   justify-content: space-between;
   gap: 10px;
   color: var(--color-text-dark);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.25;
   transition:
     background-color 0.12s ease,
     border-color 0.12s ease,
@@ -253,6 +256,25 @@ select.limit-select option:checked {
   font-size: 12px;
   background: #ffffff;
   text-align: center;
+}
+
+.dropdown-loading {
+  font-size: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+}
+
+.dropdown-loading::before {
+  content: '';
+  display: block;
+  width: 58%;
+  height: 12px;
+  border-radius: 999px !important;
+  background: linear-gradient(90deg, #e2e8f0 20%, #f1f5f9 40%, #e2e8f0 60%);
+  background-size: 220% 100%;
+  animation: data-skeleton-shimmer 1.2s ease-in-out infinite;
 }
 
 .dropdown::-webkit-scrollbar {

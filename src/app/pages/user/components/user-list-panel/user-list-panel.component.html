@@ -1,10 +1,31 @@
-<div *ngIf="loading" class="loading">
-  <div class="spinner"></div>
-  <p>Đang tải danh sách người dùng...</p>
+<div *ngIf="loading && users.length === 0" class="table-skeleton" aria-hidden="true">
+  <div class="table-skeleton__row">
+    <span class="table-skeleton__bar table-skeleton__bar--md"></span>
+    <span class="table-skeleton__bar table-skeleton__bar--lg"></span>
+    <span class="table-skeleton__bar table-skeleton__bar--sm"></span>
+    <span class="table-skeleton__bar table-skeleton__bar--md"></span>
+    <span class="table-skeleton__bar table-skeleton__bar--sm"></span>
+  </div>
+  @for (_ of skeletonRows; track $index) {
+    <div class="table-skeleton__row">
+      <span class="table-skeleton__bar table-skeleton__bar--lg"></span>
+      <span class="table-skeleton__bar table-skeleton__bar--md"></span>
+      <span class="table-skeleton__bar"></span>
+      <span class="table-skeleton__bar table-skeleton__bar--sm"></span>
+      <span class="table-skeleton__bar table-skeleton__bar--sm"></span>
+    </div>
+  }
 </div>
 
-<div *ngIf="!loading" class="page-body">
-  <div class="table-wrap" *ngIf="users.length > 0; else emptyState">
+<div *ngIf="!loading || users.length > 0" class="page-body">
+  <div class="table-wrap" [class.table-wrap--busy]="loading" [attr.aria-busy]="loading" *ngIf="users.length > 0; else emptyState">
+    <div class="data-loading-overlay" *ngIf="loading">
+      <span class="data-loading-card" aria-hidden="true">
+        <span class="data-loading-line data-loading-line--sm"></span>
+        <span class="data-loading-line data-loading-line--lg"></span>
+        <span class="data-loading-line data-loading-line--md"></span>
+      </span>
+    </div>
     <table class="table">
       <thead>
         <tr>
@@ -101,9 +122,13 @@
     </div>
   </ng-template>
 
-  <div class="pagination">
-    <button class="btn-load-more" [disabled]="nextCursor === null || loadingMore" (click)="loadMore.emit()">
-      {{ nextCursor !== null ? (loadingMore ? 'Đang tải...' : 'Tiếp theo') : 'Không còn dữ liệu' }}
+  <div class="pagination" *ngIf="users.length > 0">
+    <button class="btn-load-more" [disabled]="loading || nextCursor === null || loadingMore" (click)="loadMore.emit()">
+      {{ nextCursor !== null ? 'Tiếp theo' : 'Không còn dữ liệu' }}
     </button>
+  </div>
+
+  <div *ngIf="loadingMore" class="load-more-inline">
+    <span class="data-loading-line data-loading-line--md" aria-hidden="true"></span>
   </div>
 </div>

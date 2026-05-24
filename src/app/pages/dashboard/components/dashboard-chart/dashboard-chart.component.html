@@ -3,7 +3,12 @@
   <div class="chart-card__canvas">
     <canvas #cv [class.chart-card__canvas--dim]="loading"></canvas>
     <div *ngIf="loading" class="chart-card__overlay" aria-busy="true">
-      <div class="chart-card__spinner"></div>
+      <div class="chart-card__skeleton" aria-hidden="true">
+        <span class="api-skeleton-line api-skeleton-line--md"></span>
+        <span class="api-skeleton-line chart-card__skeleton-line"></span>
+        <span class="api-skeleton-line chart-card__skeleton-line"></span>
+        <span class="api-skeleton-line chart-card__skeleton-line"></span>
+      </div>
     </div>
   </div>
 </div>

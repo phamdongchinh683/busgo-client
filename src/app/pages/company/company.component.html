@@ -19,27 +19,22 @@
     </div>
   </div>
 
-  <div *ngIf="loading" class="loading">
-    <div class="spinner"></div>
-    <p>Đang tải...</p>
-  </div>
-
-  <div *ngIf="!loading" class="page-body">
+  <div class="page-body">
     <app-company-list
       [companies]="companies"
+      [loading]="loading"
       (editCompany)="onEdit($event)"
       (deleteCompany)="onDelete($event)"
     ></app-company-list>
 
-    <div class="pagination">
-      <button class="btn-load-more" type="button" [disabled]="nextCursor === null || loadingMore" (click)="loadMore()">
+    <div class="pagination" *ngIf="companies.length > 0">
+      <button class="btn-load-more" type="button" [disabled]="loading || nextCursor === null || loadingMore" (click)="loadMore()">
         {{ nextCursor !== null ? 'Tiếp theo' : 'Không còn dữ liệu' }}
       </button>
     </div>
 
-    <div *ngIf="loadingMore" class="loading">
-      <div class="spinner"></div>
-      <p>Đang tải thêm...</p>
+    <div *ngIf="loadingMore" class="load-more-inline">
+      <span class="data-loading-line data-loading-line--md" aria-hidden="true"></span>
     </div>
   </div>
 </div>
