@@ -24,7 +24,7 @@ import {
   styleUrl: './login.component.css',
 })
 export class LoginComponent implements OnDestroy {
-  private static readonly OTP_COOLDOWN_SECONDS = 120;
+  private static readonly OTP_COOLDOWN_SECONDS = 30;
   private readonly fb = inject(FormBuilder);
   private readonly toast = inject(PageToastService);
   private resendOtpTimerId: ReturnType<typeof setInterval> | null = null;
