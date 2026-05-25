@@ -782,11 +782,11 @@
   box-shadow: none;
 }
 
-.login-box :is(button, .btn-send-otp, .btn-forgot-cancel, .btn-forgot-back) {
+.login-box :is(button, .btn-send-otp, .btn-forgot-cancel) {
   transition: none;
 }
 
-.login-box :is(button, .btn-send-otp, .btn-forgot-cancel, .btn-forgot-back):hover:not(:disabled) {
+.login-box :is(button, .btn-send-otp, .btn-forgot-cancel):hover:not(:disabled) {
   transform: none;
 }
 h1 {
@@ -867,8 +867,17 @@ h1 {
   color: #5f6f68;
 }
 
-.otp-countdown {
+.otp-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
   margin: -6px 0 12px;
+}
+
+.otp-countdown {
+  margin: 0;
   font-size: 13px;
   font-weight: 600;
   color: var(--color-primary);
@@ -876,6 +885,29 @@ h1 {
 
 .otp-countdown--expired {
   color: #dc2626;
+}
+
+.otp-resend-action {
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  color: var(--color-primary);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.otp-resend-action:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.otp-resend-action:disabled {
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+  opacity: 0.75;
 }
 
 .otp-field {
@@ -1017,28 +1049,6 @@ h1 {
 .forgot-modal__actions--single {
   justify-content: flex-end;
   margin-top: 8px;
-}
-
-.btn-forgot-back {
-  width: 100%;
-  margin: 4px 0 12px;
-  border: none;
-  background: none;
-  color: var(--color-primary);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  text-align: left;
-  padding: 4px 0;
-}
-
-.btn-forgot-back:hover:not(:disabled) {
-  text-decoration: underline;
-}
-
-.btn-forgot-back:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
 }
 
 .btn-forgot-cancel {

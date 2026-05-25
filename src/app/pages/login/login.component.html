@@ -48,9 +48,14 @@
 
             <ng-container *ngIf="otpSent">
                 <p class="forgot-hint">Mã OTP đã được gửi. Nhập mã và mật khẩu mới bên dưới.</p>
-                <p class="otp-countdown" [class.otp-countdown--expired]="isOtpExpired">
-                    {{ isOtpExpired ? 'Mã OTP đã hết hạn. Vui lòng gửi lại mã mới.' : ('Mã OTP sẽ hết hạn sau: ' + resendOtpCooldownLabel) }}
-                </p>
+                <div class="otp-status">
+                    <p class="otp-countdown" [class.otp-countdown--expired]="isOtpExpired">
+                        {{ isOtpExpired ? 'Mã OTP đã hết hạn.' : ('Hết hạn sau ' + otpExpiryLabel) }}
+                    </p>
+                    <button class="otp-resend-action" type="button" (click)="sendOtp()" [disabled]="!canSendOtp || resettingPassword">
+            {{ sendingOtp ? 'Đang gửi...' : (resendOtpCooldownSeconds > 0 ? 'Gửi lại sau ' + resendOtpCooldownLabel : 'Gửi lại OTP') }}
+          </button>
+                </div>
 
                 <fieldset class="otp-field">
                     <div class="otp-boxes" formArrayName="otpDigits" (paste)="onOtpPaste($event)">
@@ -75,10 +80,6 @@
                 </fieldset>
 
                 <app-input label="Mật khẩu mới" type="password" formControlName="newPassword" name="newPassword" placeholder="Nhập mật khẩu mới" [showPasswordToggle]="true" [disabled]="resettingPassword"></app-input>
-
-                <button type="button" class="btn-forgot-back" (click)="backToSendOtpStep()" [disabled]="resettingPassword">
-          ← Quay lại gửi OTP
-        </button>
 
                 <div class="forgot-modal__actions">
                     <button type="button" class="btn-forgot-cancel" (click)="closeForgotPassword()" [disabled]="resettingPassword">

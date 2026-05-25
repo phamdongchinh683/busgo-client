@@ -24,10 +24,12 @@ import {
   styleUrl: './login.component.css',
 })
 export class LoginComponent implements OnDestroy {
-  private static readonly OTP_COOLDOWN_SECONDS = 30;
+  private static readonly OTP_RESEND_COOLDOWN_SECONDS = 30;
+  private static readonly OTP_EXPIRES_SECONDS = 120;
   private readonly fb = inject(FormBuilder);
   private readonly toast = inject(PageToastService);
   private resendOtpTimerId: ReturnType<typeof setInterval> | null = null;
+  private otpExpiryTimerId: ReturnType<typeof setInterval> | null = null;
 
   @ViewChildren('otpBox') otpBoxRefs!: QueryList<ElementRef<HTMLInputElement>>;
 
@@ -51,6 +53,7 @@ export class LoginComponent implements OnDestroy {
   otpSent = false;
   otpTarget: { field: 'email' | 'phone'; value: string } | null = null;
   resendOtpCooldownSeconds = 0;
+  otpExpiresInSeconds = 0;
 
   constructor(
     private readonly api: auth.ApiService,
@@ -59,6 +62,7 @@ export class LoginComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.clearResendOtpTimer();
+    this.clearOtpExpiryTimer();
   }
 
   private validateText(text: string): string | null {
@@ -99,7 +103,9 @@ export class LoginComponent implements OnDestroy {
     this.otpSent = false;
     this.otpTarget = null;
     this.clearResendOtpTimer();
+    this.clearOtpExpiryTimer();
     this.resendOtpCooldownSeconds = 0;
+    this.otpExpiresInSeconds = 0;
     this.forgotForm.reset();
   }
 
@@ -159,27 +165,28 @@ export class LoginComponent implements OnDestroy {
     this.submitForgotPassword();
   }
 
-  backToSendOtpStep(): void {
-    this.otpSent = false;
-    this.otpTarget = null;
-    this.forgotForm.patchValue({ newPassword: '' });
-    this.resetOtpDigits();
-  }
-
   get canSendOtp(): boolean {
     return !this.sendingOtp && this.resendOtpCooldownSeconds === 0;
   }
 
   get resendOtpCooldownLabel(): string {
-    const minutes = Math.floor(this.resendOtpCooldownSeconds / 60)
+    return this.formatCountdown(this.resendOtpCooldownSeconds);
+  }
+
+  get otpExpiryLabel(): string {
+    return this.formatCountdown(this.otpExpiresInSeconds);
+  }
+
+  private formatCountdown(totalSeconds: number): string {
+    const minutes = Math.floor(totalSeconds / 60)
       .toString()
       .padStart(2, '0');
-    const seconds = (this.resendOtpCooldownSeconds % 60).toString().padStart(2, '0');
+    const seconds = (totalSeconds % 60).toString().padStart(2, '0');
     return `${minutes}:${seconds}`;
   }
 
   get isOtpExpired(): boolean {
-    return this.otpSent && this.resendOtpCooldownSeconds === 0;
+    return this.otpSent && this.otpExpiresInSeconds === 0;
   }
 
   sendOtp(): void {
@@ -189,7 +196,9 @@ export class LoginComponent implements OnDestroy {
       return;
     }
     const account = this.forgotForm.controls.account.value;
-    const target = this.parseForgotAccount(account);
+    const target = this.otpSent && this.otpTarget
+      ? this.otpTarget
+      : this.parseForgotAccount(account);
 
     if (!target) {
       this.toast.show('Vui lòng nhập email hợp lệ hoặc số điện thoại từ 10 chữ số.', 'warning');
@@ -203,6 +212,7 @@ export class LoginComponent implements OnDestroy {
         this.otpSent = true;
         this.otpTarget = target;
         this.startResendOtpCooldown();
+        this.startOtpExpiryTimer();
         this.toast.show('Đã gửi OTP thành công vui lòng kiểm tra email hoặc số điện thoại nếu không nhận được vui lòng kiểm tra thư rác.', 'info');
         setTimeout(() => this.focusOtpBox(0), 50);
       },
@@ -218,7 +228,7 @@ export class LoginComponent implements OnDestroy {
 
   private startResendOtpCooldown(): void {
     this.clearResendOtpTimer();
-    this.resendOtpCooldownSeconds = LoginComponent.OTP_COOLDOWN_SECONDS;
+    this.resendOtpCooldownSeconds = LoginComponent.OTP_RESEND_COOLDOWN_SECONDS;
     this.resendOtpTimerId = setInterval(() => {
       if (this.resendOtpCooldownSeconds <= 1) {
         this.clearResendOtpTimer();
@@ -229,10 +239,30 @@ export class LoginComponent implements OnDestroy {
     }, 1000);
   }
 
+  private startOtpExpiryTimer(): void {
+    this.clearOtpExpiryTimer();
+    this.otpExpiresInSeconds = LoginComponent.OTP_EXPIRES_SECONDS;
+    this.otpExpiryTimerId = setInterval(() => {
+      if (this.otpExpiresInSeconds <= 1) {
+        this.clearOtpExpiryTimer();
+        this.otpExpiresInSeconds = 0;
+        return;
+      }
+      this.otpExpiresInSeconds -= 1;
+    }, 1000);
+  }
+
   private clearResendOtpTimer(): void {
     if (this.resendOtpTimerId) {
       clearInterval(this.resendOtpTimerId);
       this.resendOtpTimerId = null;
+    }
+  }
+
+  private clearOtpExpiryTimer(): void {
+    if (this.otpExpiryTimerId) {
+      clearInterval(this.otpExpiryTimerId);
+      this.otpExpiryTimerId = null;
     }
   }
 
