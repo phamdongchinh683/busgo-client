@@ -8,17 +8,17 @@
   --font-weight-semibold: 600;
   --font-weight-title: 700;
 
-  --color-bg: #f5faf7;
-  --color-text: #435144;
+  --color-bg: #f6f8f7;
+  --color-text: #3d4a42;
   --color-surface: #ffffff;
 
-  --color-text-dark: #151b18;
+  --color-text-dark: #111816;
   --color-text-light: #d1fae5;
-  --color-text-muted: #5f6b61;
+  --color-text-muted: #5d6b63;
   --color-text-inverse: #ffffff;
-  --color-text-title: #161d1a;
-  --color-text-body: #475448;
-  --color-text-subtle: #748075;
+  --color-text-title: #111816;
+  --color-text-body: #45524a;
+  --color-text-subtle: #6f7d74;
   --color-text-placeholder: #9ba79d;
 
   --color-primary: #087a2e;
@@ -47,12 +47,18 @@
   --color-warning-text: #9a5a1a;
   --color-danger-text: #9f1d1d;
 
-  --color-border: #dce7de;
+  --color-border: #d8e3dc;
 
-  --shadow-sm: 0 1px 2px rgba(21, 27, 24, 0.06);
+  --shadow-xs: 0 1px 2px rgba(17, 24, 22, 0.05);
+  --shadow-sm:
+    0 1px 2px rgba(17, 24, 22, 0.06),
+    0 8px 24px rgba(17, 24, 22, 0.04);
   --shadow-md:
-    0 16px 32px rgba(21, 27, 24, 0.08),
-    0 2px 8px rgba(21, 27, 24, 0.05);
+    0 18px 42px rgba(17, 24, 22, 0.1),
+    0 4px 12px rgba(17, 24, 22, 0.06);
+  --shadow-panel:
+    0 20px 50px rgba(17, 24, 22, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.72) inset;
   --motion-fast: 200ms;
   --motion-base: 280ms;
   --motion-slow: 420ms;
@@ -65,20 +71,20 @@
   --radius-lg: 8px;
   --radius-xl: 8px;
 
-  --sidebar-bg: #eef7f1;
-  --sidebar-border: #d7e6db;
-  --sidebar-hover: #e5f3ea;
-  --sidebar-hover-bg: #e5f3ea;
+  --sidebar-bg: #eef6f1;
+  --sidebar-border: #d4e3d9;
+  --sidebar-hover: #ffffff;
+  --sidebar-hover-bg: #ffffff;
   --sidebar-active-bg: #087a2e;
   --sidebar-active-border: #087a2e;
-  --sidebar-text: #405144;
+  --sidebar-text: #3d4d42;
   --sidebar-text-hover: #087a2e;
   --sidebar-text-active: #ffffff;
-  --sidebar-text-muted: #68796d;
+  --sidebar-text-muted: #68766e;
   --sidebar-width: 248px;
   --sidebar-collapsed: 72px;
-  --topbar-bg: rgba(250, 253, 251, 0.82);
-  --topbar-border: rgba(220, 231, 222, 0.72);
+  --topbar-bg: rgba(255, 255, 255, 0.78);
+  --topbar-border: rgba(216, 227, 220, 0.86);
 
   --layer-topbar: 120;
   --layer-topbar-menu: 2400;

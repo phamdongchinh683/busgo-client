@@ -228,7 +228,7 @@
   margin: 0;
   font-size: 17px;
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   color: var(--color-text-dark);
 }
 
@@ -269,7 +269,7 @@
 .field__label {
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
   color: var(--color-text-dark);
 }
 
@@ -456,12 +456,12 @@
 .payout-table-wrap {
   position: relative;
   margin-top: 8px;
-  border: 1px solid var(--color-border);
+  border: 1px solid color-mix(in srgb, var(--color-border) 88%, #ffffff);
   border-radius: 10px;
   overflow: auto;
-  min-height: 280px;
-  background: #ffffff;
-  flex: 1 1 auto;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdfc 100%);
+  box-shadow: var(--shadow-panel);
+  flex: 0 0 auto;
 }
 
 .payout-more {
@@ -493,7 +493,7 @@
 
 .payout-table th {
   font-size: 12px;
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
   color: var(--color-text-subtle);
   background: #ffffff;
   position: sticky;
@@ -501,7 +501,7 @@
 }
 
 .payout-empty {
-  min-height: 220px;
+  min-height: 140px;
   display: flex;
   align-items: center;
   justify-content: center;

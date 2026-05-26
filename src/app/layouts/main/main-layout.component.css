@@ -2,9 +2,7 @@
   display: block;
   height: 100vh;
   overflow: hidden;
-  background:
-    radial-gradient(circle at 7% 8%, rgba(8, 122, 46, 0.08), transparent 30%),
-    linear-gradient(180deg, #fbfdfb 0%, #f4faf6 100%);
+  background: linear-gradient(180deg, #fbfdfc 0%, #f3f7f5 52%, #f8fafc 100%);
 }
 
 .layout {
@@ -32,7 +30,7 @@
 
 .layout-footer {
   border-top: 1px solid rgba(220, 231, 222, 0.72);
-  background: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.86);
   backdrop-filter: blur(12px);
 }
 

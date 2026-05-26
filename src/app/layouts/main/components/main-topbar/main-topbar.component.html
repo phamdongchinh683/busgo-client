@@ -1,7 +1,7 @@
 <header class="topbar">
     <div class="topbar__context">
         <span class="topbar__eyebrow">BusGo</span>
-        <span class="topbar__title">{{ pageTitle || 'Tổng quan' }}</span>
+        <span class="topbar__title">{{ pageTitle }}</span>
     </div>
 
     <div class="topbar__actions">
@@ -51,13 +51,13 @@
 
                 <div *ngIf="isLoadingNotifications" class="notification-state notification-state--loading notification-skeleton" aria-hidden="true">
                     @for (_ of [1, 2, 3]; track $index) {
-                        <div class="api-skeleton-row notification-skeleton__row">
-                            <span class="api-skeleton-avatar"></span>
-                            <span class="api-skeleton-row__content">
+                    <div class="api-skeleton-row notification-skeleton__row">
+                        <span class="api-skeleton-avatar"></span>
+                        <span class="api-skeleton-row__content">
                                 <span class="api-skeleton-line api-skeleton-line--md"></span>
-                                <span class="api-skeleton-line api-skeleton-line--lg"></span>
-                            </span>
-                        </div>
+                        <span class="api-skeleton-line api-skeleton-line--lg"></span>
+                        </span>
+                    </div>
                     }
                 </div>
 

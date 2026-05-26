@@ -13,17 +13,4 @@ import { DashboardOverview } from '../../../../data/interfaces/dashboard';
 })
 export class DashboardStatsGridComponent {
   @Input({ required: true }) overview!: DashboardOverview;
-
-  get activityRate(): number {
-    return this.overview.totalCompanies > 0 ? 100 : 0;
-  }
-
-  get operatingScale(): number {
-    return this.overview.totalUsers + this.overview.totalBookings + this.overview.totalCompanies;
-  }
-
-  get revenuePerCompany(): number {
-    if (!this.overview.totalCompanies) return 0;
-    return this.overview.totalRevenue / this.overview.totalCompanies;
-  }
 }

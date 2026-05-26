@@ -1,5 +1,6 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, effect, inject, OnInit } from '@angular/core';
 import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
+import { Title } from '@angular/platform-browser';
 import { filter, take, catchError, finalize, switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -28,6 +29,7 @@ export class MainLayoutComponent implements OnInit {
   userEmail = '';
   userRole = '';
   userInitial = 'U';
+  notificationUnreadCount = 0;
 
   items: MainNavItem[] = navItems as MainNavItem[];
 
@@ -45,6 +47,7 @@ export class MainLayoutComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly api = inject(auth.ApiService);
+  private readonly title = inject(Title);
   private readonly fcmDeviceService = inject(FcmDeviceService);
   private readonly chatDock = inject(ChatDockService);
   private readonly chatSocket = inject(ChatSocketService);
@@ -52,13 +55,21 @@ export class MainLayoutComponent implements OnInit {
   private hasRequestedNotificationAccess = false;
 
   get pageTitle(): string {
-    return this.pageTitles[this.currentUrl];
+    return this.resolveTitleFromUrl(this.currentUrl);
+  }
+
+  constructor() {
+    effect(() => {
+      this.chatDock.unreadCount();
+      this.updateDocumentTitle();
+    });
   }
 
   ngOnInit() {
     this.loadUser();
 
     this.currentUrl = this.router.url;
+    this.updateDocumentTitle();
     this.requestNotificationOnDashboard(this.currentUrl);
     this.router.events
       .pipe(
@@ -67,6 +78,7 @@ export class MainLayoutComponent implements OnInit {
       )
       .subscribe((e) => {
         this.currentUrl = e.urlAfterRedirects || e.url;
+        this.updateDocumentTitle();
         this.requestNotificationOnDashboard(this.currentUrl);
       });
 
@@ -97,6 +109,11 @@ export class MainLayoutComponent implements OnInit {
       .subscribe();
   }
 
+  onNotificationUnreadChange(count: number): void {
+    this.notificationUnreadCount = Math.max(0, Math.floor(Number(count) || 0));
+    this.updateDocumentTitle();
+  }
+
   private loadUser() {
     const raw = localStorage.getItem('user');
     if (!raw) return;
@@ -119,8 +136,22 @@ export class MainLayoutComponent implements OnInit {
     this.chatSocket.disconnect();
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    this.notificationUnreadCount = 0;
     this.chatDock.clearUnreadState();
+    this.title.setTitle('BusGo');
     this.router.navigate(['/login']);
+  }
+
+  private updateDocumentTitle(): void {
+    const page = this.pageTitles[this.currentUrl] ?? this.resolveTitleFromUrl(this.currentUrl);
+    const totalUnread = Math.min(99, this.notificationUnreadCount + this.chatDock.unreadCount());
+    const prefix = totalUnread > 0 ? `(${totalUnread}) ` : '';
+    this.title.setTitle(page === 'BusGo' ? `${prefix}BusGo` : `${prefix}${page} | BusGo`);
+  }
+
+  private resolveTitleFromUrl(url: string): string {
+    const cleanUrl = (url || '').split('?')[0].split('#')[0];
+    return this.pageTitles[cleanUrl] ?? 'BusGo';
   }
 
   private requestNotificationOnDashboard(url: string) {

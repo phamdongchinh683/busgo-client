@@ -1,29 +1,25 @@
 <div class="layout">
-  <app-main-sidebar
-    [items]="items"
-    [currentUrl]="currentUrl"
-    [userInitial]="userInitial"
-    [userName]="userName"
-    [userRole]="userRole"
-    [userEmail]="userEmail"
-    (signOut)="logout()"
-  />
+    <app-main-sidebar [items]="items" [currentUrl]="currentUrl" [userInitial]="userInitial" [userName]="userName" [userRole]="userRole" [userEmail]="userEmail" (signOut)="logout()" />
 
-  <main class="main-content">
-    <app-main-topbar [pageTitle]="pageTitle" (signOut)="logout()" />
-    <div class="page-content">
-      <router-outlet></router-outlet>
-    </div>
-    <app-chat-dock />
-    <footer class="layout-footer">
-      <div class="layout-footer__inner">
-        <p class="layout-footer__brand">© {{ currentYear }} BusGo</p>
-        <div class="layout-footer__meta">
-          <span>Hỗ trợ bởi đội ngũ BusGo</span>
-          <span class="layout-footer__dot" aria-hidden="true"></span>
-          <a href="mailto:dchinh6803&#64;gmail.com">dchinh6803&#64;gmail.com</a>
+    <main class="main-content">
+        <app-main-topbar
+            [pageTitle]="pageTitle"
+            (signOut)="logout()"
+            (notificationUnreadChange)="onNotificationUnreadChange($event)"
+        />
+        <div class="page-content">
+            <router-outlet></router-outlet>
         </div>
-      </div>
-    </footer>
-  </main>
+        <app-chat-dock />
+        <footer class="layout-footer">
+            <div class="layout-footer__inner">
+                <p class="layout-footer__brand">© {{ currentYear }} BusGo</p>
+                <div class="layout-footer__meta">
+                    <span>Hỗ trợ bởi đội ngũ BusGo</span>
+                    <span class="layout-footer__dot" aria-hidden="true"></span>
+                    <a href="mailto:dchinh6803&#64;gmail.com">dchinh6803&#64;gmail.com</a>
+                </div>
+            </div>
+        </footer>
+    </main>
 </div>

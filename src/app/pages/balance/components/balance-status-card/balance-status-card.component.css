@@ -1,22 +1,18 @@
 .balance-card {
   position: relative;
-  background: #fff;
-  border: 1px solid var(--color-border);
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdfc 100%);
+  border: 1px solid color-mix(in srgb, var(--color-border) 88%, #ffffff);
   border-radius: 16px;
   padding: 22px 20px 20px;
   min-height: 206px;
-  box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.05),
-    0 10px 18px rgba(15, 23, 42, 0.05);
+  box-shadow: var(--shadow-sm);
   transition:
     box-shadow 0.2s ease,
     transform 0.2s ease;
 }
 
 .balance-card:hover {
-  box-shadow:
-    0 2px 4px rgba(15, 23, 42, 0.08),
-    0 14px 30px rgba(15, 23, 42, 0.1);
+  box-shadow: var(--shadow-md);
   transform: translateY(-2px);
 }
 
@@ -56,8 +52,8 @@
   margin: 0;
   font-size: 16px;
   font-weight: 700;
-  letter-spacing: -0.02em;
-  color: #059669;
+  letter-spacing: 0;
+  color: var(--color-primary);
 }
 
 .balance-card__hint {
@@ -114,8 +110,8 @@
 
 .balance-list__amount {
   font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-weight: 800;
+  letter-spacing: 0;
   font-variant-numeric: tabular-nums;
   color: var(--color-text-title);
 }

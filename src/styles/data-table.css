@@ -1,11 +1,10 @@
 :is(.page, .modal) :is(.table-wrap, .company-table-wrap, .payout-table-wrap) {
   position: relative;
-  border: 1px solid var(--color-border);
+  border: 1px solid color-mix(in srgb, var(--color-border) 88%, #ffffff);
   border-radius: 12px;
-  background: var(--color-surface);
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdfc 100%);
   overflow: auto;
-  box-shadow: var(--shadow-sm);
-  min-height: 220px;
+  box-shadow: var(--shadow-panel);
   transition:
     opacity 180ms var(--ease-standard),
     box-shadow 180ms var(--ease-standard);
@@ -13,34 +12,46 @@
 
 :is(.page, .modal) :is(.table-wrap, .company-table-wrap, .payout-table-wrap) :is(.table, .company-table, .payout-table, table) {
   width: 100%;
+  min-width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
 }
 
 :is(.page, .modal) :is(.table-wrap, .company-table-wrap, .payout-table-wrap) :is(.table, .company-table, .payout-table, table) th,
 :is(.page, .modal) :is(.table-wrap, .company-table-wrap, .payout-table-wrap) :is(.table, .company-table, .payout-table, table) td {
-  padding: 12px 14px;
-  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 72%, #ffffff);
+  padding: 13px 16px;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 66%, #ffffff);
   font-size: 13px;
   line-height: 1.45;
   color: var(--color-text-dark);
   vertical-align: middle;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 :is(.page, .modal) :is(.table-wrap, .company-table-wrap, .payout-table-wrap) :is(.table, .company-table, .payout-table, table) th {
   font-size: 12px;
-  font-weight: 600;
-  color: var(--color-text-subtle);
+  font-weight: 700;
+  color: #65736b;
   text-align: left;
   text-transform: none;
   letter-spacing: 0;
   white-space: nowrap;
-  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  background: linear-gradient(180deg, #f8fbfa 0%, #f1f6f3 100%);
   position: sticky;
   top: 0;
   z-index: 1;
+}
+
+:is(.page, .modal) :is(.table-wrap, .company-table-wrap, .payout-table-wrap) :is(.table, .company-table, .payout-table, table) tbody tr {
+  transition:
+    background-color 160ms var(--ease-standard),
+    box-shadow 160ms var(--ease-standard);
+}
+
+:is(.page, .modal) :is(.table-wrap, .company-table-wrap, .payout-table-wrap) :is(.table, .company-table, .payout-table, table) tbody tr:nth-child(even) td {
+  background: rgba(248, 250, 252, 0.44);
 }
 
 :is(.page, .modal) :is(.table-wrap, .company-table-wrap, .payout-table-wrap) :is(.table, .company-table, .payout-table, table) tbody tr:last-child td {
@@ -48,7 +59,7 @@
 }
 
 :is(.page, .modal) :is(.table-wrap, .company-table-wrap, .payout-table-wrap) :is(.table, .company-table, .payout-table, table) tbody tr:hover td {
-  background: color-mix(in srgb, var(--color-primary) 5%, #ffffff);
+  background: color-mix(in srgb, var(--color-primary) 7%, #ffffff);
 }
 
 :is(.page, .modal) :is(.table-wrap, .company-table-wrap, .payout-table-wrap) :is(.table, .company-table, .payout-table, table) :is(.actions-col, th.actions-col, td.actions-col) {
@@ -74,6 +85,24 @@
 :is(.page, .modal) :is(.table-wrap--busy, .company-table-wrap--busy, .payout-table-wrap--busy) :is(table, .table, .company-table, .payout-table) {
   opacity: 0.52;
   transition: opacity 180ms var(--ease-standard);
+}
+
+:is(.page, .modal) :is(.table-wrap, .company-table-wrap, .payout-table-wrap)::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+:is(.page, .modal) :is(.table-wrap, .company-table-wrap, .payout-table-wrap)::-webkit-scrollbar-track {
+  background: #f3f7f5;
+}
+
+:is(.page, .modal) :is(.table-wrap, .company-table-wrap, .payout-table-wrap)::-webkit-scrollbar-thumb {
+  background: #c7d8ce;
+  border: 2px solid #f3f7f5;
+}
+
+:is(.page, .modal) :is(.table-wrap, .company-table-wrap, .payout-table-wrap)::-webkit-scrollbar-thumb:hover {
+  background: #9fc0ac;
 }
 
 .data-loading-overlay {

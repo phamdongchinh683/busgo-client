@@ -34,11 +34,12 @@ import { onMessage } from 'firebase/messaging';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MainTopbarComponent implements OnInit {
+  @Input() pageTitle = 'BusGo';
   selectedNotificationStatus: NotificationStatus | null = null;
 
-  @Input() pageTitle = '';
 
   @Output() signOut = new EventEmitter<void>();
+  @Output() notificationUnreadChange = new EventEmitter<number>();
 
   notifications: NotificationItem[] = [];
   isNotificationOpen = false;
@@ -55,6 +56,8 @@ export class MainTopbarComponent implements OnInit {
   isVerifyingAccount = false;
   verifyErrorMessage = '';
   private readonly newNotificationIds = new Set<string>();
+  private notificationUnreadCount = 0;
+  private emittedUnreadCount = -1;
 
   @ViewChild('notificationMenu') private notificationMenuRef?: ElementRef<HTMLElement>;
   @ViewChild('notificationRoot') private notificationRootRef?: ElementRef<HTMLElement>;
@@ -109,10 +112,11 @@ export class MainTopbarComponent implements OnInit {
     );
 
     this.prefetchNotifications();
+    this.emitNotificationUnreadIfChanged();
   }
 
   get unreadCount(): number {
-    return this.notifications.reduce((count, noti) => count + (noti.isRead ? 0 : 1), 0);
+    return this.notificationUnreadCount;
   }
 
   @HostListener('document:click', ['$event'])
@@ -400,9 +404,11 @@ export class MainTopbarComponent implements OnInit {
         next: (res) => {
           const incoming = res.notifications ? res.notifications.map((item) => this.normalizeNotification(item)) : [];
           this.notifications = incoming;
+          this.syncUnreadCountFromLoadedNotifications(status);
           this.nextCursor = this.parseNextCursor(res.next);
           this.hasLoadedNotifications = true;
           this.loadedNotificationStatus = status;
+          this.emitNotificationUnreadIfChanged();
           this.cdr.markForCheck();
           if (this.isNotificationOpen) {
             queueMicrotask(() => {
@@ -444,7 +450,9 @@ export class MainTopbarComponent implements OnInit {
         next: (res) => {
           const incoming = res.notifications ? res.notifications.map((item) => this.normalizeNotification(item)) : [];
           this.notifications = [...this.notifications, ...incoming];
+          this.syncUnreadCountFromLoadedNotifications(this.selectedNotificationStatus);
           this.nextCursor = this.parseNextCursor(res.next);
+          this.emitNotificationUnreadIfChanged();
           this.cdr.markForCheck();
           this.loadMoreIfNearBottom();
         },
@@ -509,6 +517,8 @@ export class MainTopbarComponent implements OnInit {
 
     const normalizedIncoming = this.normalizeNotification(incoming);
     this.notifications = [normalizedIncoming, ...this.notifications];
+    this.notificationUnreadCount += normalizedIncoming.isRead ? 0 : 1;
+    this.emitNotificationUnreadIfChanged();
     this.newNotificationIds.add(String(normalizedIncoming.id));
     setTimeout(() => {
       this.newNotificationIds.delete(String(normalizedIncoming.id));
@@ -536,6 +546,8 @@ export class MainTopbarComponent implements OnInit {
   private markNotificationAsRead(noti: NotificationItem) {
     if (noti.isRead) return;
     this.notifications = this.setReadStatus(noti.id, true);
+    this.notificationUnreadCount = Math.max(0, this.notificationUnreadCount - 1);
+    this.emitNotificationUnreadIfChanged();
     this.cdr.markForCheck();
 
     this.notificationApi
@@ -544,9 +556,27 @@ export class MainTopbarComponent implements OnInit {
       .subscribe({
         error: () => {
           this.notifications = this.setReadStatus(noti.id, false);
+          this.notificationUnreadCount += 1;
+          this.emitNotificationUnreadIfChanged();
           this.cdr.markForCheck();
         },
       });
+  }
+
+  private emitNotificationUnreadIfChanged(): void {
+    const count = Math.max(0, Math.floor(this.notificationUnreadCount));
+    if (count === this.emittedUnreadCount) return;
+    this.emittedUnreadCount = count;
+    this.notificationUnreadChange.emit(count);
+  }
+
+  private syncUnreadCountFromLoadedNotifications(status: NotificationStatus | null): void {
+    if (status === 1) return;
+    if (status === 0) {
+      this.notificationUnreadCount = this.notifications.length;
+      return;
+    }
+    this.notificationUnreadCount = this.notifications.reduce((count, noti) => count + (noti.isRead ? 0 : 1), 0);
   }
 
   private openVerifyDialog(noti: NotificationItem) {

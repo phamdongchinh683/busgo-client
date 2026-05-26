@@ -8,28 +8,31 @@
 
 .label {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   text-align: left;
-  color: var(--color-text-muted);
+  color: var(--color-text-subtle);
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0;
 }
 
 .input {
+  min-height: 40px;
   padding: 10px 12px;
-  border: 1px solid var(--color-border);
+  border: 1px solid color-mix(in srgb, var(--color-border) 88%, #ffffff);
   border-radius: var(--radius-md);
   font-size: 13px;
   outline: none;
-  background: var(--color-surface);
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdfc 100%);
   color: var(--color-text-dark);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
   transition:
     border-color 0.15s ease,
-    box-shadow 0.15s ease;
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
 }
 
 .input:hover {
-  border-color: #8fd29a;
+  border-color: color-mix(in srgb, var(--color-primary) 32%, var(--color-border));
 }
 
 .input:focus {
@@ -107,15 +110,15 @@
 
 .btn {
   padding: 10px 16px;
-  background: #ffffff;
-  color: #059669;
-  border: 1px solid var(--color-border);
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdfc 100%);
+  color: var(--color-primary);
+  border: 1px solid color-mix(in srgb, var(--color-border) 88%, #ffffff);
   border-radius: var(--radius-md);
   font-size: 13px;
   font-weight: 600;
   line-height: 1.2;
   cursor: pointer;
-  box-shadow: inset 0 0 0 1px rgba(5, 150, 105, 0.08);
+  box-shadow: var(--shadow-xs);
   transition:
     border-color 0.3s ease,
     background 0.3s ease,
@@ -123,9 +126,9 @@
 }
 
 .btn:hover {
-  border-color: #059669;
+  border-color: var(--color-primary);
   background: #e8f6ef;
-  box-shadow: 0 0 8px rgba(5, 150, 105, 0.16);
+  box-shadow: 0 8px 18px rgba(17, 24, 22, 0.08);
 }
 
 .btn:active {
@@ -224,9 +227,9 @@
 .modal h3 {
   margin: 0 0 14px;
   font-size: 17px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--color-text-dark);
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
 }
 
 .modal p {
@@ -267,9 +270,9 @@
   margin-bottom: 16px;
   font-size: 18px;
   font-weight: 700;
-  color: #059669;
+  color: var(--color-primary);
   text-transform: uppercase;
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
 }
 
 .notification-form {

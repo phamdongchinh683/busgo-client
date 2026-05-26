@@ -1,5 +1,5 @@
 .topbar {
-  min-height: 64px;
+  min-height: 66px;
   background: var(--topbar-bg);
   position: relative;
   z-index: var(--layer-topbar);
@@ -7,9 +7,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 10px 24px;
+  padding: 10px 26px;
   border-bottom: 1px solid var(--topbar-border);
-  box-shadow: none;
+  box-shadow: 0 10px 28px rgba(17, 24, 22, 0.04);
   flex-shrink: 0;
   backdrop-filter: blur(14px);
 }
@@ -25,15 +25,15 @@
   color: var(--color-primary);
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
   line-height: 1.2;
   text-transform: uppercase;
 }
 
 .topbar__title {
   font-family: var(--font-family-title);
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 17px;
+  font-weight: 800;
   letter-spacing: 0;
   color: var(--color-text-dark);
   overflow: hidden;
@@ -54,8 +54,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid transparent;
-  background: #ffffff;
+  border: 1px solid color-mix(in srgb, var(--color-border) 82%, #ffffff);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbfa 100%);
   color: #405144;
   cursor: pointer;
   transition:
@@ -71,7 +71,8 @@
 .btn-chat:hover {
   color: var(--color-primary);
   background: #edf7f1;
-  border-color: rgba(8, 122, 46, 0.12);
+  border-color: rgba(8, 122, 46, 0.2);
+  box-shadow: 0 8px 18px rgba(17, 24, 22, 0.08);
 }
 
 .btn-chat--open {
@@ -128,8 +129,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid transparent;
-  background: #ffffff;
+  border: 1px solid color-mix(in srgb, var(--color-border) 82%, #ffffff);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbfa 100%);
   color: #405144;
   cursor: pointer;
   transition:
@@ -147,9 +148,9 @@
 .btn-notification:hover {
   color: var(--color-primary);
   background: #edf7f1;
-  border-color: rgba(8, 122, 46, 0.12);
+  border-color: rgba(8, 122, 46, 0.2);
   transform: none;
-  box-shadow: none;
+  box-shadow: 0 8px 18px rgba(17, 24, 22, 0.08);
 }
 
 .btn-notification--open {
@@ -720,7 +721,7 @@
   color: var(--color-text-muted);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
 }
 
 .verify-dialog__badge--verify {
@@ -752,7 +753,7 @@
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
 }
 
 .verify-dialog__field-value {

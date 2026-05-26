@@ -1,71 +1,6 @@
 <section class="overview-suite" aria-labelledby="dashboard-metrics-heading">
   <h2 id="dashboard-metrics-heading" class="sr-only">Chỉ số tổng quan</h2>
 
-  <div class="stat-grid">
-    <article class="stat-card stat-card--green">
-      <div class="stat-card__copy">
-        <span>Nhà xe</span>
-        <strong>{{ overview.totalCompanies | number }}</strong>
-      </div>
-      <span class="stat-card__icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M4 16V7a2 2 0 0 1 2-2h10a4 4 0 0 1 4 4v7" />
-          <path d="M4 12h16" />
-          <path d="M7 18h.01" />
-          <path d="M17 18h.01" />
-          <circle cx="7" cy="18" r="2" />
-          <circle cx="17" cy="18" r="2" />
-        </svg>
-      </span>
-    </article>
-
-    <article class="stat-card stat-card--blue">
-      <div class="stat-card__copy">
-        <span>Người dùng</span>
-        <strong>{{ overview.totalUsers | number }}</strong>
-      </div>
-      <span class="stat-card__icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-          <circle cx="9.5" cy="7" r="4" />
-          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-        </svg>
-      </span>
-    </article>
-
-    <article class="stat-card stat-card--mint">
-      <div class="stat-card__copy">
-        <span>Lượt đặt vé</span>
-        <strong>{{ overview.totalBookings | number }}</strong>
-      </div>
-      <span class="stat-card__icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M3 7h18" />
-          <path d="M3 17h18" />
-          <path d="M7 7v10" />
-          <path d="M17 7v10" />
-          <rect x="3" y="5" width="18" height="14" rx="2" />
-        </svg>
-      </span>
-    </article>
-
-    <article class="stat-card stat-card--amber">
-      <div class="stat-card__copy">
-        <span>Doanh thu</span>
-        <strong>{{ overview.totalRevenue | currency: 'VND' : 'symbol' : '1.0-0' }}</strong>
-      </div>
-      <span class="stat-card__icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="6" width="18" height="12" rx="2" />
-          <circle cx="12" cy="12" r="2" />
-          <path d="M7 10v4" />
-          <path d="M17 10v4" />
-        </svg>
-      </span>
-    </article>
-  </div>
-
   <div class="overview-panels">
     <section class="quick-panel" aria-labelledby="quick-links-heading">
       <div class="panel-heading">
@@ -129,28 +64,32 @@
     <aside class="status-panel" aria-labelledby="system-status-heading">
       <div class="panel-heading">
         <div>
-          <h3 id="system-status-heading">Tình trạng hệ thống</h3>
-          <p>Tóm tắt nhanh từ dữ liệu hiện có.</p>
+          <h3 id="system-status-heading">Tình trạng dữ liệu</h3>
+          <p>Các chỉ số đang được ghi nhận từ hệ thống.</p>
         </div>
       </div>
 
       <div class="status-list">
         <div class="status-tile">
-          <span>Tỷ lệ nhà xe hoạt động</span>
-          <strong>{{ activityRate }}%</strong>
+          <span>Nhà xe hiện có</span>
+          <strong>{{ overview.totalCompanies | number }}</strong>
         </div>
         <div class="status-tile">
-          <span>Quy mô vận hành</span>
-          <strong>{{ operatingScale | number }}</strong>
+          <span>Người dùng</span>
+          <strong>{{ overview.totalUsers | number }}</strong>
+        </div>
+        <div class="status-tile">
+          <span>Lượt đặt vé</span>
+          <strong>{{ overview.totalBookings | number }}</strong>
         </div>
         <div class="status-tile status-tile--soft">
-          <span>Doanh thu trung bình / nhà xe</span>
-          <strong>{{ revenuePerCompany | currency: 'VND' : 'symbol' : '1.0-0' }}</strong>
+          <span>Doanh thu ghi nhận</span>
+          <strong>{{ overview.totalRevenue | currency: 'VND' : 'symbol' : '1.0-0' }}</strong>
         </div>
       </div>
 
       <a class="status-link" routerLink="/balance">
-        <span>Xem số dư</span>
+        <span>Đối soát số dư</span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <path d="M5 12h14" />
           <path d="m12 5 7 7-7 7" />
