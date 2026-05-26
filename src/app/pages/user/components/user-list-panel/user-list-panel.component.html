@@ -46,8 +46,13 @@
             <td>
               <span class="pill" [class]="'pill--' + u.status">{{ displayStatus(u.status) }}</span>
             </td>
-            <td>
-              <span class="pill pill--neutral">{{ displayRole(u.role) }}</span>
+            <td class="role-cell">
+              <span class="role-pills">
+                <span class="pill pill--neutral">{{ displayRole(u.role) }}</span>
+                @if (u.staffProfileRole; as staffProfileRole) {
+                  <span class="pill pill--neutral">{{ displayStaffProfileRole(staffProfileRole) }}</span>
+                }
+              </span>
             </td>
             <td class="actions-col">
               <div class="row-actions">

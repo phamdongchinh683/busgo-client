@@ -33,7 +33,12 @@
         <div class="dropdown-loading" *ngIf="companiesLoading">Đang tải công ty...</div>
 
         @for (c of companies; track c.id) {
-          <button class="dropdown-item" type="button" (click)="selectCompany.emit(c)">
+          <button
+            class="dropdown-item"
+            type="button"
+            [class.dropdown-item--selected]="selectedCompany?.id === c.id"
+            (click)="selectCompany.emit(c)"
+          >
             <span class="company-name">{{ c.name }}</span>
             <span class="company-hotline">{{ c.hotline }}</span>
           </button>

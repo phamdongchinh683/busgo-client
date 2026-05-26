@@ -118,6 +118,29 @@ td:nth-child(5) {
   color: #475569;
 }
 
+.table td.role-cell {
+  white-space: normal;
+  overflow: hidden;
+}
+
+.role-pills {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.role-pills .pill {
+  min-height: 20px;
+  max-width: 100%;
+  padding: 2px 6px;
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+}
+
 .empty {
   padding: 36px 28px;
   border: 1px dashed var(--color-border);

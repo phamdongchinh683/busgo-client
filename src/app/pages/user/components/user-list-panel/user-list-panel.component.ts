@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { User } from '../../../../data/interfaces/user';
-import { userRoleLabel, userStatusLabel } from '@app/shared/utils/domain-labels';
+import { staffProfileRoleLabel, userRoleLabel, userStatusLabel } from '@app/shared/utils/domain-labels';
 
 @Component({
   selector: 'app-user-list-panel',
@@ -26,4 +26,5 @@ export class UserListPanelComponent {
   readonly skeletonRows = Array.from({ length: 6 });
   displayStatus = userStatusLabel;
   displayRole = userRoleLabel;
+  displayStaffProfileRole = staffProfileRoleLabel;
 }

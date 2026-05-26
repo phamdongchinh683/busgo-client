@@ -82,6 +82,10 @@ export function staffProfileRoleLabel(value: string): string {
       return 'Quản trị viên';
     case 'company_admin':
       return 'Quản trị nhà xe';
+    case 'dispatcher':
+      return 'Điều phối viên';
+    case 'support':
+      return 'Hỗ trợ';
     default:
       return userRoleLabel(normalized);
   }

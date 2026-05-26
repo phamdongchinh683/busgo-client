@@ -1,5 +1,6 @@
 export type UserStatus = 'active' | 'inactive' | 'banned';
 export type UserRole = 'driver' | 'customer' | 'operator';
+export type StaffProfileRole = 'company_admin' | 'dispatcher' | 'support' | string;
 
 export interface User {
   id: number;
@@ -8,6 +9,7 @@ export interface User {
   phone: string;
   status: UserStatus;
   role: UserRole;
+  staffProfileRole?: StaffProfileRole | null;
   password: string;
 }
 
