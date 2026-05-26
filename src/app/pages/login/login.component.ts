@@ -1,7 +1,8 @@
-import { Component, ElementRef, OnDestroy, QueryList, ViewChildren, inject } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChildren, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Title } from '@angular/platform-browser';
 import { auth } from '../../data/services/index';
 import { AppButtonComponent } from '@app/shared/components/app-button/app-button.component';
 import { AppInputComponent } from '@app/shared/components/app-input/app-input.component';
@@ -23,11 +24,12 @@ import {
   templateUrl: './login.component.html',
   styleUrl: './login.component.css',
 })
-export class LoginComponent implements OnDestroy {
+export class LoginComponent implements OnInit, OnDestroy {
   private static readonly OTP_RESEND_COOLDOWN_SECONDS = 30;
   private static readonly OTP_EXPIRES_SECONDS = 120;
   private readonly fb = inject(FormBuilder);
   private readonly toast = inject(PageToastService);
+  private readonly title = inject(Title);
   private resendOtpTimerId: ReturnType<typeof setInterval> | null = null;
   private otpExpiryTimerId: ReturnType<typeof setInterval> | null = null;
 
@@ -59,6 +61,10 @@ export class LoginComponent implements OnDestroy {
     private readonly api: auth.ApiService,
     private readonly router: Router,
   ) { }
+
+  ngOnInit(): void {
+    this.title.setTitle('Đăng nhập | BusGo');
+  }
 
   ngOnDestroy(): void {
     this.clearResendOtpTimer();

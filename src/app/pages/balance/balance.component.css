@@ -339,6 +339,7 @@
   height: min(86vh, 760px);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .modal h3 {
@@ -441,9 +442,13 @@
 }
 
 .payout-skeleton {
-  min-width: 760px;
+  min-width: 680px;
   border: 0;
   min-height: 280px;
+}
+
+.payout-skeleton .table-skeleton__row {
+  grid-template-columns: 1.4fr 0.8fr 1fr 1fr;
 }
 
 .payout-filters {
@@ -461,7 +466,8 @@
   overflow: auto;
   background: linear-gradient(180deg, #ffffff 0%, #fbfdfc 100%);
   box-shadow: var(--shadow-panel);
-  flex: 0 0 auto;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .payout-more {
@@ -475,7 +481,7 @@
 .payout-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 760px;
+  min-width: 680px;
   font-size: 13px;
   table-layout: fixed;
 }
@@ -498,6 +504,7 @@
   background: #ffffff;
   position: sticky;
   top: 0;
+  z-index: 1;
 }
 
 .payout-empty {

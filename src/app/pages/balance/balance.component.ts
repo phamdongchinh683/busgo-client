@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 
-import { balance, dashboard, fxRate } from '../../data/services';
+import { balance, dashboard } from '../../data/services';
 import type { RevenueExportMethod, RevenueExportQuery, RevenueExportTimeType } from '../../data/interfaces/dashboard/revenue-export';
 import { BalanceMoneyItem, BalanceResponse } from '../../data/interfaces/balance';
 import { PageToastHostComponent } from '@app/shared/components/page-toast-host/page-toast-host.component';
@@ -25,17 +25,14 @@ import { payoutStatusLabel as mapPayoutStatusLabel } from '@app/shared/utils/dom
 })
 export class BalanceComponent implements OnInit {
   private static readonly MIN_WITHDRAW_VND = 500000;
-  private static readonly FALLBACK_USD_TO_VND_RATE = 26000;
+  private static readonly USD_TO_VND_RATE = 26000;
   data: BalanceResponse | null = null;
   loading = true;
 
   private readonly api = inject(balance.ApiService);
   private readonly dashboardApi = inject(dashboard.ApiService);
-  private readonly fxApi = inject(fxRate.ApiService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly toast = inject(PageToastService);
-
-  usdToVndRate: number | null = null;
 
   exportType: RevenueExportTimeType = 'monthly';
   exportYear!: number;
@@ -63,7 +60,6 @@ export class BalanceComponent implements OnInit {
     { value: 'cash', label: 'Tiền mặt' },
   ];
   readonly amountFormatter = (item: BalanceMoneyItem) => this.formatAmountVndOnly(item);
-  readonly secondaryAmountFormatter = (item: BalanceMoneyItem) => this.formatUsdAsVndSecondary(item);
   readonly contextFormatter = (item: BalanceMoneyItem, section: 'available' | 'pending') =>
     this.balanceContextMessage(item, section);
   readonly payoutStatusLabel = mapPayoutStatusLabel;
@@ -75,7 +71,6 @@ export class BalanceComponent implements OnInit {
   }
 
   load(): void {
-    this.fetchUsdVndRate();
     this.loading = true;
     this.api
       .getBalance()
@@ -92,9 +87,6 @@ export class BalanceComponent implements OnInit {
       });
   }
 
-  isUsd(item: BalanceMoneyItem): boolean {
-    return item.currency.trim().toLowerCase() === 'usd';
-  }
   balanceContextMessage(item: BalanceMoneyItem, section: 'available' | 'pending'): string {
     if (section === 'pending') {
       if (item.amount < 0) {
@@ -115,93 +107,8 @@ export class BalanceComponent implements OnInit {
     return 'Số dư đang bằng 0 — chưa có số dư khả dụng cho khoản này.';
   }
 
-  formatUsdPrimary(item: BalanceMoneyItem): string {
-    const major = item.amount / 100;
-    try {
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }).format(major);
-    } catch {
-      return `${major.toFixed(2)} USD`;
-    }
-  }
-
-  formatUsdAsVnd(item: BalanceMoneyItem): string {
-    const rate = this.usdToVndRate ?? BalanceComponent.FALLBACK_USD_TO_VND_RATE;
-    const major = item.amount / 100;
-    const vnd = Math.round(major * rate);
-    return this.formatVnd(vnd);
-  }
-
   formatAmountVndOnly(item: BalanceMoneyItem): string {
-    if (this.isUsd(item)) {
-      return this.formatUsdPrimary(item);
-    }
-    return this.formatMoney(item);
-  }
-
-  formatUsdAsVndSecondary(item: BalanceMoneyItem): string {
-    const code = item.currency.trim().toLowerCase();
-    const rate = this.usdToVndRate ?? BalanceComponent.FALLBACK_USD_TO_VND_RATE;
-    if (!Number.isFinite(rate) || rate <= 0) return '';
-
-    if (code === 'usd') {
-      return this.formatUsdAsVnd(item);
-    }
-
-    if (code === 'vnd') {
-      const vndMajor = Math.round(item.amount / 100);
-      const usdMajor = vndMajor / rate;
-      try {
-        return new Intl.NumberFormat('en-US', {
-          style: 'currency',
-          currency: 'USD',
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        }).format(usdMajor);
-      } catch {
-        return `${usdMajor.toFixed(2)} USD`;
-      }
-    }
-
-    return '';
-  }
-
-  formatMoney(item: BalanceMoneyItem): string {
-    const major = item.amount / 100;
-    const code = item.currency.trim().toLowerCase();
-
-    if (code === 'vnd') {
-      return this.formatVnd(Math.round(major));
-    }
-
-    try {
-      return new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: item.currency.toUpperCase(),
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 2,
-      }).format(major);
-    } catch {
-      return `${major.toLocaleString('vi-VN')} ${item.currency.toUpperCase()}`;
-    }
-  }
-
-  private fetchUsdVndRate(): void {
-    this.fxApi
-      .getUsdVndRate()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (rate) => {
-          this.usdToVndRate = rate !== null && Number.isFinite(rate) ? rate : null;
-        },
-        error: () => {
-          this.usdToVndRate = null;
-        },
-      });
+    return this.formatVnd(this.toVndMajor(item.amount, item.currency));
   }
 
   private formatVnd(value: number): string {
@@ -367,31 +274,7 @@ export class BalanceComponent implements OnInit {
   }
 
   formatPayoutAmount(item: balance.PayoutItem): string {
-    const major = item.amount / 100;
-    try {
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: item.currency.toUpperCase(),
-        minimumFractionDigits: item.currency.toLowerCase() === 'vnd' ? 0 : 2,
-        maximumFractionDigits: item.currency.toLowerCase() === 'vnd' ? 0 : 2,
-      }).format(major);
-    } catch {
-      return `${major.toLocaleString('en-US')} ${item.currency.toUpperCase()}`;
-    }
-  }
-
-  formatPayoutVnd(item: balance.PayoutItem): string {
-    const code = item.currency.trim().toLowerCase();
-    if (code === 'vnd') {
-      return this.formatVnd(Math.round(item.amount / 100));
-    }
-    if (code === 'usd') {
-      const rate = this.usdToVndRate ?? BalanceComponent.FALLBACK_USD_TO_VND_RATE;
-      if (!Number.isFinite(rate) || rate <= 0) return '—';
-      const usdMajor = item.amount / 100;
-      return this.formatVnd(Math.round(usdMajor * rate));
-    }
-    return '—';
+    return this.formatVnd(this.toVndMajor(item.amount, item.currency));
   }
 
   formatUnixDate(seconds: number): string {
@@ -476,6 +359,21 @@ export class BalanceComponent implements OnInit {
     a.rel = 'noopener';
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  private toVndMajor(amountMinor: number, currency: string): number {
+    const code = currency.trim().toLowerCase();
+    const major = amountMinor / 100;
+
+    if (code === 'vnd') {
+      return Math.round(major);
+    }
+
+    if (code === 'usd') {
+      return Math.round(major * BalanceComponent.USD_TO_VND_RATE);
+    }
+
+    return Math.round(major);
   }
 
 }

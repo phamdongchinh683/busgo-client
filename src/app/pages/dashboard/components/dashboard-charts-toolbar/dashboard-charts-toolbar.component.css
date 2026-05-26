@@ -1,95 +1,115 @@
 .charts-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px 12px;
-  padding: 12px 14px;
-  border: 1px solid var(--color-border);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow:
-    0 1px 2px rgba(21, 27, 24, 0.05),
-    0 12px 30px rgba(21, 27, 24, 0.04);
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) auto;
+    align-items: center;
+    gap: 14px 18px;
+    padding: 16px 18px;
+    border: 1px solid color-mix(in srgb, var(--color-border) 85%, #ffffff);
+    border-radius: 8px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, #f8fbf9 100%);
+    box-shadow: 0 2px 4px rgba(21, 27, 24, 0.06), 0 12px 24px rgba(21, 27, 24, 0.06);
 }
 
 .charts-toolbar__intro {
-  flex: 0 1 auto;
-  min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    min-width: 0;
 }
 
 .charts-section__heading {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: 0;
-  color: var(--color-text-dark, #151b18);
+    margin: 0;
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: 0;
+    color: var(--color-text-dark, #151b18);
+}
+
+.charts-toolbar__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.charts-toolbar__chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--color-primary) 24%, #ffffff);
+    background: color-mix(in srgb, var(--color-primary-bg) 78%, #ffffff);
+    color: var(--color-primary);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0;
 }
 
 .charts-toolbar__filters {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 10px;
-  flex: 0 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 10px 12px;
+    flex: 0 0 auto;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid color-mix(in srgb, var(--color-border) 80%, #ffffff);
+    background: rgba(255, 255, 255, 0.88);
 }
 
 .charts-toolbar__filters--global {
-  padding: 0;
-  border: none;
-  background: transparent;
-  box-shadow: none;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 
 .filter {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0;
-  color: var(--color-text-muted, #5f6b61);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--color-text-muted, #5f6b61);
 }
 
 .select {
-  min-width: 136px;
-  height: 34px;
-  padding: 0 10px;
-  border: 1px solid var(--color-border);
-  background: #ffffff;
-  color: var(--color-text-dark, #151b18);
-  font-size: 12px;
-  font-weight: 600;
-  transition:
-    border-color 0.15s ease,
-    box-shadow 0.15s ease;
+    min-width: 168px;
+    height: 38px;
+    padding: 0 12px;
+    border: 1px solid var(--color-border);
+    background: #ffffff;
+    color: var(--color-text-dark, #151b18);
+    font-size: 14px;
+    font-weight: 700;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 
 .select:hover {
-  border-color: rgba(8, 122, 46, 0.3);
+    border-color: rgba(8, 122, 46, 0.3);
+    background: #fbfefc;
 }
 
 .select:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(8, 122, 46, 0.12);
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(8, 122, 46, 0.12);
 }
 
 @media (max-width: 720px) {
-  .charts-toolbar {
-    align-items: stretch;
-  }
-
-  .charts-toolbar__filters {
-    width: 100%;
-  }
-
-  .filter {
-    flex: 1 1 140px;
-  }
-
-  .select {
-    width: 100%;
-    min-width: 0;
-  }
+    .charts-toolbar {
+        grid-template-columns: 1fr;
+        align-items: stretch;
+        padding: 14px;
+    }
+    .charts-toolbar__filters {
+        width: 100%;
+        padding: 10px;
+    }
+    .filter {
+        flex: 1 1 140px;
+    }
+    .select {
+        width: 100%;
+        min-width: 0;
+    }
 }

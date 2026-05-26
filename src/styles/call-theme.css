@@ -95,25 +95,39 @@ app-chat-call-popup .call-media--video .messenger__call-remote-video {
   height: 100% !important;
   object-fit: cover !important;
   display: block;
-  background: var(--call-video-bg);
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(56, 189, 248, 0.2), transparent 56%),
+    var(--call-video-bg);
 }
 
 app-chat-call-popup .call-media--video .messenger__call-local-video {
   position: absolute !important;
-  top: 52px !important;
-  right: 12px !important;
+  top: 56px !important;
+  right: 14px !important;
   bottom: auto !important;
   left: auto !important;
-  width: 108px !important;
-  height: 144px !important;
+  width: min(30%, 148px) !important;
+  aspect-ratio: 3 / 4 !important;
+  height: auto !important;
   z-index: 4;
-  border-radius: 18px !important;
+  border-radius: 20px !important;
   object-fit: cover !important;
-  border: 2px solid var(--call-pip-border) !important;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45) !important;
+  border: 2px solid rgba(226, 232, 240, 0.78) !important;
+  box-shadow:
+    0 16px 30px rgba(2, 6, 23, 0.46) !important,
+    0 0 0 1px rgba(255, 255, 255, 0.14) inset !important;
   background: #111827 !important;
 }
 
 app-chat-call-popup .call-media--video .messenger__call-local-video.messenger__call-local-video--off {
   display: none !important;
+}
+
+@media (max-width: 640px) {
+  app-chat-call-popup .call-media--video .messenger__call-local-video {
+    top: 46px !important;
+    right: 10px !important;
+    width: min(34%, 118px) !important;
+    border-radius: 16px !important;
+  }
 }

@@ -1,59 +1,82 @@
 .balance-card {
+  --balance-accent: var(--color-primary);
+  --balance-accent-strong: #066226;
+  --balance-accent-soft: #e7f6ed;
+  --balance-card-border: color-mix(in srgb, var(--balance-accent) 24%, #d8e3dc);
   position: relative;
-  background: linear-gradient(180deg, #ffffff 0%, #fbfdfc 100%);
-  border: 1px solid color-mix(in srgb, var(--color-border) 88%, #ffffff);
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 252, 250, 0.98) 100%),
+    linear-gradient(135deg, var(--balance-accent-soft) 0%, #ffffff 62%);
+  border: 1px solid var(--balance-card-border);
   border-radius: 16px;
-  padding: 22px 20px 20px;
+  padding: 24px 22px 22px;
   min-height: 206px;
-  box-shadow: var(--shadow-sm);
+  box-shadow:
+    0 18px 38px rgba(17, 24, 22, 0.1),
+    0 1px 0 rgba(255, 255, 255, 0.86) inset;
   transition:
     box-shadow 0.2s ease,
     transform 0.2s ease;
 }
 
+.balance-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  background: linear-gradient(180deg, var(--balance-accent) 0%, var(--balance-accent-strong) 100%);
+}
+
+.balance-card--pending {
+  --balance-accent: #b45309;
+  --balance-accent-strong: #92400e;
+  --balance-accent-soft: #fff7ed;
+}
+
 .balance-card:hover {
-  box-shadow: var(--shadow-md);
+  box-shadow:
+    0 24px 52px rgba(17, 24, 22, 0.14),
+    0 1px 0 rgba(255, 255, 255, 0.9) inset;
   transform: translateY(-2px);
 }
 
 .balance-card__head {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: flex-start;
   gap: 14px;
-  margin-bottom: 14px;
+  margin-bottom: 18px;
 }
 
 .balance-card__icon {
   flex-shrink: 0;
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid currentColor;
-  background: color-mix(in srgb, currentColor 8%, #ffffff) !important;
-}
-
-.balance-card--available .balance-card__icon {
-  color: var(--color-primary);
-}
-
-.balance-card--pending .balance-card__icon {
-  color: #c2410c;
+  border: 1px solid color-mix(in srgb, var(--balance-accent) 28%, #ffffff);
+  background: linear-gradient(135deg, var(--balance-accent) 0%, var(--balance-accent-strong) 100%) !important;
+  color: #ffffff;
+  box-shadow:
+    0 12px 24px color-mix(in srgb, var(--balance-accent) 22%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
 }
 
 .balance-card__icon svg {
-  width: 22px;
-  height: 22px;
+  width: 23px;
+  height: 23px;
 }
 
 .balance-card__title {
   margin: 0;
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 17px;
+  font-weight: 800;
   letter-spacing: 0;
-  color: var(--color-primary);
+  color: var(--balance-accent-strong);
 }
 
 .balance-card__hint {
@@ -64,6 +87,8 @@
 }
 
 .balance-list {
+  position: relative;
+  z-index: 1;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -95,7 +120,7 @@
   max-width: none;
   font-size: 13px;
   line-height: 1.5;
-  color: var(--color-text-muted);
+  color: #4b5a52;
 }
 
 .balance-list__context--negative {
@@ -109,23 +134,16 @@
 }
 
 .balance-list__amount {
-  font-size: 22px;
+  font-size: 30px;
   font-weight: 800;
   letter-spacing: 0;
   font-variant-numeric: tabular-nums;
-  color: var(--color-text-title);
+  color: var(--balance-accent-strong);
+  line-height: 1.08;
 }
 
 .balance-list__amount--negative {
   color: var(--color-danger-text);
-}
-
-.balance-list__amount-secondary {
-  font-size: 13px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  color: var(--color-text-muted);
-  line-height: 1.4;
 }
 
 .balance-list__empty {

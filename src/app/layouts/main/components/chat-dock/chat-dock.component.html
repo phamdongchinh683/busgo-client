@@ -154,8 +154,9 @@
                     @if (!isMine(m)) {
                     <span class="messenger__avatar messenger__avatar--bubble" [attr.title]="m.fullName || 'Người dùng'" [attr.aria-label]="m.fullName || 'Người dùng'">{{ initials(m.fullName || '?') }}</span> }
                     <div class="messenger__bubble-wrap">
-                        <div class="messenger__bubble-line" [class.messenger__bubble-line--mine]="isMine(m)">
-                            @let imageUrl = extractImageUrl(m.message); @if (canRecallMessage(m)) {
+                        @let imageUrl = extractImageUrl(m.message);
+                        <div class="messenger__bubble-line" [class.messenger__bubble-line--mine]="isMine(m)" [class.messenger__bubble-line--image]="!!imageUrl">
+                            @if (canRecallMessage(m)) {
                             <div class="messenger__row-action">
                                 <button type="button" class="messenger__more-btn" (click)="$event.stopPropagation(); recallMessage(m)" [disabled]="recallingMessageIds().has(+$any(m.id))" [attr.aria-label]="recallingMessageIds().has(+$any(m.id)) ? 'Đang thu hồi' : 'Thu hồi tin nhắn'"
                                     [attr.title]="recallingMessageIds().has(+$any(m.id)) ? 'Đang thu hồi' : 'Thu hồi tin nhắn'">
@@ -176,7 +177,7 @@
                           </button>
                             </div>
                             }
-                            <div class="messenger__bubble-stack">
+                            <div class="messenger__bubble-stack" [class.messenger__bubble-stack--image]="!!imageUrl">
                                 <div class="messenger__bubble" [class.messenger__bubble--mine]="isMine(m) && !imageUrl" [class.messenger__bubble--image]="!!imageUrl">
                                     @if (imageUrl) {
                                     <button type="button" class="messenger__image-btn" (click)="openImagePreview(imageUrl)" aria-label="Mở ảnh xem lớn" title="Xem ảnh">

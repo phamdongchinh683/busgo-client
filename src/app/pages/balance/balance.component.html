@@ -89,7 +89,6 @@
         [section]="'available'"
         [items]="data.available"
         [amountFormatter]="amountFormatter"
-        [secondaryAmountFormatter]="secondaryAmountFormatter"
         [contextFormatter]="contextFormatter"
       />
 
@@ -99,7 +98,6 @@
         [section]="'pending'"
         [items]="data.pending"
         [amountFormatter]="amountFormatter"
-        [secondaryAmountFormatter]="secondaryAmountFormatter"
         [contextFormatter]="contextFormatter"
       />
     </div>
@@ -206,7 +204,6 @@
           <span class="table-skeleton__bar table-skeleton__bar--lg"></span>
           <span class="table-skeleton__bar table-skeleton__bar--sm"></span>
           <span class="table-skeleton__bar table-skeleton__bar--md"></span>
-          <span class="table-skeleton__bar table-skeleton__bar--sm"></span>
         </div>
         @for (_ of [1, 2, 3, 4, 5]; track $index) {
           <div class="table-skeleton__row">
@@ -214,7 +211,6 @@
             <span class="table-skeleton__bar table-skeleton__bar--md"></span>
             <span class="table-skeleton__bar table-skeleton__bar--sm"></span>
             <span class="table-skeleton__bar"></span>
-            <span class="table-skeleton__bar table-skeleton__bar--sm"></span>
           </div>
         }
       </div>
@@ -222,7 +218,6 @@
         <thead>
           <tr>
             <th>Số tiền</th>
-            <th>Quy đổi VND</th>
             <th>Trạng thái</th>
             <th>Ngày tạo</th>
             <th>Ngày về</th>
@@ -231,7 +226,6 @@
         <tbody>
           <tr *ngFor="let p of payouts">
             <td>{{ formatPayoutAmount(p) }}</td>
-            <td>{{ formatPayoutVnd(p) }}</td>
             <td>
               <span class="payout-status" [class]="'payout-status payout-status--' + (p.status || 'unknown')">
                 {{ payoutStatusLabel(p.status) }}

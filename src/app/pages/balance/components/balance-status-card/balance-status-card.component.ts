@@ -16,7 +16,6 @@ export class BalanceStatusCardComponent {
   @Input({ required: true }) section!: 'available' | 'pending';
   @Input({ required: true }) items: BalanceMoneyItem[] = [];
   @Input({ required: true }) amountFormatter!: (item: BalanceMoneyItem) => string;
-  @Input() secondaryAmountFormatter?: (item: BalanceMoneyItem) => string;
   @Input({ required: true }) contextFormatter!: (item: BalanceMoneyItem, section: 'available' | 'pending') => string;
 
   trackByIndex(index: number): number {

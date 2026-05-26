@@ -1,6 +1,11 @@
 @if (visible()) {
   <div class="call-overlay">
-    <div class="call-popup" role="dialog" aria-label="Cuộc gọi">
+    <div
+      class="call-popup"
+      [class.call-popup--video]="callType() === 'video'"
+      role="dialog"
+      aria-label="Cuộc gọi"
+    >
       <div class="call-media" [class.call-media--video]="callType() === 'video'">
         <div
           class="call-status"
@@ -12,6 +17,10 @@
 
         @if (callType() === 'video') {
           <div class="call-video-stage">
+            <div class="call-video-backdrop" aria-hidden="true">
+              <div class="call-video-backdrop-avatar">{{ initials(title() || 'Video') }}</div>
+              <p class="call-video-peer">{{ title() || 'Cuộc gọi video' }}</p>
+            </div>
             <ng-content select="[remoteVideo]"></ng-content>
             <ng-content select="[localVideo]"></ng-content>
           </div>

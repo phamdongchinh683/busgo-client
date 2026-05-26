@@ -1,6 +1,12 @@
 <div class="charts-toolbar">
   <div class="charts-toolbar__intro">
     <h2 id="dashboard-trends-heading" class="charts-section__heading">Phân tích xu hướng</h2>
+    <div class="charts-toolbar__meta">
+      <span class="charts-toolbar__chip">{{ chartType === 'monthly' ? 'Theo tháng' : 'Theo năm' }}</span>
+      @if (chartType === 'monthly') {
+        <span class="charts-toolbar__chip">Năm {{ selectedYear }}</span>
+      }
+    </div>
   </div>
 
   <div class="charts-toolbar__filters charts-toolbar__filters--global">
