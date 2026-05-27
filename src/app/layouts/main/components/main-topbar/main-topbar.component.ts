@@ -119,6 +119,11 @@ export class MainTopbarComponent implements OnInit {
     return this.notificationUnreadCount;
   }
 
+  compactBadgeCount(count: number): string {
+    const normalized = Math.max(0, Math.floor(Number(count) || 0));
+    return normalized > 99 ? '99+' : String(normalized);
+  }
+
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: Event) {
     if (!this.isNotificationOpen || this.isVerifyDialogOpen) return;
