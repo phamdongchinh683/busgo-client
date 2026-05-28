@@ -3,56 +3,59 @@
  * Đổi màu / bóng tại đây — component đọc qua var(--call-*).
  */
 :root {
-  --call-accent: #00a884;
-  --call-accent-soft: #00c389;
-  --call-line: #d8f2eb;
-  --call-text: #0f172a;
-  --call-text-muted: #64748b;
+  /* Modern 2026 call palette — dark immersive with premium green accent */
+  --call-accent: #10b981;
+  --call-accent-soft: #34d399;
+  --call-accent-deep: #059669;
+  --call-line: rgba(148, 163, 184, 0.25);
+  --call-text: #f8fafc;
+  --call-text-muted: #94a3b8;
   --call-icon-on-accent: #ffffff;
 
-  --call-danger: #ef4444;
-  --call-danger-soft: #f87171;
+  --call-danger: #f87171;
+  --call-danger-soft: #fb7185;
   --call-danger-deep: #dc2626;
 
-  --call-surface-pop: #ffffff;
-  --call-surface-pop-end: #f8fafc;
-  --call-surface-media: #f1f5f9;
+  --call-surface-pop: #0f172a;
+  --call-surface-pop-end: #0b1220;
+  --call-surface-media: #020617;
 
-  --call-overlay-grad-a: rgba(15, 23, 42, 0.35);
-  --call-overlay-grad-b: rgba(0, 72, 58, 0.45);
-  --call-media-radial-top: rgba(0, 196, 137, 0.14);
-  --call-media-radial-bottom: rgba(216, 242, 235, 0.65);
-  --call-video-bg: #020617;
+  --call-overlay-grad-a: rgba(2, 6, 23, 0.82);
+  --call-overlay-grad-b: rgba(2, 6, 23, 0.92);
 
-  --call-shadow-popup: 0 28px 60px rgba(15, 23, 42, 0.28);
-  --call-shadow-popup-inset: 0 0 0 1px rgba(255, 255, 255, 0.6) inset;
-  --call-shadow-status: 0 4px 16px rgba(15, 23, 42, 0.08);
-  --call-shadow-btn-base: 0 8px 24px rgba(15, 23, 42, 0.18);
-  --call-shadow-accept: 0 10px 28px rgba(0, 168, 132, 0.45);
-  --call-shadow-reject: 0 10px 28px rgba(239, 68, 68, 0.45);
-  --call-shadow-end: 0 10px 28px rgba(220, 38, 38, 0.42);
-  --call-ring-outer: 0 12px 40px rgba(0, 168, 132, 0.28);
-  --call-avatar-inner-shadow: 0 4px 16px rgba(15, 23, 42, 0.12);
-  --call-avatar-ring-line: 0 0 0 1px rgba(0, 168, 132, 0.2);
+  --call-video-bg: #0a0f1c;
 
-  --call-btn-size: 68px;
-  --call-btn-icon: 28px;
-  --call-btn-gap: 52px;
+  --call-shadow-popup: 0 32px 80px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+  --call-shadow-popup-inset: 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  --call-shadow-status: 0 4px 16px rgba(0, 0, 0, 0.25);
+  --call-shadow-btn-base: 0 8px 24px rgba(0, 0, 0, 0.3);
+  --call-shadow-accept: 0 12px 32px rgba(16, 185, 129, 0.45);
+  --call-shadow-reject: 0 12px 32px rgba(248, 113, 113, 0.45);
+  --call-shadow-end: 0 12px 32px rgba(220, 38, 38, 0.5);
+  --call-ring-outer: 0 0 0 12px rgba(16, 185, 129, 0.18);
+  --call-avatar-inner-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --call-avatar-ring-line: 0 0 0 1px rgba(255, 255, 255, 0.15);
+
+  --call-btn-size: 64px;
+  --call-btn-icon: 26px;
+  --call-btn-gap: 28px;
+
   --call-chrome-video-grad: linear-gradient(
     180deg,
     transparent 0%,
-    rgba(0, 0, 0, 0.38) 42%,
-    rgba(0, 0, 0, 0.82) 100%
+    rgba(2, 6, 23, 0.55) 48%,
+    rgba(2, 6, 23, 0.88) 100%
   );
   --call-chrome-voice-grad: linear-gradient(
     180deg,
-    transparent 0%,
-    rgba(248, 250, 252, 0.97) 50%,
-    rgba(241, 245, 249, 1) 100%
+    transparent 10%,
+    rgba(15, 23, 42, 0.65) 55%,
+    rgba(15, 23, 42, 0.92) 100%
   );
-  --call-status-on-dark-bg: rgba(15, 23, 42, 0.58);
-  --call-status-on-dark-border: rgba(255, 255, 255, 0.14);
-  --call-pip-border: rgba(255, 255, 255, 0.35);
+
+  --call-status-on-dark-bg: rgba(15, 23, 42, 0.72);
+  --call-status-on-dark-border: rgba(148, 163, 184, 0.2);
+  --call-pip-border: rgba(226, 232, 240, 0.7);
 }
 
 /*
@@ -112,21 +115,21 @@ app-chat-call-popup .call-media--video .messenger__call-remote-video {
 
 app-chat-call-popup .call-media--video .messenger__call-local-video {
   position: absolute !important;
-  top: 56px !important;
-  right: 14px !important;
+  top: 68px !important;
+  right: 12px !important;
   bottom: auto !important;
   left: auto !important;
-  width: min(30%, 148px) !important;
-  aspect-ratio: 3 / 4 !important;
+  width: min(28%, 136px) !important;
+  aspect-ratio: 16 / 11 !important;
   height: auto !important;
-  z-index: 4;
-  border-radius: 20px !important;
+  z-index: 5;
+  border-radius: 16px !important;
   object-fit: cover !important;
-  border: 2px solid rgba(226, 232, 240, 0.78) !important;
+  border: 2.5px solid rgba(226, 232, 240, 0.85) !important;
   box-shadow:
-    0 16px 30px rgba(2, 6, 23, 0.46) !important,
-    0 0 0 1px rgba(255, 255, 255, 0.14) inset !important;
-  background: #111827 !important;
+    0 12px 28px rgba(0, 0, 0, 0.55) !important,
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset !important;
+  background: #0f172a !important;
 }
 
 app-chat-call-popup .call-media--video .messenger__call-local-video.messenger__call-local-video--off {
@@ -135,9 +138,9 @@ app-chat-call-popup .call-media--video .messenger__call-local-video.messenger__c
 
 @media (max-width: 640px) {
   app-chat-call-popup .call-media--video .messenger__call-local-video {
-    top: 46px !important;
+    top: 58px !important;
     right: 10px !important;
-    width: min(34%, 118px) !important;
-    border-radius: 16px !important;
+    width: min(30%, 104px) !important;
+    border-radius: 14px !important;
   }
 }
