@@ -1,14 +1,27 @@
 :host {
   display: block;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   background: linear-gradient(180deg, #fbfdfc 0%, #f3f7f5 52%, #f8fafc 100%);
+  /* Respect safe areas on notched devices */
+  padding-top: var(--safe-area-top);
+  padding-left: var(--safe-area-left);
+  padding-right: var(--safe-area-right);
 }
 
 .layout {
   display: flex;
-  height: 100vh;
+  height: 100%;
   background: transparent;
+}
+
+/* On mobile the sidebar is pulled out of flow via fixed positioning */
+@media (max-width: 768px) {
+  .layout {
+    /* Ensure no horizontal overflow from old collapsed sidebar */
+    overflow-x: hidden;
+  }
 }
 
 .main-content {
@@ -26,12 +39,14 @@
   overflow-y: auto;
   background: transparent;
   scroll-padding-top: 20px;
+  /* Leave room for safe area at bottom on notched devices */
+  padding-bottom: var(--safe-area-bottom, 0px);
 }
 
 .layout-footer {
-  border-top: 1px solid rgba(220, 231, 222, 0.72);
-  background: rgba(255, 255, 255, 0.86);
-  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(14px);
 }
 
 .layout-footer__inner {
@@ -41,6 +56,17 @@
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
+  padding-bottom: calc(10px + var(--safe-area-bottom, 0px));
+}
+
+@media (max-width: 520px) {
+  .layout-footer__inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 10px 16px;
+    padding-bottom: calc(10px + var(--safe-area-bottom, 0px));
+  }
 }
 
 .layout-footer__brand {
@@ -75,4 +101,29 @@
 
 .layout-footer__meta a:hover {
   text-decoration: underline;
+}
+
+/* Mobile sidebar drawer + backdrop */
+.mobile-sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 22, 0.45);
+  z-index: 1400;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 220ms cubic-bezier(0.4, 0, 0.2, 1), visibility 0ms linear 220ms;
+  backdrop-filter: blur(1px);
+  /* Respect safe areas */
+  top: var(--safe-area-top, 0px);
+  left: var(--safe-area-left, 0px);
+  right: var(--safe-area-right, 0px);
+  bottom: var(--safe-area-bottom, 0px);
+}
+
+.mobile-sidebar-backdrop--open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 220ms cubic-bezier(0.4, 0, 0.2, 1);
 }

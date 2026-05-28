@@ -83,6 +83,9 @@ export class ChatDockComponent {
   readonly sendError = signal('');
   readonly sendingMessage = signal(false);
   readonly sendingImage = signal(false);
+
+  /** Minimum time (ms) we keep the sending state visible to avoid cursor/button blink on very fast APIs */
+  private readonly MIN_SENDING_FEEDBACK_MS = 420;
   readonly peerTyping = signal(false);
   readonly callStatus = signal('');
   readonly callIncoming = signal<ChatCallStartPayload | null>(null);
@@ -534,12 +537,23 @@ export class ChatDockComponent {
     const text = this.draft().trim();
     if (boxId === null || !text) return;
     if (this.sendingMessage()) return;
+
     this.stopTypingNow();
     this.sendError.set('');
+
+    const start = Date.now();
     this.sendingMessage.set(true);
+
     this.chatService
       .sendMessage(boxId, { message: text })
-      .pipe(finalize(() => this.sendingMessage.set(false)), takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        finalize(() => {
+          const elapsed = Date.now() - start;
+          const remaining = Math.max(0, this.MIN_SENDING_FEEDBACK_MS - elapsed);
+          setTimeout(() => this.sendingMessage.set(false), remaining);
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe({
         next: () => {
           this.socket.emitMessageSend(boxId, text);
@@ -1115,14 +1129,19 @@ export class ChatDockComponent {
 
   private async sendImageFiles(files: File[]): Promise<void> {
     if (!files.length) return;
+
+    const start = Date.now();
     this.sendingImage.set(true);
+
     try {
       const { parallelBatch } = imageUploadPresets.chat;
       for (let i = 0; i < files.length; i += parallelBatch) {
         await Promise.all(files.slice(i, i + parallelBatch).map((f) => this.sendSingleImageFile(f)));
       }
     } finally {
-      this.sendingImage.set(false);
+      const elapsed = Date.now() - start;
+      const remaining = Math.max(0, this.MIN_SENDING_FEEDBACK_MS - elapsed);
+      setTimeout(() => this.sendingImage.set(false), remaining);
     }
   }
 

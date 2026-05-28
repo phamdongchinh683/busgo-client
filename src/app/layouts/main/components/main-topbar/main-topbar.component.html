@@ -1,7 +1,16 @@
 <header class="topbar">
-    <div class="topbar__context">
-        <span class="topbar__eyebrow">BusGo</span>
-        <span class="topbar__title">{{ pageTitle }}</span>
+    <div class="topbar__left">
+        <button type="button" class="topbar__hamburger" aria-label="Mở menu" (click)="toggleSidebar.emit()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+        </button>
+
+        <div class="topbar__context">
+            <span class="topbar__title">{{ pageTitle }}</span>
+        </div>
     </div>
 
     <div class="topbar__actions">

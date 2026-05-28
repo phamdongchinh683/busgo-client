@@ -10,14 +10,15 @@
     width: var(--sidebar-width);
     height: 100%;
     min-height: 0;
-    background: linear-gradient(180deg, #f8fbf9 0%, var(--sidebar-bg) 100%);
+    background: linear-gradient(175deg, #f8fbf9 0%, var(--sidebar-bg) 100%);
     color: var(--sidebar-text);
     display: flex;
     flex-direction: column;
-    border-right: 1px solid var(--sidebar-border);
-    box-shadow: 16px 0 42px rgba(17, 24, 22, 0.05);
+    border-right: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-lg);
     flex-shrink: 0;
     flex: 1;
+    backdrop-filter: blur(12px);
 }
 
 .sidebar__brand {
@@ -25,9 +26,10 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 9px 16px;
-    border-bottom: 1px solid var(--sidebar-border);
-    background: rgba(255, 255, 255, 0.42);
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
 }
 
 .brand-icon-wrap {
@@ -105,11 +107,17 @@
     color: var(--sidebar-text);
     text-decoration: none;
     font-size: 13px;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0;
     text-transform: none;
     position: relative;
-    transition: background-color var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard), transform var(--motion-fast) var(--ease-standard), box-shadow var(--motion-base) var(--ease-standard);
+    border-radius: var(--radius-md) !important;
+    transition: 
+      background-color var(--motion-fast) var(--ease-standard), 
+      color var(--motion-fast) var(--ease-standard), 
+      border-color var(--motion-fast) var(--ease-standard), 
+      transform var(--motion-base) var(--ease-spring), 
+      box-shadow var(--motion-base) var(--ease-standard);
     will-change: transform, opacity;
     cursor: pointer;
     white-space: nowrap;
@@ -130,10 +138,13 @@
 }
 
 .nav-item--active {
-    background: linear-gradient(180deg, #0b8c3c 0%, var(--sidebar-active-bg) 100%);
+    background: linear-gradient(175deg, #0b8c3c 0%, var(--sidebar-active-bg) 100%);
     color: var(--sidebar-text-active);
     border-color: var(--sidebar-active-border);
-    box-shadow: 0 12px 24px rgba(8, 122, 46, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    box-shadow: 
+      0 4px 10px rgba(8, 122, 46, 0.18),
+      0 12px 24px rgba(8, 122, 46, 0.16),
+      inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 
 .nav-item--active::before {
@@ -302,5 +313,94 @@
     .user-block {
         justify-content: center;
         padding: 8px;
+    }
+}
+
+/* ===== True mobile drawer (slide-in from left) ===== */
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed !important;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        z-index: 1500;
+        width: min(268px, 82vw) !important;
+        transform: translateX(-100%);
+        transition: transform 260ms cubic-bezier(0.32, 0.72, 0, 1);
+        box-shadow: 18px 0 48px rgba(17, 24, 22, 0.18);
+        border-right: 1px solid var(--sidebar-border);
+        will-change: transform;
+    }
+
+    .sidebar--mobile-open {
+        transform: translateX(0);
+    }
+
+    /* Force full labels + comfortable tap targets when drawer is open on mobile */
+    .sidebar--mobile-open .brand-copy,
+    .sidebar--mobile-open .sidebar__section-label,
+    .sidebar--mobile-open .nav-item__label,
+    .sidebar--mobile-open .user-info,
+    .sidebar--mobile-open .sidebar-logout span {
+        display: block !important;
+    }
+
+    .sidebar--mobile-open .sidebar__brand {
+        justify-content: flex-start !important;
+        padding: 9px 16px;
+    }
+
+    .sidebar--mobile-open .sidebar__nav {
+        padding: 0 12px 12px;
+    }
+
+    .sidebar--mobile-open .nav-item {
+        justify-content: flex-start;
+        padding: 10px 12px;
+        min-height: 50px;
+    }
+
+    .sidebar--mobile-open .user-block {
+        justify-content: flex-start;
+        padding: 10px;
+    }
+
+    /* Slightly larger touch targets */
+    .sidebar--mobile-open .nav-item__icon {
+        width: 34px;
+        height: 34px;
+    }
+
+    .sidebar--mobile-open .nav-item__icon ::ng-deep svg {
+        width: 18px;
+        height: 18px;
+    }
+}
+
+/* Extra tight screens + landscape phones */
+@media (max-width: 380px) {
+    .sidebar {
+        width: min(260px, 86vw) !important;
+    }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+    .sidebar--mobile-open {
+        max-height: 100dvh;
+        overflow-y: auto;
+    }
+}
+
+/* Remove sidebar from normal document flow on mobile (it becomes a fixed drawer) */
+@media (max-width: 768px) {
+    :host {
+        width: 0 !important;
+        flex: 0 0 0 !important;
+        min-width: 0 !important;
+    }
+
+    .sidebar {
+        /* When closed, ensure it doesn't occupy space even if transform fails */
+        margin-left: 0;
     }
 }

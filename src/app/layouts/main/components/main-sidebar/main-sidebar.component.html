@@ -1,4 +1,4 @@
-<aside class="sidebar">
+<aside class="sidebar" [class.sidebar--mobile-open]="mobileOpen">
     <div class="sidebar__brand">
         <div class="brand-icon-wrap">
             <img src="https://res.cloudinary.com/dinvm5h7g/image/upload/v1776836282/logo/ChatGPT_Image_Apr_22_2026_12_37_40_PM_melvlj.png" alt="BusGo" class="brand-icon" />
@@ -12,7 +12,14 @@
 
     <nav class="sidebar__nav">
         @for (item of items; track item.route) {
-        <a class="nav-item" [class.nav-item--active]="isActive(item.route)" [routerLink]="item.route" [title]="item.label" (pointerdown)="activateImmediately(item.route)" (click)="activateImmediately(item.route)">
+        <a
+            class="nav-item"
+            [class.nav-item--active]="isActive(item.route)"
+            [routerLink]="item.route"
+            [title]="item.label"
+            (pointerdown)="activateImmediately(item.route)"
+            (click)="onNavItemClick(item.route)"
+        >
             <span class="nav-item__icon" [innerHTML]="asSafeIcon(item.icon)"></span>
             <span class="nav-item__label">{{ item.label }}</span>
         </a>
@@ -28,7 +35,7 @@
                 <span class="user-role">{{ userRole || 'Quản trị hệ thống' }}</span>
             </div>
         </div>
-        <button type="button" class="sidebar-logout" (click)="signOut.emit()">
+        <button type="button" class="sidebar-logout" (click)="onLogoutClick()">
       <svg
         viewBox="0 0 24 24"
         fill="none"

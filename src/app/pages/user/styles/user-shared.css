@@ -183,6 +183,11 @@
   justify-content: center;
   z-index: var(--layer-modal);
   padding: 16px;
+  /* Respect safe areas on notched devices */
+  padding-top: calc(16px + var(--safe-area-top, 0px));
+  padding-bottom: calc(16px + var(--safe-area-bottom, 0px));
+  padding-left: calc(16px + var(--safe-area-left, 0px));
+  padding-right: calc(16px + var(--safe-area-right, 0px));
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
@@ -205,18 +210,37 @@
   width: 100%;
   max-width: 520px;
   max-height: 90vh;
+  max-height: 90dvh;
   overflow-y: auto;
-  background: var(--color-surface);
+  background: var(--glass-bg);
   border-radius: var(--radius-xl);
   padding: 22px;
-  border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-md);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-xl);
+  backdrop-filter: blur(16px);
   opacity: 0;
-  transform: translateZ(0) scale(0.97);
+  transform: translateZ(0) scale(0.96);
   transition:
-    opacity 240ms cubic-bezier(0.4, 0, 0.2, 1),
-    transform 240ms cubic-bezier(0.4, 0, 0.2, 1);
+    opacity var(--motion-slow) var(--ease-standard),
+    transform var(--motion-slow) var(--ease-spring);
   will-change: opacity, transform;
+}
+
+/* Any-device modal improvements */
+@media (max-width: 520px) {
+  .modal {
+    max-width: 100%;
+    max-height: 92dvh;
+    padding: 18px;
+    border-radius: 14px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .modal {
+    padding: 16px 14px;
+    border-radius: 12px !important;
+  }
 }
 
 .modal-overlay--open .modal {
@@ -249,6 +273,14 @@
   grid-template-columns: 1fr;
 }
 
+/* Any device: stack form fields earlier */
+@media (max-width: 480px) {
+  .modal-form {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}
+
 .modal--sm {
   max-width: 420px;
 }
@@ -259,6 +291,18 @@
   justify-content: flex-end;
   gap: 10px;
   margin-top: 4px;
+}
+
+@media (max-width: 420px) {
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .modal-actions .btn,
+  .modal-actions .action-button {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 .modal--notification {

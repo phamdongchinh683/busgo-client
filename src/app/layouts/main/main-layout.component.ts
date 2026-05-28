@@ -30,6 +30,7 @@ export class MainLayoutComponent implements OnInit {
   userRole = '';
   userInitial = 'U';
   notificationUnreadCount = 0;
+  isMobileSidebarOpen = false;
 
   items: MainNavItem[] = navItems as MainNavItem[];
 
@@ -66,6 +67,10 @@ export class MainLayoutComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.destroyRef.onDestroy(() => {
+      document.body.style.overflow = '';
+    });
+
     this.loadUser();
 
     this.currentUrl = this.router.url;
@@ -80,6 +85,10 @@ export class MainLayoutComponent implements OnInit {
         this.currentUrl = e.urlAfterRedirects || e.url;
         this.updateDocumentTitle();
         this.requestNotificationOnDashboard(this.currentUrl);
+        // Close mobile drawer after navigation on small screens
+        if (this.isMobileSidebarOpen) {
+          this.closeMobileSidebar();
+        }
       });
 
     this.prefetchChatUnreadBadgeFromBoxList();
@@ -114,6 +123,22 @@ export class MainLayoutComponent implements OnInit {
     this.updateDocumentTitle();
   }
 
+  toggleMobileSidebar(): void {
+    this.isMobileSidebarOpen = !this.isMobileSidebarOpen;
+    if (this.isMobileSidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+  }
+
+  closeMobileSidebar(): void {
+    if (this.isMobileSidebarOpen) {
+      this.isMobileSidebarOpen = false;
+      document.body.style.overflow = '';
+    }
+  }
+
   private loadUser() {
     const raw = localStorage.getItem('user');
     if (!raw) return;
@@ -133,6 +158,7 @@ export class MainLayoutComponent implements OnInit {
   }
 
   private handleLogoutSuccess() {
+    this.closeMobileSidebar();
     this.chatSocket.disconnect();
     localStorage.removeItem('token');
     localStorage.removeItem('user');

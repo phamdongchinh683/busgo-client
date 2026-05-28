@@ -39,6 +39,7 @@ export class MainTopbarComponent implements OnInit {
 
 
   @Output() signOut = new EventEmitter<void>();
+  @Output() toggleSidebar = new EventEmitter<void>();
   @Output() notificationUnreadChange = new EventEmitter<number>();
 
   notifications: NotificationItem[] = [];

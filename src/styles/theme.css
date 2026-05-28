@@ -49,27 +49,41 @@
 
   --color-border: #d8e3dc;
 
-  --shadow-xs: 0 1px 2px rgba(17, 24, 22, 0.05);
+  --shadow-xs: 0 1px 2px rgba(17, 24, 22, 0.04);
   --shadow-sm:
-    0 1px 2px rgba(17, 24, 22, 0.06),
-    0 8px 24px rgba(17, 24, 22, 0.04);
+    0 1px 3px rgba(17, 24, 22, 0.06),
+    0 10px 24px rgba(17, 24, 22, 0.04);
   --shadow-md:
-    0 18px 42px rgba(17, 24, 22, 0.1),
-    0 4px 12px rgba(17, 24, 22, 0.06);
+    0 4px 8px rgba(17, 24, 22, 0.05),
+    0 20px 44px rgba(17, 24, 22, 0.08);
+  --shadow-lg:
+    0 8px 16px rgba(17, 24, 22, 0.06),
+    0 28px 60px rgba(17, 24, 22, 0.09);
+  --shadow-xl:
+    0 12px 24px rgba(17, 24, 22, 0.07),
+    0 40px 80px rgba(17, 24, 22, 0.1);
   --shadow-panel:
-    0 20px 50px rgba(17, 24, 22, 0.08),
-    0 1px 0 rgba(255, 255, 255, 0.72) inset;
-  --motion-fast: 200ms;
-  --motion-base: 280ms;
-  --motion-slow: 420ms;
-  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-emphasis: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-flow: cubic-bezier(0.22, 0.61, 0.36, 1);
+    0 20px 50px rgba(17, 24, 22, 0.07),
+    0 1px 0 rgba(255, 255, 255, 0.8) inset;
 
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 8px;
-  --radius-xl: 8px;
+  /* Modern glass / elevated surface tokens */
+  --glass-bg: rgba(255, 255, 255, 0.82);
+  --glass-border: rgba(216, 227, 220, 0.7);
+  --glass-highlight: rgba(255, 255, 255, 0.65);
+
+  /* Refined motion (more premium feel) */
+  --motion-fast: 160ms;
+  --motion-base: 240ms;
+  --motion-slow: 380ms;
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-emphasis: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-flow: cubic-bezier(0.23, 1.0, 0.32, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
 
   --sidebar-bg: #eef6f1;
   --sidebar-border: #d4e3d9;
@@ -91,6 +105,12 @@
   --layer-modal: 9997;
   --layer-notification-menu: 9998;
   --layer-toast: 9999;
+
+  /* Safe area support for notched phones (iPhone X+, some Android) */
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
 }
 
 body {

@@ -1,10 +1,29 @@
 <div class="layout">
-    <app-main-sidebar [items]="items" [currentUrl]="currentUrl" [userInitial]="userInitial" [userName]="userName" [userRole]="userRole" [userEmail]="userEmail" (signOut)="logout()" />
+    <!-- Mobile backdrop -->
+    <div
+        class="mobile-sidebar-backdrop"
+        [class.mobile-sidebar-backdrop--open]="isMobileSidebarOpen"
+        (click)="closeMobileSidebar()"
+        aria-hidden="true"
+    ></div>
+
+    <app-main-sidebar
+        [items]="items"
+        [currentUrl]="currentUrl"
+        [userInitial]="userInitial"
+        [userName]="userName"
+        [userRole]="userRole"
+        [userEmail]="userEmail"
+        [mobileOpen]="isMobileSidebarOpen"
+        (signOut)="logout()"
+        (closeMobile)="closeMobileSidebar()"
+    />
 
     <main class="main-content">
         <app-main-topbar
             [pageTitle]="pageTitle"
             (signOut)="logout()"
+            (toggleSidebar)="toggleMobileSidebar()"
             (notificationUnreadChange)="onNotificationUnreadChange($event)"
         />
         <div class="page-content">

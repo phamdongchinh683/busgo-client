@@ -33,7 +33,9 @@ export class MainSidebarComponent {
   @Input() userName = 'Người dùng';
   @Input() userRole = '';
   @Input() userEmail = '';
+  @Input() mobileOpen = false;
   @Output() signOut = new EventEmitter<void>();
+  @Output() closeMobile = new EventEmitter<void>();
 
   activeRoute = '';
   private _currentUrl = '';
@@ -46,6 +48,21 @@ export class MainSidebarComponent {
 
   activateImmediately(route: string): void {
     this.activeRoute = route;
+  }
+
+  onNavItemClick(route: string): void {
+    this.activateImmediately(route);
+    // Close mobile drawer when user taps a nav item
+    if (this.mobileOpen) {
+      this.closeMobile.emit();
+    }
+  }
+
+  onLogoutClick(): void {
+    if (this.mobileOpen) {
+      this.closeMobile.emit();
+    }
+    this.signOut.emit();
   }
 
   isActive(route: string): boolean {

@@ -214,10 +214,21 @@
 }
 
 .card-surface {
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
   background: linear-gradient(180deg, #ffffff 0%, #fbfdfc 100%);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(8px);
+  transition:
+    transform var(--motion-base) var(--ease-spring),
+    box-shadow var(--motion-base) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard);
+}
+
+.card-surface:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
+  border-color: color-mix(in srgb, var(--color-primary) 14%, var(--color-border));
 }
 
 .page-body {
@@ -229,6 +240,16 @@
 @media (max-width: 720px) {
   .page {
     padding: 20px 14px 32px;
+  }
+}
+
+@media (max-width: 380px) {
+  .page-header {
+    gap: 10px;
+  }
+
+  .page-header > app-page-header-intro {
+    flex: 1 1 100%;
   }
 }
 
