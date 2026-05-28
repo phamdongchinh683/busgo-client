@@ -371,23 +371,7 @@ export class ChatDockComponent {
       if (vid !== null && row)
         this.dock.applySocketUnreadCount(box.id, viewerUnreadCount(row, vid));
       this.socket.emitChatRead(box.id);
-      this.refreshBoxStateOnOpen(box.id);
     }
-  }
-
-  private refreshBoxStateOnOpen(boxId: number): void {
-    this.chatService
-      .listBoxes(50)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (res) => {
-          const { boxes } = normalizeBoxPayload(res);
-          const fresh = boxes.find((b: ChatBox) => b.id === boxId);
-          if (!fresh) return;
-          this.boxes.update((list) => list.map((b) => (b.id === boxId ? { ...b, ...fresh } : b)));
-          this.dock.syncUnreadBaselineFromBoxes([fresh], getChatViewerUserId(), true);
-        },
-      });
   }
 
   private handleChatUnreadCount(p: ChatUnreadCountPayload): void {
