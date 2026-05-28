@@ -83,13 +83,10 @@
             {{ resolvingFromAddress ? 'Đang kiểm tra...' : 'Kiểm tra' }}
           </button>
         </div>
-        <div *ngIf="hasCoordinates" class="map-preview">
-          <iframe
-            title="Bản đồ vị trí địa chỉ"
-            [src]="mapEmbedUrl"
-            loading="lazy"
-          ></iframe>
-        </div>
+        <div *ngIf="hasCoordinates" class="map-leaflet" #mapEl></div>
+        <p *ngIf="hasCoordinates" class="map-attribution">
+          Bản đồ: © OpenStreetMap contributors, © CARTO
+        </p>
       </label>
       <div class="modal-footer">
         <button class="action-button action-button--ghost" type="button" (click)="close()">Hủy</button>

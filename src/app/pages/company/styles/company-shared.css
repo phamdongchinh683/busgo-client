@@ -245,18 +245,35 @@ select.modal-input::-ms-expand {
   cursor: not-allowed;
 }
 
-.map-preview {
-  margin-top: 4px;
+.map-leaflet {
+  margin-top: 6px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   overflow: hidden;
+  height: 220px;
+  width: 100%;
+  background: #f1f5f9;
+  /* Leaflet needs explicit size */
 }
 
-.map-preview iframe {
+.map-leaflet .leaflet-container {
   width: 100%;
-  height: 220px;
-  border: 0;
-  display: block;
+  height: 100%;
+  border-radius: var(--radius-md);
+}
+
+.map-attribution {
+  margin: 4px 0 0;
+  font-size: 10px;
+  color: #64748b;
+  text-align: right;
+  line-height: 1.2;
+}
+
+/* Custom marker already styled inline in TS for simplicity */
+.company-map-marker {
+  background: transparent !important;
+  border: none !important;
 }
 
 .logo-upload {
