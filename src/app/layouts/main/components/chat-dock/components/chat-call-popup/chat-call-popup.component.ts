@@ -19,9 +19,16 @@ export class ChatCallPopupComponent {
   /** Ảnh đại diện người gọi (nếu có); không có thì hiển thị chữ cái đầu. */
   readonly avatarUrl = input('');
 
+  /** New rich call UI inputs */
+  readonly duration = input('');
+  readonly micMuted = input(false);
+  readonly cameraOff = input(false);
+
   readonly accept = output<void>();
   readonly reject = output<void>();
   readonly end = output<void>();
+  readonly toggleMic = output<void>();
+  readonly toggleCamera = output<void>();
 
   onAccept(): void {
     this.accept.emit();
@@ -33,6 +40,14 @@ export class ChatCallPopupComponent {
 
   onEnd(): void {
     this.end.emit();
+  }
+
+  onToggleMic(): void {
+    this.toggleMic.emit();
+  }
+
+  onToggleCamera(): void {
+    this.toggleCamera.emit();
   }
 
   initials(name: string): string {

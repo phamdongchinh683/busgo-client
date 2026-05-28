@@ -84,6 +84,16 @@ app-chat-call-popup button.call-ui-btn.call-action--solid:hover:not(:disabled) {
   filter: brightness(1.07);
 }
 
+/* New control buttons (mic/camera) — prevent global button overrides */
+app-chat-call-popup button.call-ui-btn.call-control-btn {
+  border-radius: 999px !important;
+  box-shadow: none !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+app-chat-call-popup button.call-ui-btn.call-control-btn svg {
+  display: block;
+}
+
 /*
   Video / PiP: nội dung project từ chat-dock — phải để global (encapsulation không bọc projected nodes).
 */

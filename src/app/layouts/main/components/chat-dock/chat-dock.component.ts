@@ -86,6 +86,7 @@ export class ChatDockComponent {
 
   /** Minimum time (ms) we keep the sending state visible to avoid cursor/button blink on very fast APIs */
   private readonly MIN_SENDING_FEEDBACK_MS = 420;
+  private callTimerInterval: ReturnType<typeof setInterval> | null = null;
   readonly peerTyping = signal(false);
   readonly callStatus = signal('');
   readonly callIncoming = signal<ChatCallStartPayload | null>(null);
@@ -94,6 +95,11 @@ export class ChatDockComponent {
   readonly inCall = signal(false);
   /** Hiện PiP camera local chỉ khi đã có track video (tránh ô viền trống kiểu Messenger). */
   readonly callLocalPipVisible = signal(false);
+
+  /** Call timer & media controls for improved voice/video UI */
+  readonly callDuration = signal('');
+  readonly micMuted = signal(false);
+  readonly cameraOff = signal(false);
 
   /** voice/video cho UI popup — ưu tiên payload cuộc gọi đến (activeCallType có lúc chưa sync). */
   readonly callPopupMediaType = computed<ChatCallType | null>(() => {
@@ -852,6 +858,50 @@ export class ChatDockComponent {
     return this.callStatus().trim();
   }
 
+  /** Format seconds to MM:SS (or HH:MM:SS for long calls) */
+  private formatCallDuration(totalSeconds: number): string {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    const mmss = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    return hours > 0 ? `${hours}:${mmss}` : mmss;
+  }
+
+  private startCallTimer(): void {
+    this.stopCallTimer();
+    const startedAt = Date.now();
+    this.callDuration.set('00:00');
+    this.callTimerInterval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+      this.callDuration.set(this.formatCallDuration(elapsed));
+    }, 1000);
+  }
+
+  private stopCallTimer(): void {
+    if (this.callTimerInterval) {
+      clearInterval(this.callTimerInterval);
+      this.callTimerInterval = null;
+    }
+    this.callDuration.set('');
+  }
+
+  toggleMic(): void {
+    const nextMuted = !this.micMuted();
+    this.setLocalAudioEnabled(!nextMuted);
+    this.micMuted.set(nextMuted);
+  }
+
+  toggleCamera(): void {
+    if (!this.localStream || this.activeCallType() !== 'video') return;
+    const nextOff = !this.cameraOff();
+    const videoTracks = this.localStream.getVideoTracks();
+    for (const track of videoTracks) {
+      track.enabled = !nextOff;
+    }
+    this.cameraOff.set(nextOff);
+    this.refreshCallLocalPipVisible();
+  }
+
   startCall(callType: ChatCallType): void {
     void this.startCallInternal(callType);
   }
@@ -863,6 +913,8 @@ export class ChatDockComponent {
       this.callIncoming.set(null);
       this.callOutgoing.set(callType);
       this.activeCallType.set(callType);
+      this.micMuted.set(false);
+      this.cameraOff.set(false);
       this.callStatus.set(callType === 'video' ? 'Đang gọi video…' : 'Đang gọi thoại…');
       this.socket.emitCallStart(boxId, callType);
       await this.ensureLocalStream(callType);
@@ -897,6 +949,8 @@ export class ChatDockComponent {
       this.callIncoming.set(null);
       this.callOutgoing.set(incoming.callType);
       this.activeCallType.set(incoming.callType);
+      this.micMuted.set(false);
+      this.cameraOff.set(false);
       this.callStatus.set(
         incoming.callType === 'video' ? 'Đã nhận cuộc gọi video.' : 'Đã nhận cuộc gọi thoại.',
       );
@@ -1342,8 +1396,11 @@ export class ChatDockComponent {
       this.callIncoming.set(null);
       this.callOutgoing.set(this.activeCallType());
       this.inCall.set(true);
+      this.micMuted.set(false);
+      this.cameraOff.set(false);
       this.setLocalAudioEnabled(true);
       this.callStatus.set('Đã kết nối cuộc gọi.');
+      this.startCallTimer();
     } catch {
       this.callStatus.set('Không thể thiết lập kết nối cuộc gọi.');
     }
@@ -1401,14 +1458,20 @@ export class ChatDockComponent {
       this.syncCallMediaElements();
       this.inCall.set(true);
       this.setLocalAudioEnabled(true);
+      this.micMuted.set(false);
+      this.cameraOff.set(false);
       this.callStatus.set('Đã kết nối cuộc gọi.');
+      this.startCallTimer();
     };
     pc.onconnectionstatechange = () => {
       const s = pc.connectionState;
       if (s === 'connected') {
         this.inCall.set(true);
         this.setLocalAudioEnabled(true);
+        this.micMuted.set(false);
+        this.cameraOff.set(false);
         this.callStatus.set('Đã kết nối cuộc gọi.');
+        this.startCallTimer();
         return;
       }
       if (s === 'disconnected' || s === 'failed' || s === 'closed') {
@@ -1432,6 +1495,10 @@ export class ChatDockComponent {
     });
     this.localStream = media;
     this.setLocalAudioEnabled(this.inCall());
+    // Apply current camera state (in case toggled very early)
+    if (callType === 'video' && this.cameraOff()) {
+      for (const t of media.getVideoTracks()) t.enabled = false;
+    }
     this.syncCallMediaElements();
   }
 
@@ -1457,7 +1524,8 @@ export class ChatDockComponent {
   private refreshCallLocalPipVisible(): void {
     const show =
       this.activeCallType() === 'video' &&
-      !!this.localStream?.getVideoTracks().some((t) => t.readyState !== 'ended');
+      !!this.localStream?.getVideoTracks().some((t) => t.readyState !== 'ended') &&
+      !this.cameraOff();
     this.callLocalPipVisible.set(show);
   }
 
@@ -1482,6 +1550,9 @@ export class ChatDockComponent {
     this.callOutgoing.set(null);
     this.activeCallType.set(null);
     this.inCall.set(false);
+    this.micMuted.set(false);
+    this.cameraOff.set(false);
+    this.stopCallTimer();
     this.syncCallMediaElements();
     this.refreshCallLocalPipVisible();
     if (clearStatus) this.callStatus.set('');

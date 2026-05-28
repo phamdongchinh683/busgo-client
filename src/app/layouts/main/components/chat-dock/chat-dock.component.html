@@ -258,8 +258,21 @@
         }
     </div>
 </div>
-<app-chat-call-popup [visible]="!!activeCallType() || !!callIncoming()" [status]="callStatusText()" [callType]="callPopupMediaType()" [incoming]="!!callIncoming()" [ongoing]="!!callOutgoing() || inCall()" [title]="selectedTitle()" (accept)="acceptIncomingCall()"
-    (reject)="rejectIncomingCall()" (end)="endCall()">
+<app-chat-call-popup
+  [visible]="!!activeCallType() || !!callIncoming()"
+  [status]="callStatusText()"
+  [callType]="callPopupMediaType()"
+  [incoming]="!!callIncoming()"
+  [ongoing]="!!callOutgoing() || inCall()"
+  [title]="selectedTitle()"
+  [duration]="callDuration()"
+  [micMuted]="micMuted()"
+  [cameraOff]="cameraOff()"
+  (accept)="acceptIncomingCall()"
+  (reject)="rejectIncomingCall()"
+  (end)="endCall()"
+  (toggleMic)="toggleMic()"
+  (toggleCamera)="toggleCamera()">
     <video remoteVideo #callRemoteVideo class="messenger__call-remote-video" autoplay></video>
     <video localVideo #callLocalVideo class="messenger__call-local-video" [class.messenger__call-local-video--off]="!callLocalPipVisible()" autoplay muted playsinline></video>
     <audio remoteAudio #callRemoteAudio autoplay></audio>

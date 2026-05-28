@@ -372,3 +372,188 @@
     gap: max(30px, calc(var(--call-btn-gap) - 14px));
   }
 }
+
+/* ============================================================
+   IMPROVED VOICE & VIDEO CALL UI — NEW ELEMENTS
+   Top info bar, voice activity bars, rich control toolbar
+   ============================================================ */
+
+/* Top info bar (name + duration) */
+.call-topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px 10px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,250,252,0.82) 100%);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+  backdrop-filter: blur(12px);
+  pointer-events: none;
+}
+.call-topbar--video {
+  background: linear-gradient(180deg, rgba(15,23,42,0.82) 0%, rgba(15,23,42,0.55) 100%);
+  border-bottom-color: rgba(148, 163, 184, 0.25);
+  color: #e2e8f0;
+}
+.call-topbar__meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.call-topbar__name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--call-text);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 210px;
+}
+.call-topbar--video .call-topbar__name {
+  color: #e2e8f0;
+}
+.call-topbar__duration {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--call-accent);
+  background: rgba(16, 185, 129, 0.12);
+  padding: 2px 9px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+}
+.call-topbar--video .call-topbar__duration {
+  background: rgba(52, 211, 153, 0.18);
+  color: #a7f3d0;
+}
+.call-topbar__kind {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--call-text-muted);
+  background: rgba(15, 23, 42, 0.06);
+  padding: 3px 10px 2px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+.call-topbar--video .call-topbar__kind {
+  background: rgba(148, 163, 184, 0.16);
+  color: #cbd5e1;
+  border-color: rgba(148, 163, 184, 0.22);
+}
+
+/* Position old status below new top info bar + make it subtler now that we show duration */
+.call-topbar + .call-status {
+  top: 62px;
+  font-size: 11px;
+  padding: 5px 12px;
+  opacity: 0.85;
+}
+
+
+
+/* Voice activity bars */
+.call-voice-bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  margin: 12px 0 4px;
+  pointer-events: none;
+}
+.call-voice-bar {
+  width: 5px;
+  height: 6px;
+  background: linear-gradient(180deg, var(--call-accent), var(--call-accent-soft));
+  border-radius: 999px;
+  opacity: 0.35;
+  transition: height 160ms ease, opacity 160ms ease;
+}
+.call-voice-bar--active {
+  animation: voice-bar-pulse 1.1s ease-in-out infinite;
+  opacity: 0.95;
+}
+.call-voice-bar:nth-child(2) { animation-delay: 140ms; }
+.call-voice-bar:nth-child(3) { animation-delay: 260ms; }
+.call-voice-bar:nth-child(4) { animation-delay: 90ms; }
+
+@keyframes voice-bar-pulse {
+  0%, 100% { height: 6px; }
+  40% { height: 22px; }
+  55% { height: 14px; }
+}
+
+/* Rich ongoing control toolbar */
+.call-control-btn {
+  width: 52px;
+  height: 52px;
+  min-width: 52px;
+  min-height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(248, 250, 252, 0.92);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  color: var(--call-text);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.1);
+  transition: all 0.15s var(--ease-standard);
+  cursor: pointer;
+}
+.call-bottom-chrome--video .call-control-btn {
+  background: rgba(15, 23, 42, 0.55);
+  border-color: rgba(148, 163, 184, 0.3);
+  color: #e2e8f0;
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.35);
+}
+
+.call-control-btn:hover {
+  transform: translateY(-1px) scale(1.02);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.14);
+}
+.call-bottom-chrome--video .call-control-btn:hover {
+  box-shadow: 0 8px 22px rgba(2, 6, 23, 0.45);
+}
+
+.call-control-btn--off {
+  background: #fee2e2 !important;
+  border-color: #fecaca !important;
+  color: #dc2626 !important;
+}
+.call-bottom-chrome--video .call-control-btn--off {
+  background: rgba(127, 29, 29, 0.75) !important;
+  border-color: rgba(185, 28, 28, 0.6) !important;
+  color: #fecaca !important;
+}
+
+/* End call button remains a simple large round icon button (no text) */
+
+/* Control bar spacing for icon-only buttons (mic + optional camera + end) */
+.call-controls--bar {
+  gap: 18px;
+  padding: 8px 12px;
+}
+.call-bottom-chrome--video .call-controls--bar {
+  gap: 20px;
+}
+
+@media (max-width: 640px) {
+  .call-topbar {
+    padding: 10px 14px 8px;
+  }
+  .call-topbar__name {
+    font-size: 14px;
+    max-width: 160px;
+  }
+  .call-control-btn {
+    width: 48px;
+    height: 48px;
+  }
+}
