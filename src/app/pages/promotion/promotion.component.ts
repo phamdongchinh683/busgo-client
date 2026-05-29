@@ -229,6 +229,11 @@ export class PromotionComponent implements OnInit {
       return;
     }
 
+    if (!this.currentImagePreview) {
+      this.toast.show('Vui lòng chọn ảnh khuyến mãi.', 'warning');
+      return;
+    }
+
     this.submitting = true;
     try {
       if (this.editingPromotion) {
@@ -355,34 +360,69 @@ export class PromotionComponent implements OnInit {
     const editing = this.editingPromotion;
     if (!editing) return;
 
-    const hasSelectedUpload = !!this.selectedImageFile && !!this.selectedImagePreviewUrl;
-    const updateBody: PromotionUpsertBody = hasSelectedUpload ? { ...body, imageUrl: editing.imageUrl ?? '' } : body;
-    const res = await firstValueFrom(this.api.updatePromotion(editing.id, updateBody));
-    const selectedUpload = hasSelectedUpload ? this.takeSelectedImageUpload() : null;
-    const updated = this.pickUpsertItem(res, editing, updateBody);
-    const visibleItem = selectedUpload ? { ...updated, imageUrl: selectedUpload.previewUrl } : updated;
-    this.replacePromotionInList(visibleItem);
-    this.toast.show(
-      selectedUpload ? 'Cập nhật khuyến mãi thành công. Ảnh đang được tải nền...' : 'Cập nhật khuyến mãi thành công.',
-      'success',
-    );
+    let imageUrl = body.imageUrl?.trim() || '';
+    let selectedUpload: { file: File; previewUrl: string } | null = null;
+
+    const hasSelected = !!this.selectedImageFile && !!this.selectedImagePreviewUrl;
+
+    if (hasSelected) {
+      selectedUpload = this.takeSelectedImageUpload();
+      if (selectedUpload) {
+        this.uploading = true;
+        this.uploadProgress = 0;
+        try {
+          const secureUrl = await this.uploadPromotionImage(editing.id, selectedUpload.file);
+          imageUrl = secureUrl;
+        } catch (err) {
+          // Put selection back so user can retry Save with the same file
+          this.selectedImageFile = selectedUpload.file;
+          this.selectedImagePreviewUrl = selectedUpload.previewUrl;
+          this.uploading = false;
+          this.uploadProgress = 0;
+          throw err;
+        } finally {
+          this.uploading = false;
+          this.uploadProgress = 0;
+        }
+      }
+    } else {
+      // No new image selected → preserve the original value from the item being edited.
+      // This prevents sending "" when the promotion already has a valid imageUrl.
+      imageUrl = editing.imageUrl?.trim() || body.imageUrl?.trim() || '';
+    }
+
+    const finalBody: PromotionUpsertBody = { ...body, imageUrl };
+
+    // Last safety: if we still have no valid image, block the call (backend requires proper URL)
+    if (!imageUrl) {
+      this.submitting = false;
+      this.uploading = false;
+      this.toast.show('Khuyến mãi cần có ảnh. Vui lòng chọn ảnh.', 'warning');
+      return;
+    }
+
+    const res = await firstValueFrom(this.api.updatePromotion(editing.id, finalBody));
+    const updated = this.pickUpsertItem(res, editing, finalBody);
+    this.replacePromotionInList(updated);
+    this.toast.show('Cập nhật khuyến mãi thành công.', 'success');
     this.closeModal();
+
     if (selectedUpload) {
-      this.uploadPromotionImageInBackground({
-        id: updated.id,
-        body,
-        file: selectedUpload.file,
-        previewUrl: selectedUpload.previewUrl,
-        fallbackImageUrl: editing.imageUrl ?? '',
-        successMessage: 'Ảnh khuyến mãi đã được cập nhật.',
-        failureMessage: 'Cập nhật nội dung thành công nhưng tải ảnh lên thất bại.',
-      });
+      URL.revokeObjectURL(selectedUpload.previewUrl);
     }
   }
 
   private async createPromotionWithBody(body: PromotionUpsertBody): Promise<void> {
     const hasSelectedUpload = !!this.selectedImageFile && !!this.selectedImagePreviewUrl;
-    const createBody: PromotionUpsertBody = hasSelectedUpload ? { ...body, imageUrl: '' } : body;
+
+    // Backend requires imageUrl to be a valid URL. For create we don't have the ID yet
+    // to request presigned upload, so we send a tiny valid placeholder and replace it
+    // immediately after getting the real ID (the UI shows local preview blob anyway).
+    const PLACEHOLDER_IMAGE = 'https://via.placeholder.com/1x1/ffffff/ffffff';
+    const createBody: PromotionUpsertBody = hasSelectedUpload
+      ? { ...body, imageUrl: PLACEHOLDER_IMAGE }
+      : body;
+
     const res = await firstValueFrom(this.api.createPromotion(createBody));
     const selectedUpload = hasSelectedUpload ? this.takeSelectedImageUpload() : null;
     let created = this.pickUpsertItem(res, null, createBody);
@@ -400,6 +440,7 @@ export class PromotionComponent implements OnInit {
       'success',
     );
     this.closeModal();
+
     if (selectedUpload && Number.isFinite(createdId) && createdId > 0) {
       this.uploadPromotionImageInBackground({
         id: createdId,
