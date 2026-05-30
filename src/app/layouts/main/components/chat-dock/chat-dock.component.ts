@@ -145,6 +145,11 @@ export class ChatDockComponent {
   private localStream: MediaStream | null = null;
   private remoteStream: MediaStream | null = null;
   private pendingIncomingOffer: RTCSessionDescriptionInit | null = null;
+  /**
+   * Khi user bấm "Nhận" trước khi offer đến (race condition phổ biến).
+   * Đánh dấu để handleCallOffer tự động hoàn tất accept thay vì để callee cũng tạo offer (gây glare).
+   */
+  private callAcceptPending = false;
   private pendingImageObjectUrls = new Map<number, string>();
 
   @ViewChild('messageScroll') private messageScroll?: ElementRef<HTMLElement>;
@@ -220,6 +225,7 @@ export class ChatDockComponent {
             this.selectedBoxId.set(null);
             this.view.set('list');
             this.resetCallState();
+            this.callAcceptPending = false;
           }
         });
         return;
@@ -935,14 +941,19 @@ export class ChatDockComponent {
       this.activeCallType.set(incoming.callType);
       this.micMuted.set(false);
       this.cameraOff.set(false);
+
+      if (!this.pendingIncomingOffer) {
+        // Race: user accepted before the offer arrived over the wire.
+        // Do NOT call startCallInternal (that would make callee also send an offer → glare).
+        // Instead, mark pending and wait for handleCallOffer to complete the flow.
+        this.callAcceptPending = true;
+        this.callStatus.set('Đang kết nối…');
+        return;
+      }
+
       this.callStatus.set(
         incoming.callType === 'video' ? 'Đã nhận cuộc gọi video.' : 'Đã nhận cuộc gọi thoại.',
       );
-      if (!this.pendingIncomingOffer) {
-        this.callStatus.set('Đang tham gia cuộc gọi đang hoạt động…');
-        await this.startCallInternal(incoming.callType);
-        return;
-      }
       await this.ensureLocalStream(incoming.callType);
       const pc = this.createPeerConnection(boxId);
       await pc.setRemoteDescription(this.pendingIncomingOffer);
@@ -1364,6 +1375,34 @@ export class ChatDockComponent {
         callType: this.activeCallType() ?? 'voice',
       });
     }
+
+    // If user already clicked Accept while we were waiting for the offer (race condition fix),
+    // automatically complete the answer flow now. This guarantees callee ALWAYS sends an answer,
+    // never an offer → no glare.
+    if (this.callAcceptPending) {
+      this.callAcceptPending = false;
+      this.callStatus.set('Đang kết nối…');
+      try {
+        const boxId = this.selectedBoxId();
+        if (boxId === null || !this.pendingIncomingOffer) return;
+        await this.ensureLocalStream(this.activeCallType() ?? 'voice');
+        const pc = this.createPeerConnection(boxId);
+        await pc.setRemoteDescription(this.pendingIncomingOffer);
+        this.pendingIncomingOffer = null;
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        this.socket.emitCallAnswer(boxId, answer);
+        this.inCall.set(true);
+        this.setLocalAudioEnabled(true);
+        this.callStatus.set('Đã kết nối cuộc gọi.');
+        this.startCallTimer();
+      } catch {
+        this.callStatus.set('Không thể nhận cuộc gọi.');
+        this.hangupLocal(false);
+      }
+      return;
+    }
+
     if (this.inCall() || this.callOutgoing() !== null) {
       this.callStatus.set('Đang đồng bộ cuộc gọi…');
       await this.acceptIncomingCallInternal();
@@ -1387,6 +1426,8 @@ export class ChatDockComponent {
       this.startCallTimer();
     } catch {
       this.callStatus.set('Không thể thiết lập kết nối cuộc gọi.');
+      // Clean up so the next call attempt starts fresh instead of being stuck in bad SDP state
+      this.hangupLocal(false);
     }
   }
 
@@ -1396,8 +1437,13 @@ export class ChatDockComponent {
     try {
       await this.peerConnection.addIceCandidate(new RTCIceCandidate(p.payload));
     } catch {
+      // Ignore bad candidates (common during ICE restart or glare recovery)
     }
-    this.callStatus.set('Đang đồng bộ kết nối cuộc gọi…');
+    // Do not overwrite "Đã kết nối" with noisy per-candidate status.
+    // Only set a transient message if we are still in early signaling.
+    if (!this.inCall()) {
+      this.callStatus.set('Đang đồng bộ kết nối cuộc gọi…');
+    }
   }
 
   private handleCallRejected(p: ChatCallStartPayload): void {
@@ -1413,7 +1459,20 @@ export class ChatDockComponent {
   }
 
   private createPeerConnection(boxId: number): RTCPeerConnection {
-    if (this.peerConnection) return this.peerConnection;
+    // If we somehow still have an old PC in a bad state (e.g. previous glare or mid-call error),
+    // close it to avoid InvalidStateError on subsequent setLocal/setRemote.
+    if (this.peerConnection) {
+      const state = this.peerConnection.connectionState;
+      if (state === 'closed' || state === 'failed' || state === 'disconnected') {
+        try {
+          this.peerConnection.close();
+        } catch {}
+        this.peerConnection = null;
+      } else {
+        return this.peerConnection;
+      }
+    }
+
     const pc = new RTCPeerConnection({
       iceServers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }],
     });
@@ -1474,6 +1533,18 @@ export class ChatDockComponent {
         noiseSuppression: true,
         autoGainControl: true,
         channelCount: 1,
+        // Chromium-specific flags — dramatically improve echo cancellation on real devices
+        // (laptops with built-in speakers + mic, many Android devices, etc.)
+        // These are still the most effective practical improvement without custom AudioContext work.
+        // Cast required because the standard MediaTrackConstraints type does not include the goog* keys,
+        // but every major Chromium browser (Chrome, Edge, Arc, Brave, etc.) honors them at runtime.
+        ...( {
+          googEchoCancellation: true,
+          googAutoGainControl: true,
+          googNoiseSuppression: true,
+          googHighpassFilter: true,
+          googTypingNoiseDetection: true,
+        } as Record<string, unknown> ),
       },
       video: callType === 'video',
     });
@@ -1497,10 +1568,21 @@ export class ChatDockComponent {
     requestAnimationFrame(() => {
       const local = this.callLocalVideo?.nativeElement;
       if (local) local.srcObject = this.localStream;
+
       const remoteVideo = this.callRemoteVideo?.nativeElement;
-      if (remoteVideo) remoteVideo.srcObject = this.remoteStream;
+      if (remoteVideo) {
+        remoteVideo.srcObject = this.remoteStream;
+        // Slightly reduce remote volume to give acoustic echo cancellation more headroom.
+        // Users can still raise it manually if needed; this helps a lot on speakerphone.
+        remoteVideo.volume = 0.88;
+      }
+
       const remoteAudio = this.callRemoteAudio?.nativeElement;
-      if (remoteAudio) remoteAudio.srcObject = this.remoteStream;
+      if (remoteAudio) {
+        remoteAudio.srcObject = this.remoteStream;
+        remoteAudio.volume = 0.88;
+      }
+
       this.refreshCallLocalPipVisible();
     });
   }
@@ -1515,6 +1597,7 @@ export class ChatDockComponent {
 
   private hangupLocal(clearStatus: boolean): void {
     this.pendingIncomingOffer = null;
+    this.callAcceptPending = false;
     if (this.peerConnection) {
       this.peerConnection.onicecandidate = null;
       this.peerConnection.ontrack = null;
