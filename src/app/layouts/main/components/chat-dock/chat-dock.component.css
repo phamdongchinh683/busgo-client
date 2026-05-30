@@ -1592,6 +1592,11 @@
         color: var(--color-text-muted);
         box-shadow: none;
     }
+
+    /* On mobile, "mine" (sent) messages have dark gradient bubbles → need light time color */
+    #app-chat-messenger .messenger__bubble-line--mine .messenger__time--bubble-tip {
+        color: rgba(255, 255, 255, 0.72);
+    }
 }
 
 #app-chat-messenger .messenger__bubble--image {
@@ -2360,6 +2365,13 @@
 #app-chat-messenger .messenger__time--bubble-tip {
     border-radius: 8px !important;
     background: rgba(15, 23, 42, 0.9);
+}
+
+/* Mobile: the static time label under bubble should never get the dark tooltip background */
+@media (hover: none) {
+    #app-chat-messenger .messenger__time--bubble-tip {
+        background: transparent !important;
+    }
 }
 
 #app-chat-messenger .messenger__composer {
