@@ -4,6 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs/operators';
 import { device } from '../../data/services';
 import { DeviceFcmToken } from '../../data/interfaces/device';
+import { FcmDeviceService } from '../../core/services/fcm-device.service';
 import { PageToastHostComponent } from '../../shared/components/page-toast-host/page-toast-host.component';
 import { PageHeaderIntroComponent } from '../../shared/components/page-header-intro/page-header-intro.component';
 import { PageToastService } from '../../shared/services/page-toast.service';
@@ -31,6 +32,7 @@ export class DeviceComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly messaging = inject(Messaging);
+  private readonly fcmDeviceService = inject(FcmDeviceService);
   ngOnInit(): void {
     this.fetchTokens();
   }
@@ -67,6 +69,9 @@ export class DeviceComponent implements OnInit {
       .subscribe({
         next: () => {
           this.tokens = this.tokens.filter((item) => Number(item.id) !== Number(id));
+          if (this.fcmDeviceService.getCurrentDeviceId() === Number(id)) {
+            this.fcmDeviceService.clearCurrentDeviceId();
+          }
           this.toast.show('Đã xóa', 'success');
           this.cdr.markForCheck();
         },
@@ -162,6 +167,9 @@ export class DeviceComponent implements OnInit {
             this.tokens = [res, ...this.tokens];
           }
           this.currentFcmToken = res.fcmToken;
+          if (res?.id != null) {
+            this.fcmDeviceService.storeCurrentDeviceId(Number(res.id));
+          }
           this.toast.show('Đã lưu', 'success');
           this.cdr.markForCheck();
         },

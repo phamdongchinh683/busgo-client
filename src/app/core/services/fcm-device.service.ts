@@ -17,6 +17,8 @@ export class FcmDeviceService {
   private readonly messaging = inject(Messaging);
   private preparedToken: string | null = null;
 
+  private readonly CURRENT_DEVICE_ID_KEY = 'currentDeviceId';
+
   prepareTokenBeforeLogin(): Observable<boolean> {
     return from(this.getCurrentFcmToken(true)).pipe(
       map((token) => {
@@ -45,10 +47,20 @@ export class FcmDeviceService {
         return this.deviceApi.getFcmTokens().pipe(
           switchMap((tokens) => {
             const existing = tokens.find((item) => item.fcmToken === fcmToken);
-            if (existing) return of<EnsureFcmTokenResult>({ ok: true });
+            if (existing) {
+              if (existing.id != null) {
+                localStorage.setItem(this.CURRENT_DEVICE_ID_KEY, String(existing.id));
+              }
+              return of<EnsureFcmTokenResult>({ ok: true });
+            }
 
             return this.deviceApi.saveFcmToken({ fcmToken }).pipe(
-              map(() => ({ ok: true as const })),
+              map((res) => {
+                if (res?.id != null) {
+                  localStorage.setItem(this.CURRENT_DEVICE_ID_KEY, String(res.id));
+                }
+                return { ok: true as const };
+              }),
               catchError(() => of<EnsureFcmTokenResult>({ ok: false, reason: 'register-failed' })),
             );
           }),
@@ -60,6 +72,17 @@ export class FcmDeviceService {
   }
 
   removeCurrentDeviceToken(): Observable<void> {
+    const storedId = this.getStoredCurrentDeviceId();
+    if (storedId !== null) {
+      return this.deviceApi.deleteFcmToken(storedId).pipe(
+        map(() => {
+          this.clearStoredCurrentDeviceId();
+          return void 0;
+        }),
+        catchError(() => of(void 0)),
+      );
+    }
+
     return from(this.getCurrentFcmToken(false)).pipe(
       switchMap((fcmToken) => {
         if (!fcmToken) return of(void 0);
@@ -74,6 +97,31 @@ export class FcmDeviceService {
       }),
       catchError(() => of(void 0)),
     );
+  }
+
+  getCurrentDeviceId(): number | null {
+    return this.getStoredCurrentDeviceId();
+  }
+
+  clearCurrentDeviceId(): void {
+    this.clearStoredCurrentDeviceId();
+  }
+
+  storeCurrentDeviceId(id: number): void {
+    if (id != null && Number.isFinite(id)) {
+      localStorage.setItem(this.CURRENT_DEVICE_ID_KEY, String(id));
+    }
+  }
+
+  private getStoredCurrentDeviceId(): number | null {
+    const raw = localStorage.getItem(this.CURRENT_DEVICE_ID_KEY);
+    if (!raw) return null;
+    const id = Number(raw);
+    return Number.isFinite(id) ? id : null;
+  }
+
+  private clearStoredCurrentDeviceId(): void {
+    localStorage.removeItem(this.CURRENT_DEVICE_ID_KEY);
   }
 
   private async getCurrentFcmToken(requestPermission: boolean): Promise<string | null> {

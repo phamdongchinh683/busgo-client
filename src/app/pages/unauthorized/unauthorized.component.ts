@@ -35,6 +35,7 @@ export class UnauthorizedComponent {
     this.chatSocket.disconnect();
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    this.fcmDeviceService.clearCurrentDeviceId();
     this.router.navigate(['/login']);
   }
 }

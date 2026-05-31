@@ -85,7 +85,6 @@ export class MainLayoutComponent implements OnInit {
         this.currentUrl = e.urlAfterRedirects || e.url;
         this.updateDocumentTitle();
         this.requestNotificationOnDashboard(this.currentUrl);
-        // Close mobile drawer after navigation on small screens
         if (this.isMobileSidebarOpen) {
           this.closeMobileSidebar();
         }
@@ -162,6 +161,7 @@ export class MainLayoutComponent implements OnInit {
     this.chatSocket.disconnect();
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    this.fcmDeviceService.clearCurrentDeviceId();
     this.notificationUnreadCount = 0;
     this.chatDock.clearUnreadState();
     this.title.setTitle('BusGo');

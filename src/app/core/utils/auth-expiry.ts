@@ -1,6 +1,7 @@
 export function clearStoredCredentials(): void {
   localStorage.removeItem('token');
   localStorage.removeItem('user');
+  localStorage.removeItem('currentDeviceId');
 }
 
 export function textIndicatesExpiredSession(text: string): boolean {
