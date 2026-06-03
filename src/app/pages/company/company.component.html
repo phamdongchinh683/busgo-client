@@ -9,10 +9,16 @@
       />
 
       <app-company-toolbar
-        [searchName]="searchName"
         [limit]="limit"
         [pageLimits]="pageLimits"
-        (searchNameChange)="onSearchInput($event)"
+        [companies]="filterCompanies"
+        [companiesLoading]="filterCompaniesLoading"
+        [companiesLoadingMore]="filterCompaniesLoadingMore"
+        [dropdownOpen]="companyDropdownOpen"
+        [selectedCompany]="selectedFilterCompany"
+        (dropdownOpenChange)="onCompanyDropdownOpenChange($event)"
+        (selectCompany)="selectFilterCompany($event)"
+        (companyDropdownScroll)="onCompanyDropdownScroll($event)"
         (limitChange)="onLimitChange($event)"
         (addClick)="openCreateModal()"
       ></app-company-toolbar>

@@ -41,8 +41,8 @@
         @for (u of users; track u.id) {
           <tr>
             <td>{{ u.fullName }}</td>
-            <td>{{ u.email }}</td>
-            <td>{{ u.phone }}</td>
+            <td>{{ displayContact(u.email) }}</td>
+            <td>{{ displayContact(u.phone) }}</td>
             <td>
               <span class="pill" [class]="'pill--' + u.status">{{ displayStatus(u.status) }}</span>
             </td>

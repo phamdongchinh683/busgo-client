@@ -11,7 +11,9 @@ import {
   UpdateUserPasswordResponse,
   UpdateUserResponse,
   User,
+  UserAuthType,
   UserListResponse,
+  USER_AUTH_TYPES,
   USER_ROLES,
   USER_STATUSES,
 } from '../../data/interfaces/user';
@@ -57,6 +59,7 @@ import { UserNotificationModalComponent } from './components/user-notification-m
 export class UserComponent implements OnInit {
   statuses = USER_STATUSES;
   roles = USER_ROLES;
+  authTypes = USER_AUTH_TYPES;
   createRoles = USER_ROLES.filter((role) => role === 'driver' || role === 'customer');
   pageLimits = PAGE_LIMITS;
 
@@ -97,6 +100,7 @@ export class UserComponent implements OnInit {
     phone: FormControl<string | null>;
     status: FormControl<null | (typeof USER_STATUSES)[number]>;
     role: FormControl<null | (typeof USER_ROLES)[number]>;
+    type: FormControl<null | UserAuthType>;
     companyName: FormControl<string | null>;
     limit: FormControl<number | null>;
   }>;
@@ -129,6 +133,7 @@ export class UserComponent implements OnInit {
       phone: ['', [phone10DigitsValidator()]],
       status: [null as null | (typeof USER_STATUSES)[number]],
       role: [null as null | (typeof USER_ROLES)[number]],
+      type: [null as null | UserAuthType],
       companyName: [''],
       limit: [DEFAULT_PAGE_LIMIT],
     });
@@ -259,6 +264,7 @@ export class UserComponent implements OnInit {
       phone: '',
       status: null,
       role: null,
+      type: null,
       companyName: '',
       limit: DEFAULT_PAGE_LIMIT,
     });
@@ -307,12 +313,13 @@ export class UserComponent implements OnInit {
     const filters = this.filters.getRawValue();
     if (filters.status && filters.status !== user.status) return false;
     if (filters.role && filters.role !== user.role) return false;
+    if (filters.type && filters.type !== user.type) return false;
 
     const emailFilter = filters.email?.trim().toLowerCase();
-    if (emailFilter && !user.email.toLowerCase().includes(emailFilter)) return false;
+    if (emailFilter && !(user.email ?? '').toLowerCase().includes(emailFilter)) return false;
 
     const phoneFilter = filters.phone?.trim();
-    if (phoneFilter && !user.phone.includes(phoneFilter)) return false;
+    if (phoneFilter && !(user.phone ?? '').includes(phoneFilter)) return false;
 
     return true;
   }
@@ -463,6 +470,7 @@ export class UserComponent implements OnInit {
         limit: Number(v.limit) || DEFAULT_PAGE_LIMIT,
         status: v.status ?? undefined,
         role: v.role ?? undefined,
+        type: v.type ?? undefined,
         companyId: this.selectedCompany?.id,
         email: v.email?.trim() || undefined,
         phone: v.phone?.trim() || undefined,
@@ -492,6 +500,7 @@ export class UserComponent implements OnInit {
         next: this.nextCursor,
         status: v.status ?? undefined,
         role: v.role ?? undefined,
+        type: v.type ?? undefined,
         companyId: this.selectedCompany?.id,
         email: v.email?.trim() || undefined,
         phone: v.phone?.trim() || undefined,

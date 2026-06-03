@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Company } from '../../../../data/interfaces/company';
 import { PageLimit } from '../../../../data/constants';
-import { userRoleLabel, userStatusLabel } from '@app/shared/utils/domain-labels';
+import { userAuthTypeLabel, userRoleLabel, userStatusLabel } from '@app/shared/utils/domain-labels';
 
 @Component({
   selector: 'app-user-filters-panel',
@@ -22,6 +22,7 @@ export class UserFiltersPanelComponent {
   @Input() selectedCompany: Company | null = null;
   @Input() statuses: readonly string[] = [];
   @Input() roles: readonly string[] = [];
+  @Input() authTypes: readonly string[] = [];
   @Input() pageLimits: readonly PageLimit[] = [];
   @Input() listLoading = false;
 
@@ -41,4 +42,5 @@ export class UserFiltersPanelComponent {
 
   displayStatus = userStatusLabel;
   displayRole = userRoleLabel;
+  displayAuthType = userAuthTypeLabel;
 }

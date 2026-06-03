@@ -49,18 +49,24 @@
     </div>
 
     <div class="table-wrap" [class.table-wrap--busy]="loading" [attr.aria-busy]="loading" *ngIf="!loading || promotions.length > 0">
-      <div class="promotion-filters">
-        <div class="promotion-filters__left">
-          <label class="promotion-filter">
-            <select class="select" aria-label="Lọc trạng thái khuyến mãi" [(ngModel)]="filterStatus" (ngModelChange)="applyPromotionFilters()">
-              <option [ngValue]="null">Tất cả</option>
-              <option [ngValue]="true">Đang bật</option>
-              <option [ngValue]="false">Đang tắt</option>
-            </select>
+      <div class="promotion-filters filter-card filter-card--inline">
+        <div class="promotion-filters__left filter-grid">
+          <label class="filter-field filter-field--span-12">
+            <span class="filter-label">Trạng thái</span>
+            <span class="filter-control">
+              <select class="filter-select" aria-label="Lọc trạng thái khuyến mãi" [(ngModel)]="filterStatus" (ngModelChange)="applyPromotionFilters()">
+                <option [ngValue]="null">Tất cả</option>
+                <option [ngValue]="true">Đang bật</option>
+                <option [ngValue]="false">Đang tắt</option>
+              </select>
+              <svg class="filter-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </span>
           </label>
         </div>
         <div class="promotion-filters__right">
-          <span class="promotion-filters__meta">{{ filteredPromotionsView.length }}/{{ promotions.length }} kết quả</span>
+          <span class="filter-meta-pill">{{ filteredPromotionsView.length }}/{{ promotions.length }} kết quả</span>
           <button
             type="button"
             class="action-button action-button--ghost action-button--icon"

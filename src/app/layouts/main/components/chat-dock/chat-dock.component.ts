@@ -983,6 +983,13 @@ export class ChatDockComponent {
     return this.socket.onlineUserIds().has(uid);
   }
 
+  userContactSummary(u: User): string {
+    const email = u.email?.trim();
+    const phone = u.phone?.trim();
+    if (email && phone) return `${email} · ${phone}`;
+    return email || phone || 'Chưa cập nhật liên hệ';
+  }
+
   boxUnreadCount(box: ChatBox): number {
     return viewerUnreadCount(box, getChatViewerUserId());
   }
@@ -1719,4 +1726,3 @@ export class ChatDockComponent {
     this.openThread(openBox, false);
   }
 }
-

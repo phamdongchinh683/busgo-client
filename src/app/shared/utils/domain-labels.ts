@@ -24,6 +24,17 @@ export function userRoleLabel(value: string): string {
   }
 }
 
+export function userAuthTypeLabel(value: string | null | undefined): string {
+  switch ((value || '').toLowerCase()) {
+    case 'facebook':
+      return 'Facebook';
+    case 'google':
+      return 'Google';
+    default:
+      return value || 'Tất cả loại';
+  }
+}
+
 export function bookingStatusLabel(value: string): string {
   switch (value) {
     case 'pending':

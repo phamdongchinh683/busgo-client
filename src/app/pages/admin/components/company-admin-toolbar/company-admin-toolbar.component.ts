@@ -26,7 +26,6 @@ export class CompanyAdminToolbarComponent {
   @Output() createClick = new EventEmitter<void>();
   @Output() selectCompany = new EventEmitter<Company | null>();
   @Output() dropdownOpenChange = new EventEmitter<boolean>();
-  @Output() companySearchValueChange = new EventEmitter<string>();
   @Output() companyDropdownScroll = new EventEmitter<Event>();
 
   onCompanyFocus(): void {

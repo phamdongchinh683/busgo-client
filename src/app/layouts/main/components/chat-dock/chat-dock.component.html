@@ -345,7 +345,7 @@
                       </span>
                       <span class="messenger__hit-text">
                         <strong class="messenger__hit-name" [attr.title]="u.fullName">{{ u.fullName }}</strong>
-                        <small>{{ u.email }} · {{ u.phone }}</small>
+                        <small>{{ userContactSummary(u) }}</small>
                       </span>
                     </button>
                     </li>
@@ -361,7 +361,7 @@
                     <span class="messenger__avatar messenger__avatar--sm">{{ initials(ru.fullName) }}</span>
                     <span class="messenger__selected-recipient-text">
                   <strong [attr.title]="ru.fullName">{{ ru.fullName }}</strong>
-                  <small>{{ ru.email }}</small>
+                  <small>{{ userContactSummary(ru) }}</small>
                 </span>
                     <button type="button" class="messenger__selected-recipient-clear" (click)="clearSelectedReceiver()" aria-label="Bỏ chọn người nhận">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

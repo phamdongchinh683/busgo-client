@@ -1,4 +1,4 @@
-<div class="charts-toolbar">
+<div class="charts-toolbar filter-card filter-card--toolbar">
   <div class="charts-toolbar__intro">
     <h2 id="dashboard-trends-heading" class="charts-section__heading">Phân tích xu hướng</h2>
     <div class="charts-toolbar__meta">
@@ -9,21 +9,44 @@
     </div>
   </div>
 
-  <div class="charts-toolbar__filters charts-toolbar__filters--global">
-    <label class="filter">
-      <span>Chu kỳ</span>
-      <select class="select" [ngModel]="chartType" (ngModelChange)="emitChartType($event)">
-        <option [ngValue]="'monthly'">Theo tháng</option>
-        <option [ngValue]="'yearly'">Theo năm</option>
-      </select>
+  <div class="charts-toolbar__filters filter-grid">
+    <label class="filter-field filter-field--span-6">
+      <span class="filter-label">Chu kỳ</span>
+      <span class="filter-control">
+        <svg class="filter-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 3v18h18" />
+          <path d="M18 17V9" />
+          <path d="M13 17V5" />
+          <path d="M8 17v-3" />
+        </svg>
+        <select class="filter-select filter-select--with-icon" [ngModel]="chartType" (ngModelChange)="emitChartType($event)">
+          <option [ngValue]="'monthly'">Theo tháng</option>
+          <option [ngValue]="'yearly'">Theo năm</option>
+        </select>
+        <svg class="filter-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </span>
     </label>
-    <label class="filter" *ngIf="chartType === 'monthly'">
-      <span>Năm</span>
-      <select class="select" [ngModel]="selectedYear" (ngModelChange)="emitYear($event)">
-        @for (y of yearOptions; track y) {
-          <option [ngValue]="y">{{ y }}</option>
-        }
-      </select>
+
+    <label class="filter-field filter-field--span-6" *ngIf="chartType === 'monthly'">
+      <span class="filter-label">Năm</span>
+      <span class="filter-control">
+        <svg class="filter-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M8 2v4" />
+          <path d="M16 2v4" />
+          <rect x="3" y="4" width="18" height="18" rx="2" />
+          <path d="M3 10h18" />
+        </svg>
+        <select class="filter-select filter-select--with-icon" [ngModel]="selectedYear" (ngModelChange)="emitYear($event)">
+          @for (y of yearOptions; track y) {
+            <option [ngValue]="y">{{ y }}</option>
+          }
+        </select>
+        <svg class="filter-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </span>
     </label>
   </div>
 </div>

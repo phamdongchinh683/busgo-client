@@ -27,4 +27,8 @@ export class UserListPanelComponent {
   displayStatus = userStatusLabel;
   displayRole = userRoleLabel;
   displayStaffProfileRole = staffProfileRoleLabel;
+
+  displayContact(value: string | null | undefined): string {
+    return value?.trim() || 'Chưa cập nhật';
+  }
 }

@@ -11,6 +11,7 @@ import {
   UpdateUserPasswordResponse,
   UpdateUserResponse,
   UserListResponse,
+  UserAuthType,
   UserRole,
   UserStatus,
 } from '../../interfaces/user';
@@ -24,6 +25,7 @@ export interface UserFilters {
   companyId?: number;
   email?: string;
   phone?: string;
+  type?: UserAuthType;
   fullName?: string;
   /** Generic search; depends on API support */
   search?: string;
@@ -43,6 +45,7 @@ export class ApiService {
     if (filters.companyId) params['companyId'] = String(filters.companyId);
     if (filters.email) params['email'] = filters.email;
     if (filters.phone) params['phone'] = filters.phone;
+    if (filters.type) params['type'] = filters.type;
     if (filters.fullName) params['fullName'] = filters.fullName;
     if (filters.search) params['search'] = filters.search;
 

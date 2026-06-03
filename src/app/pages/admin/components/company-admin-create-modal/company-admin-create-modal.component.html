@@ -1,13 +1,13 @@
 <div class="modal-overlay" [class.modal-overlay--open]="open" [attr.aria-hidden]="!open" (click)="close()">
-  <div class="modal" (click)="$event.stopPropagation()">
-    <h3>Tạo tài khoản Nhà Xe</h3>
-    <form class="modal-form" [formGroup]="form" (ngSubmit)="onSubmit()">
-      <label class="field">
+    <div class="modal" (click)="$event.stopPropagation()">
+        <h3>Tạo tài khoản Nhà Xe</h3>
+        <form class="modal-form" [formGroup]="form" (ngSubmit)="onSubmit()">
+            <label class="field">
         <span class="label">Họ tên</span>
         <input class="input" formControlName="fullName" placeholder="tối thiểu 7 ký tự" autocomplete="name" />
         <span class="error" *ngIf="fullNameError">{{ fullNameError }}</span>
       </label>
-      <label class="field">
+            <label class="field">
         <span class="label">Địa chỉ email</span>
         <input
           class="input"
@@ -18,12 +18,12 @@
         />
         <span class="error" *ngIf="emailError">{{ emailError }}</span>
       </label>
-      <label class="field">
+            <label class="field">
         <span class="label">Số điện thoại</span>
         <input class="input" formControlName="phone" placeholder="11 chữ số" autocomplete="tel" />
         <span class="error" *ngIf="phoneError">{{ phoneError }}</span>
       </label>
-      <label class="field">
+            <label class="field">
         <span class="label">Mật khẩu</span>
         <div class="password-wrap">
           <input
@@ -51,7 +51,7 @@
         </div>
         <span class="error" *ngIf="passwordError">{{ passwordError }}</span>
       </label>
-      <label class="field field--full field--company">
+            <label class="field field--full field--company">
         <span class="label">Công ty</span>
         <input type="hidden" formControlName="companyId" />
         <input
@@ -83,10 +83,10 @@
         </div>
         <span class="error" *ngIf="companyError">{{ companyError }}</span>
       </label>
-      <div class="modal-actions">
-        <button class="btn btn--ghost" type="button" (click)="close()">Hủy</button>
-        <button class="btn" type="submit" [disabled]="submitting">{{ submitting ? 'Đang tạo...' : 'Tạo mới' }}</button>
-      </div>
-    </form>
-  </div>
+            <div class="modal-actions">
+                <button class="btn btn--ghost" type="button" (click)="close()">Hủy</button>
+                <button class="btn" type="submit" [disabled]="submitting">{{ submitting ? 'Đang tạo...' : 'Tạo mới' }}</button>
+            </div>
+        </form>
+    </div>
 </div>

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
@@ -33,9 +33,15 @@ import { imageUploadPresets } from '../../data/services/upload/image-upload-pres
 })
 export class CompanyComponent implements OnInit {
   companies: Company[] = [];
+  filterCompanies: Company[] = [];
   nextCursor: number | null = null;
   loading = true;
   loadingMore = false;
+  filterCompaniesLoading = false;
+  filterCompaniesLoadingMore = false;
+  companyDropdownOpen = false;
+  selectedFilterCompany: Company | null = null;
+  private filterCompanyNextCursor: number | null = null;
 
   searchName = '';
   limit: PageLimit = DEFAULT_PAGE_LIMIT;
@@ -55,8 +61,9 @@ export class CompanyComponent implements OnInit {
 
   readonly toast = inject(PageToastService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
 
-  private searchTimer: ReturnType<typeof setTimeout> | null = null;
+  private readonly COMPANY_PICKER_LIMIT = DEFAULT_PAGE_LIMIT;
 
   constructor(
     private readonly api: company.ApiService,
@@ -74,18 +81,42 @@ export class CompanyComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.fetchFilterCompanies();
+    const onClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (!target) return;
+      if (target.closest('.dropdown') || target.closest('.company-picker')) return;
+      this.companyDropdownOpen = false;
+    };
+    window.addEventListener('click', onClick);
+    this.destroyRef.onDestroy(() => window.removeEventListener('click', onClick));
     this.fetch();
-  }
-
-  onSearchInput(value: string) {
-    this.searchName = value;
-    if (this.searchTimer) clearTimeout(this.searchTimer);
-    this.searchTimer = setTimeout(() => this.fetch(), 300);
   }
 
   onLimitChange(value: PageLimit) {
     this.limit = value;
     this.fetch();
+  }
+
+  onCompanyDropdownOpenChange(open: boolean) {
+    this.companyDropdownOpen = open;
+    if (open && this.filterCompanies.length === 0 && !this.filterCompaniesLoading) {
+      this.fetchFilterCompanies();
+    }
+  }
+
+  selectFilterCompany(company: Company | null) {
+    this.selectedFilterCompany = company;
+    this.searchName = company?.name ?? '';
+    this.companyDropdownOpen = false;
+    this.fetch();
+  }
+
+  onCompanyDropdownScroll(event: Event) {
+    const el = event.target as HTMLElement;
+    const reachedBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 16;
+    if (!reachedBottom) return;
+    this.fetchMoreFilterCompanies();
   }
 
   private fetch() {
@@ -273,6 +304,7 @@ export class CompanyComponent implements OnInit {
       this.api.createCompany(name, hotline, logoUrl, address, latitude ?? undefined, longitude ?? undefined).subscribe({
         next: (res) => {
           this.companies = [res.company, ...this.companies];
+          this.filterCompanies = [res.company, ...this.filterCompanies.filter((company) => company.id !== res.company.id)];
           this.toast.show('Tạo nhà xe thành công!', 'success');
           this.closeModal();
           this.submitting = false;
@@ -388,6 +420,12 @@ export class CompanyComponent implements OnInit {
     this.api.deleteCompany(deletedCompanyId).subscribe({
       next: () => {
         this.companies = this.companies.filter((company) => company.id !== deletedCompanyId);
+        this.filterCompanies = this.filterCompanies.filter((company) => company.id !== deletedCompanyId);
+        if (this.selectedFilterCompany?.id === deletedCompanyId) {
+          this.selectedFilterCompany = null;
+          this.searchName = '';
+          this.fetch();
+        }
         this.toast.show('Xóa nhà xe thành công!', 'success');
         this.cancelDelete();
         this.submitting = false;
@@ -397,6 +435,47 @@ export class CompanyComponent implements OnInit {
         this.toast.show(getApiErrorMessage(err, 'Xóa thất bại.'), 'error');
         this.submitting = false;
         this.cdr.markForCheck();
+      },
+    });
+  }
+
+  private fetchFilterCompanies(): void {
+    this.filterCompaniesLoading = true;
+    this.filterCompanies = [];
+    this.filterCompanyNextCursor = null;
+
+    this.api.getCompanies(this.COMPANY_PICKER_LIMIT).subscribe({
+      next: (res) => {
+        this.filterCompanies = res.companies ?? [];
+        this.filterCompanyNextCursor = res.next ?? null;
+        this.filterCompaniesLoading = false;
+        this.filterCompaniesLoadingMore = false;
+      },
+      error: () => {
+        this.filterCompanies = [];
+        this.filterCompanyNextCursor = null;
+        this.filterCompaniesLoading = false;
+        this.filterCompaniesLoadingMore = false;
+      },
+    });
+  }
+
+  private fetchMoreFilterCompanies(): void {
+    if (this.filterCompanyNextCursor === null) return;
+    if (this.filterCompaniesLoading || this.filterCompaniesLoadingMore) return;
+
+    this.filterCompaniesLoadingMore = true;
+    this.api.getCompanies(this.COMPANY_PICKER_LIMIT, this.filterCompanyNextCursor).subscribe({
+      next: (res) => {
+        const incoming = res.companies ?? [];
+        const existingIds = new Set(this.filterCompanies.map((company) => company.id));
+        const merged = incoming.filter((company) => !existingIds.has(company.id));
+        this.filterCompanies = [...this.filterCompanies, ...merged];
+        this.filterCompanyNextCursor = res.next ?? null;
+        this.filterCompaniesLoadingMore = false;
+      },
+      error: () => {
+        this.filterCompaniesLoadingMore = false;
       },
     });
   }

@@ -33,8 +33,8 @@ export function clientFilterUsers(users: User[], term: string): User[] {
   return users.filter(
     (u) =>
       u.fullName.toLowerCase().includes(q) ||
-      u.email.toLowerCase().includes(q) ||
-      u.phone.replace(/\D/g, '').includes(q.replace(/\D/g, '')),
+      (u.email ?? '').toLowerCase().includes(q) ||
+      (u.phone ?? '').replace(/\D/g, '').includes(q.replace(/\D/g, '')),
   );
 }
 

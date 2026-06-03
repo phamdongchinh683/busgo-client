@@ -104,7 +104,7 @@ export class AdminComponent implements OnInit {
     const onClick = (event: MouseEvent) => {
       const target = event.target as HTMLElement | null;
       if (!target) return;
-      if (target.closest('.dropdown') || target.closest('.field--company .input')) return;
+      if (target.closest('.dropdown') || target.closest('.company-picker') || target.closest('.field--company .input')) return;
       this.companyDropdownOpen = false;
       this.createCompanyDropdownOpen = false;
     };
@@ -114,8 +114,11 @@ export class AdminComponent implements OnInit {
     this.fetch();
   }
 
-  onCompanySearchValueChange(value: string) {
-    this.companySearch.setValue(value);
+  onCompanyDropdownOpenChange(open: boolean) {
+    this.companyDropdownOpen = open;
+    if (open && this.filterCompanies.length === 0 && !this.companiesLoading) {
+      this.fetchFilterCompanies('');
+    }
   }
 
   selectFilterCompany(company: Company | null) {

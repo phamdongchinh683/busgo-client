@@ -246,10 +246,6 @@
 }
 
 .export-panel__filters {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-  align-items: end;
   max-width: 760px;
 }
 
@@ -452,9 +448,6 @@
 }
 
 .payout-filters {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 220px));
-  gap: 12px;
   margin: 8px 0 12px;
 }
 

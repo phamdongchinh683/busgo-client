@@ -85,47 +85,9 @@
 }
 
 ::ng-deep .chart-block__filters {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 10px;
   min-width: 0;
   margin: 0 0 12px;
-  padding: 0 0 12px;
-  border-bottom: 1px solid rgba(216, 227, 220, 0.55);
-}
-
-::ng-deep .chart-block__filters .filter {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  color: var(--color-text-muted, #5f6b61);
-}
-
-::ng-deep .chart-block__filters .select {
-  min-width: 136px;
-  height: 34px;
-  padding: 0 11px;
-  border: 1px solid var(--glass-border);
-  background: #fff;
-  color: var(--color-text-dark, #151b18);
-  font-size: 12px;
-  font-weight: 600;
-  border-radius: var(--radius-sm);
-}
-
-::ng-deep .chart-block__filters .select:hover {
-  border-color: rgba(8, 122, 46, 0.3);
-}
-
-::ng-deep .chart-block__filters .select:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(8, 122, 46, 0.12);
+  padding: 12px;
 }
 
 ::ng-deep .chart-block .chart-card {
@@ -160,14 +122,5 @@
 
   .chart-block__summary {
     align-items: flex-start;
-  }
-
-  ::ng-deep .chart-block__filters .filter {
-    flex: 1 1 140px;
-  }
-
-  ::ng-deep .chart-block__filters .select {
-    width: 100%;
-    min-width: 0;
   }
 }

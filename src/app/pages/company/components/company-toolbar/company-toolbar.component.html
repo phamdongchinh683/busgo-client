@@ -1,41 +1,119 @@
-<div class="toolbar">
-  <label class="field field--search">
-    <span class="label">Tên nhà xe</span>
-    <input
-      class="input"
-      type="text"
-      placeholder="Tìm theo tên..."
-      [ngModel]="searchName"
-      (ngModelChange)="searchNameChange.emit($event)"
-      aria-label="Tìm theo tên nhà xe"
-    />
-  </label>
+<div class="toolbar filter-card filter-card--toolbar">
+  <div class="filter-grid">
+    <label class="filter-field filter-field--span-8 company-picker">
+      <span class="filter-label">Nhà xe</span>
+      <span class="filter-control">
+        <svg class="filter-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 21h18" />
+          <path d="M5 21V7l8-4v18" />
+          <path d="M19 21V11l-6-4" />
+          <path d="M9 9h1" />
+          <path d="M9 13h1" />
+          <path d="M9 17h1" />
+        </svg>
+        <input
+          class="filter-input filter-input--with-icon"
+          type="text"
+          placeholder="Chọn nhà xe"
+          [ngModel]="selectedCompany?.name ?? ''"
+          readonly
+          (click)="onCompanyFocus()"
+          (focus)="onCompanyFocus()"
+          aria-label="Chọn nhà xe"
+        />
+        <svg
+          class="filter-caret"
+          *ngIf="!selectedCompany"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+        <button
+          class="filter-clear-button picker-clear"
+          *ngIf="selectedCompany"
+          type="button"
+          (click)="selectCompany.emit(null)"
+          aria-label="Xóa nhà xe đã chọn"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M18 6 6 18" />
+            <path d="m6 6 12 12" />
+          </svg>
+        </button>
+      </span>
 
-  <label class="field field--limit">
-    <span class="label">Số dòng</span>
-    <span class="select-shell select-shell--limit">
-      <select class="limit-select" [ngModel]="limit" (ngModelChange)="limitChange.emit($event)" aria-label="Số dòng mỗi trang">
-        @for (l of pageLimits; track l) {
-          <option [ngValue]="l">{{ l }}</option>
+      <div class="dropdown" *ngIf="dropdownOpen" (scroll)="onScroll($event)">
+        <button class="dropdown-item" type="button" (click)="selectCompany.emit(null)">
+          <span class="company-name">Tất cả nhà xe</span>
+          <span class="company-hotline">Không lọc nhà xe</span>
+        </button>
+
+        <div class="dropdown-loading" *ngIf="companiesLoading">Đang tải nhà xe...</div>
+
+        @for (company of companies; track company.id) {
+          <button
+            class="dropdown-item"
+            type="button"
+            [class.dropdown-item--selected]="selectedCompany?.id === company.id"
+            (click)="selectCompany.emit(company)"
+          >
+            <span class="company-name">{{ company.name }}</span>
+            <span class="company-hotline">{{ company.hotline || '—' }}</span>
+          </button>
         }
-      </select>
-    </span>
-  </label>
 
-  <div class="field field--action">
-    <span class="label label--spacer" aria-hidden="true">&nbsp;</span>
-    <button class="btn-add" type="button" (click)="addClick.emit()" title="Thêm nhà xe" aria-label="Thêm nhà xe">
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <line x1="12" y1="5" x2="12" y2="19" />
-        <line x1="5" y1="12" x2="19" y2="12" />
-      </svg>
-    </button>
+        <div class="dropdown-empty" *ngIf="!companiesLoading && companies.length === 0">Không có nhà xe</div>
+        <div class="dropdown-loading" *ngIf="companiesLoadingMore">Đang tải thêm...</div>
+      </div>
+    </label>
+
+    <label class="filter-field filter-field--span-3">
+      <span class="filter-label">Số dòng</span>
+      <span class="filter-control">
+        <svg class="filter-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M8 6h13" />
+          <path d="M8 12h13" />
+          <path d="M8 18h13" />
+          <path d="M3 6h.01" />
+          <path d="M3 12h.01" />
+          <path d="M3 18h.01" />
+        </svg>
+        <select
+          class="filter-select filter-select--with-icon"
+          [ngModel]="limit"
+          (ngModelChange)="limitChange.emit($event)"
+          aria-label="Số dòng mỗi trang"
+        >
+          @for (l of pageLimits; track l) {
+            <option [ngValue]="l">{{ l }}</option>
+          }
+        </select>
+        <svg class="filter-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </span>
+    </label>
+
+    <div class="filter-field filter-field--span-1 toolbar__action">
+      <span class="filter-label toolbar__spacer" aria-hidden="true">&nbsp;</span>
+      <button class="action-button action-button--icon" type="button" (click)="addClick.emit()" title="Thêm nhà xe" aria-label="Thêm nhà xe">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+      </button>
+    </div>
   </div>
 </div>

@@ -1,29 +1,74 @@
 <form class="filters" [formGroup]="form" (ngSubmit)="applyFilters.emit()">
-  <div class="row">
-    <label class="field">
+    <div class="filters__grid">
+        <label class="field field--email">
       <span class="label">Địa chỉ email</span>
-      <input class="input" formControlName="email" placeholder="vd: ten@congty.com" />
-      <span class="error" *ngIf="form.get('email')?.touched && form.get('email')?.errors?.['email']"
-        >Địa chỉ email không hợp lệ</span
-      >
+      <span class="control-shell">
+        <svg
+          class="control-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <path d="M4 4h16v16H4z" />
+          <path d="m22 6-10 7L2 6" />
+        </svg>
+        <input class="input input--with-icon" formControlName="email" placeholder="vd: ten@congty.com" />
+      </span>
+      <span class="error" *ngIf="form.get('email')?.touched && form.get('email')?.errors?.['email']">
+        Địa chỉ email không hợp lệ
+      </span>
     </label>
 
-    <label class="field">
+        <label class="field field--phone">
       <span class="label">Số điện thoại</span>
-      <input class="input" formControlName="phone" placeholder="vd: 0987654321" />
+      <span class="control-shell">
+        <svg
+          class="control-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <path
+            d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.35 1.9.66 2.81a2 2 0 0 1-.45 2.11L8.1 9.9a16 16 0 0 0 6 6l1.26-1.22a2 2 0 0 1 2.11-.45c.91.31 1.85.53 2.81.66A2 2 0 0 1 22 16.92z"
+          />
+        </svg>
+        <input class="input input--with-icon" formControlName="phone" placeholder="vd: 0987654321" />
+      </span>
       <span class="error" *ngIf="form.get('phone')?.touched && form.get('phone')?.errors?.['phone10Digits']">
         Số điện thoại phải lớn hơn hoặc bằng 10 số
       </span>
     </label>
 
-    <label class="field">
+        <label class="field field--company">
       <span class="label">Công ty</span>
-      <input
-        class="input"
-        formControlName="companyName"
-        placeholder="Tìm công ty theo tên..."
-        (focus)="onCompanyFocus()"
-      />
+      <span class="control-shell">
+        <svg
+          class="control-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <path d="M3 21h18" />
+          <path d="M5 21V7l8-4v18" />
+          <path d="M19 21V11l-6-4" />
+          <path d="M9 9h1" />
+          <path d="M9 13h1" />
+          <path d="M9 17h1" />
+        </svg>
+        <input
+          class="input input--with-icon"
+          formControlName="companyName"
+          placeholder="Tìm công ty theo tên..."
+          (focus)="onCompanyFocus()"
+        />
+      </span>
+
       <div class="dropdown" *ngIf="dropdownOpen" (scroll)="onScroll($event)">
         <button class="dropdown-item" type="button" (click)="selectCompany.emit(null)">
           <span class="company-name">Tất cả công ty</span>
@@ -47,63 +92,130 @@
         <div class="dropdown-empty" *ngIf="!companiesLoading && companies.length === 0">Không có công ty</div>
         <div class="dropdown-loading" *ngIf="companiesLoadingMore">Đang tải thêm...</div>
       </div>
-      <div class="hint" *ngIf="selectedCompany">
-        Đã chọn: <strong>{{ selectedCompany.name }}</strong>
-        <button class="btn-link" type="button" (click)="selectCompany.emit(null)">xóa chọn</button>
-      </div>
     </label>
-  </div>
 
-  <div class="row">
-    <label class="field">
+        <label class="field field--select">
       <span class="label">Trạng thái</span>
-      <select class="select" formControlName="status">
-        <option [ngValue]="null">Chọn trạng thái</option>
-        @for (s of statuses; track s) {
-          <option [ngValue]="s">{{ displayStatus(s) }}</option>
-        }
-      </select>
+      <span class="control-shell">
+        <svg
+          class="control-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <path d="M20 6 9 17l-5-5" />
+        </svg>
+        <select class="select select--with-icon" formControlName="status">
+          <option [ngValue]="null">Chọn trạng thái</option>
+          @for (s of statuses; track s) {
+            <option [ngValue]="s">{{ displayStatus(s) }}</option>
+          }
+        </select>
+        <svg class="select-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </span>
     </label>
 
-    <label class="field">
+        <label class="field field--select">
       <span class="label">Vai trò</span>
-      <select class="select" formControlName="role">
-        <option [ngValue]="null">Chọn vai trò</option>
-        @for (r of roles; track r) {
-          <option [ngValue]="r">{{ displayRole(r) }}</option>
-        }
-      </select>
+      <span class="control-shell">
+        <svg
+          class="control-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <path d="M20 21a8 8 0 0 0-16 0" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+        <select class="select select--with-icon" formControlName="role">
+          <option [ngValue]="null">Chọn vai trò</option>
+          @for (r of roles; track r) {
+            <option [ngValue]="r">{{ displayRole(r) }}</option>
+          }
+        </select>
+        <svg class="select-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </span>
     </label>
 
-    <label class="field">
+        <label class="field field--select">
+      <span class="label">Loại đăng nhập</span>
+      <span class="control-shell">
+        <svg
+          class="control-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <path d="M12 2a10 10 0 1 0 10 10" />
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10" />
+          <path d="M12 2a15.3 15.3 0 0 0-4 10 15.3 15.3 0 0 0 4 10" />
+          <path d="M2 12h20" />
+        </svg>
+        <select class="select select--with-icon" formControlName="type">
+          <option [ngValue]="null">Tất cả loại</option>
+          @for (t of authTypes; track t) {
+            <option [ngValue]="t">{{ displayAuthType(t) }}</option>
+          }
+        </select>
+        <svg class="select-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </span>
+    </label>
+
+        <label class="field field--limit">
       <span class="label">Số dòng</span>
-      <select class="select" formControlName="limit">
-        @for (l of pageLimits; track l) {
-          <option [ngValue]="l">{{ l }}</option>
-        }
-      </select>
+      <span class="control-shell">
+        <svg
+          class="control-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <path d="M8 6h13" />
+          <path d="M8 12h13" />
+          <path d="M8 18h13" />
+          <path d="M3 6h.01" />
+          <path d="M3 12h.01" />
+          <path d="M3 18h.01" />
+        </svg>
+        <select class="select select--with-icon" formControlName="limit">
+          @for (l of pageLimits; track l) {
+            <option [ngValue]="l">{{ l }}</option>
+          }
+        </select>
+        <svg class="select-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </span>
     </label>
-  </div>
+    </div>
 
-  <div class="actions">
-    <button class="action-button" type="submit" [disabled]="listLoading" title="Áp dụng" aria-label="Áp dụng">
+    <div class="filters__footer">
+        <button class="action-button" type="submit" [disabled]="listLoading" title="Áp dụng" aria-label="Áp dụng">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
         <polyline points="20 6 9 17 4 12" />
       </svg>
       Áp dụng
     </button>
-    <button
-      class="action-button action-button--ghost"
-      type="button"
-      (click)="resetFilters.emit()"
-      title="Đặt lại"
-      aria-label="Đặt lại"
-    >
+        <button class="action-button action-button--ghost" type="button" (click)="resetFilters.emit()" title="Đặt lại" aria-label="Đặt lại">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
         <path d="M3 12a9 9 0 1 0 3-6.7" />
         <path d="M3 4v5h5" />
       </svg>
       Đặt lại
     </button>
-  </div>
+    </div>
 </form>

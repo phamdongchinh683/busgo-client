@@ -64,87 +64,127 @@
             <div class="charts-stack">
                 <app-dashboard-trend-chart-panel chartTitle="Người dùng theo thời gian" [labels]="userChart.labels" [datasets]="userChart.datasets" [loading]="userChartLoading" [chartKind]="userChartKind" [stacked]="userChartKind === 'bar' && userChart.datasets.length > 1"
                     [total]="trendTotal(userChart)" summaryFormat="number">
-                    <div class="chart-block__filters">
-                        <label class="filter">
-              <span>Trạng thái</span>
-              <select class="select" [(ngModel)]="userStatusFilter" (ngModelChange)="onUserChartFiltersChange()">
-                <option [ngValue]="''">Tất cả</option>
-                @for (s of userStatuses; track s) {
-                  <option [ngValue]="s">{{ displayStatusLabel(s) }}</option>
-                }
-              </select>
+                    <div class="chart-block__filters filter-card filter-card--inline filter-grid">
+                        <label class="filter-field filter-field--span-4">
+              <span class="filter-label">Trạng thái</span>
+              <span class="filter-control">
+                <select class="filter-select" [(ngModel)]="userStatusFilter" (ngModelChange)="onUserChartFiltersChange()">
+                  <option [ngValue]="''">Tất cả</option>
+                  @for (s of userStatuses; track s) {
+                    <option [ngValue]="s">{{ displayStatusLabel(s) }}</option>
+                  }
+                </select>
+                <svg class="filter-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </span>
             </label>
-                        <label class="filter">
-              <span>Vai trò</span>
-              <select class="select" [(ngModel)]="userRoleFilter" (ngModelChange)="onUserChartFiltersChange()">
-                <option [ngValue]="''">Tất cả</option>
-                @for (r of userRoles; track r) {
-                  <option [ngValue]="r">{{ displayRoleLabel(r) }}</option>
-                }
-              </select>
+                        <label class="filter-field filter-field--span-4">
+              <span class="filter-label">Vai trò</span>
+              <span class="filter-control">
+                <select class="filter-select" [(ngModel)]="userRoleFilter" (ngModelChange)="onUserChartFiltersChange()">
+                  <option [ngValue]="''">Tất cả</option>
+                  @for (r of userRoles; track r) {
+                    <option [ngValue]="r">{{ displayRoleLabel(r) }}</option>
+                  }
+                </select>
+                <svg class="filter-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </span>
             </label>
-                        <label class="filter">
-              <span>Loại biểu đồ</span>
-              <select class="select" [(ngModel)]="userChartKind">
-                @for (opt of chartKindOptions; track opt.value) {
-                  <option [ngValue]="opt.value">{{ opt.label }}</option>
-                }
-              </select>
+                        <label class="filter-field filter-field--span-4">
+              <span class="filter-label">Loại biểu đồ</span>
+              <span class="filter-control">
+                <select class="filter-select" [(ngModel)]="userChartKind">
+                  @for (opt of chartKindOptions; track opt.value) {
+                    <option [ngValue]="opt.value">{{ opt.label }}</option>
+                  }
+                </select>
+                <svg class="filter-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </span>
             </label>
                     </div>
                 </app-dashboard-trend-chart-panel>
 
                 <app-dashboard-trend-chart-panel chartTitle="Lượt đặt vé theo thời gian" [labels]="bookingChart.labels" [datasets]="bookingChart.datasets" [loading]="bookingChartLoading" [chartKind]="bookingChartKind" [stacked]="bookingChartKind === 'bar' && bookingChart.datasets.length > 1"
                     [total]="trendTotal(bookingChart)" summaryFormat="number">
-                    <div class="chart-block__filters">
-                        <label class="filter">
-              <span>Trạng thái đặt vé</span>
-              <select class="select" [(ngModel)]="bookingStatusFilter" (ngModelChange)="onBookingChartFiltersChange()">
-                <option [ngValue]="''">Tất cả</option>
-                @for (s of bookingStatuses; track s) {
-                  <option [ngValue]="s">{{ displayStatusLabel(s) }}</option>
-                }
-              </select>
+                    <div class="chart-block__filters filter-card filter-card--inline filter-grid">
+                        <label class="filter-field filter-field--span-6">
+              <span class="filter-label">Trạng thái đặt vé</span>
+              <span class="filter-control">
+                <select class="filter-select" [(ngModel)]="bookingStatusFilter" (ngModelChange)="onBookingChartFiltersChange()">
+                  <option [ngValue]="''">Tất cả</option>
+                  @for (s of bookingStatuses; track s) {
+                    <option [ngValue]="s">{{ displayStatusLabel(s) }}</option>
+                  }
+                </select>
+                <svg class="filter-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </span>
             </label>
-                        <label class="filter">
-              <span>Loại biểu đồ</span>
-              <select class="select" [(ngModel)]="bookingChartKind">
-                @for (opt of chartKindOptions; track opt.value) {
-                  <option [ngValue]="opt.value">{{ opt.label }}</option>
-                }
-              </select>
+                        <label class="filter-field filter-field--span-6">
+              <span class="filter-label">Loại biểu đồ</span>
+              <span class="filter-control">
+                <select class="filter-select" [(ngModel)]="bookingChartKind">
+                  @for (opt of chartKindOptions; track opt.value) {
+                    <option [ngValue]="opt.value">{{ opt.label }}</option>
+                  }
+                </select>
+                <svg class="filter-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </span>
             </label>
                     </div>
                 </app-dashboard-trend-chart-panel>
 
                 <app-dashboard-trend-chart-panel chartTitle="Doanh thu theo thời gian" [labels]="revenueChart.labels" [datasets]="revenueChart.datasets" [loading]="revenueChartLoading" [chartKind]="revenueChartKind" [stacked]="revenueChartKind === 'bar' && revenueChart.datasets.length > 1"
                     [total]="trendTotal(revenueChart)" summaryFormat="currency">
-                    <div class="chart-block__filters">
-                        <label class="filter">
-              <span>Phương thức thanh toán</span>
-              <select class="select" [(ngModel)]="revenueMethodFilter" (ngModelChange)="onRevenueChartFiltersChange()">
-                <option [ngValue]="''">Tất cả</option>
-                @for (m of revenueMethods; track m) {
-                  <option [ngValue]="m">{{ displayMethodLabel(m) }}</option>
-                }
-              </select>
+                    <div class="chart-block__filters filter-card filter-card--inline filter-grid">
+                        <label class="filter-field filter-field--span-4">
+              <span class="filter-label">Phương thức thanh toán</span>
+              <span class="filter-control">
+                <select class="filter-select" [(ngModel)]="revenueMethodFilter" (ngModelChange)="onRevenueChartFiltersChange()">
+                  <option [ngValue]="''">Tất cả</option>
+                  @for (m of revenueMethods; track m) {
+                    <option [ngValue]="m">{{ displayMethodLabel(m) }}</option>
+                  }
+                </select>
+                <svg class="filter-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </span>
             </label>
-                        <label class="filter">
-              <span>Trạng thái thanh toán</span>
-              <select class="select" [(ngModel)]="revenueStatusFilter" (ngModelChange)="onRevenueChartFiltersChange()">
-                <option [ngValue]="''">Tất cả</option>
-                @for (s of revenueStatuses; track s) {
-                  <option [ngValue]="s">{{ displayStatusLabel(s) }}</option>
-                }
-              </select>
+                        <label class="filter-field filter-field--span-4">
+              <span class="filter-label">Trạng thái thanh toán</span>
+              <span class="filter-control">
+                <select class="filter-select" [(ngModel)]="revenueStatusFilter" (ngModelChange)="onRevenueChartFiltersChange()">
+                  <option [ngValue]="''">Tất cả</option>
+                  @for (s of revenueStatuses; track s) {
+                    <option [ngValue]="s">{{ displayStatusLabel(s) }}</option>
+                  }
+                </select>
+                <svg class="filter-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </span>
             </label>
-                        <label class="filter">
-              <span>Loại biểu đồ</span>
-              <select class="select" [(ngModel)]="revenueChartKind">
-                @for (opt of chartKindOptions; track opt.value) {
-                  <option [ngValue]="opt.value">{{ opt.label }}</option>
-                }
-              </select>
+                        <label class="filter-field filter-field--span-4">
+              <span class="filter-label">Loại biểu đồ</span>
+              <span class="filter-control">
+                <select class="filter-select" [(ngModel)]="revenueChartKind">
+                  @for (opt of chartKindOptions; track opt.value) {
+                    <option [ngValue]="opt.value">{{ opt.label }}</option>
+                  }
+                </select>
+                <svg class="filter-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </span>
             </label>
                     </div>
                 </app-dashboard-trend-chart-panel>

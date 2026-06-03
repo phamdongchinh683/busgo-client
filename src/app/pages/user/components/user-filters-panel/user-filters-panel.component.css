@@ -6,61 +6,142 @@
 }
 
 .filters {
-  background: linear-gradient(180deg, #ffffff 0%, #fbfdfc 100%);
-  border: 1px solid color-mix(in srgb, var(--color-border) 88%, #ffffff);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 251, 250, 0.98) 100%),
+    #ffffff;
+  border: 1px solid color-mix(in srgb, var(--color-border) 82%, #ffffff);
   border-radius: var(--radius-xl);
-  padding: 16px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
   box-shadow: var(--shadow-panel);
 }
 
-.row {
+.filters__grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(180px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 14px;
 }
 
-@media (max-width: 980px) {
-  .row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+.field {
+  gap: 7px;
 }
 
-@media (max-width: 520px) {
-  .row {
-    grid-template-columns: 1fr;
-  }
+.field--email,
+.field--phone,
+.field--company {
+  grid-column: span 4;
 }
 
-.actions {
+.field--select,
+.field--limit {
+  grid-column: span 3;
+}
+
+.control-shell {
+  position: relative;
   display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  padding-top: 4px;
+  align-items: center;
+  min-width: 0;
 }
 
-.actions .action-button svg {
+.control-icon {
+  position: absolute;
+  left: 12px;
+  z-index: 1;
+  width: 16px;
+  height: 16px;
+  color: color-mix(in srgb, var(--color-primary) 72%, var(--color-text-muted));
+  pointer-events: none;
+}
+
+.input,
+.select {
+  width: 100%;
+  min-height: 42px;
+  border-radius: 10px !important;
+}
+
+.input {
+  border-color: color-mix(in srgb, var(--color-border) 86%, #ffffff);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(250, 252, 251, 0.96) 100%),
+    #ffffff;
+}
+
+.input--with-icon {
+  padding-left: 38px;
+}
+
+.select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 10px 38px 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--color-border) 86%, #ffffff);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(250, 252, 251, 0.96) 100%),
+    #ffffff;
+  color: var(--color-text-dark);
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+}
+
+.select.select--with-icon {
+  padding-left: 38px;
+}
+
+.input:hover,
+.select:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 34%, var(--color-border));
+}
+
+.input:focus,
+.select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 16%, transparent);
+}
+
+.select-caret {
+  position: absolute;
+  right: 12px;
+  width: 15px;
+  height: 15px;
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+.filters__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-top: 14px;
+  border-top: 1px solid color-mix(in srgb, var(--color-border) 70%, #ffffff);
+}
+
+.filters__footer .action-button svg {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
 }
 
 .dropdown {
-  top: calc(100% + 4px);
-  max-height: 240px;
-  padding: 5px;
-  border-radius: 10px;
+  top: calc(100% + 6px);
+  max-height: 260px;
+  padding: 6px;
+  border-radius: 12px !important;
   border-color: color-mix(in srgb, var(--color-primary) 24%, var(--color-border));
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.14);
 }
 
 .dropdown-item {
-  min-height: 34px;
-  padding: 7px 9px;
-  border-radius: 8px;
-  gap: 8px;
+  min-height: 38px;
+  padding: 8px 10px;
+  border-radius: 9px !important;
+  gap: 10px;
   align-items: center;
   font-size: 12px;
 }
@@ -91,6 +172,45 @@
   border-color: #087a2e;
   color: #ffffff;
   box-shadow: inset 3px 0 0 rgba(255, 255, 255, 0.24);
+}
+
+@media (max-width: 1100px) {
+  .field--email,
+  .field--phone {
+    grid-column: span 6;
+  }
+
+  .field--company {
+    grid-column: span 12;
+  }
+
+  .field--select,
+  .field--limit {
+    grid-column: span 6;
+  }
+}
+
+@media (max-width: 680px) {
+  .filters {
+    padding: 14px;
+  }
+
+  .field--email,
+  .field--phone,
+  .field--company,
+  .field--select,
+  .field--limit {
+    grid-column: 1 / -1;
+  }
+
+  .filters__footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filters__footer .action-button {
+    width: 100%;
+  }
 }
 
 @media (max-width: 520px) {

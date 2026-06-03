@@ -51,24 +51,11 @@
   gap: 12px;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 72%, #ffffff);
-  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  margin-bottom: 12px;
 }
 
 .promotion-filters__left {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: end;
-  gap: 8px;
-}
-
-.promotion-filters__title {
-  margin: 0 8px 4px 0;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--color-text-dark);
-  letter-spacing: 0.2px;
+  width: min(240px, 100%);
 }
 
 .promotion-filters__right {
@@ -77,42 +64,11 @@
   gap: 8px;
 }
 
-.promotion-filters__meta {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  background: #fff;
-  border: 1px solid color-mix(in srgb, var(--color-border) 82%, transparent);
-  border-radius: 999px;
-  padding: 5px 10px;
-}
-
-.promotion-filter {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 150px;
-}
-
-.promotion-filter span {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.25px;
-}
-
-.promotion-filter input,
-.promotion-filter select {
-  height: 30px;
-  border: 1px solid var(--color-border);
-  background: #fff;
-  color: var(--color-text-dark);
-  padding: 0 10px;
-  font-size: 12px;
-}
-
 @media (max-width: 860px) {
+  .promotion-filters__left {
+    width: 100%;
+  }
+
   .promotion-filters__right {
     width: 100%;
     justify-content: space-between;

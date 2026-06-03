@@ -1,14 +1,16 @@
 export type UserStatus = 'active' | 'inactive' | 'banned';
 export type UserRole = 'driver' | 'customer' | 'operator';
+export type UserAuthType = 'facebook' | 'google';
 export type StaffProfileRole = 'company_admin' | 'dispatcher' | 'support' | string;
 
 export interface User {
   id: number;
   fullName: string;
-  email: string;
-  phone: string;
+  email: string | null;
+  phone: string | null;
   status: UserStatus;
   role: UserRole;
+  type?: UserAuthType | null;
   staffProfileRole?: StaffProfileRole | null;
   password: string;
 }
@@ -56,3 +58,4 @@ export interface DeleteUserResponse {
 
 export const USER_STATUSES: UserStatus[] = ['active', 'inactive', 'banned'];
 export const USER_ROLES: UserRole[] = ['driver', 'customer', 'operator'];
+export const USER_AUTH_TYPES: UserAuthType[] = ['facebook', 'google'];

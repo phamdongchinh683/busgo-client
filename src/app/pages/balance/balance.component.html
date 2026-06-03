@@ -136,35 +136,44 @@
         </button>
       </div>
 
-      <div class="export-panel__filters">
-        <label class="field">
-          <span class="field__label">Chu kỳ</span>
-          <div class="field__control">
-            <select class="select" [(ngModel)]="exportType">
+      <div class="export-panel__filters filter-card filter-card--inline filter-grid">
+        <label class="filter-field filter-field--span-4">
+          <span class="filter-label">Chu kỳ</span>
+          <span class="filter-control">
+            <select class="filter-select" [(ngModel)]="exportType">
               <option [ngValue]="'monthly'">Theo tháng</option>
               <option [ngValue]="'yearly'">Theo năm</option>
             </select>
-          </div>
+            <svg class="filter-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </span>
         </label>
-        <label class="field">
-          <span class="field__label">Năm</span>
-          <div class="field__control">
-            <select class="select" name="exportYear" [(ngModel)]="exportYear">
+        <label class="filter-field filter-field--span-4">
+          <span class="filter-label">Năm</span>
+          <span class="filter-control">
+            <select class="filter-select" name="exportYear" [(ngModel)]="exportYear">
               @for (y of yearOptions; track y) {
                 <option [ngValue]="y">{{ y }}</option>
               }
             </select>
-          </div>
+            <svg class="filter-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </span>
         </label>
-        <label class="field">
-          <span class="field__label">Phương thức thanh toán</span>
-          <div class="field__control">
-            <select class="select" [(ngModel)]="exportMethod">
+        <label class="filter-field filter-field--span-4">
+          <span class="filter-label">Phương thức thanh toán</span>
+          <span class="filter-control">
+            <select class="filter-select" [(ngModel)]="exportMethod">
               @for (m of exportMethods; track m.value) {
                 <option [ngValue]="m.value">{{ m.label }}</option>
               }
             </select>
-          </div>
+            <svg class="filter-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </span>
         </label>
       </div>
     </div>
@@ -174,26 +183,36 @@
 <div *ngIf="payoutOpen" class="modal-overlay" (click)="closePayoutModal()">
   <div class="modal modal--xl payout-modal" (click)="stopPayoutModalPropagation($event)">
     <h3>Lịch sử giao dịch rút tiền</h3>
-    <div class="payout-filters">
-      <label class="field">
-        <span class="field__label">Trạng thái</span>
-        <select class="select" [(ngModel)]="payoutStatus" [disabled]="payoutLoading || payoutLoadingMore" (change)="applyPayoutFilter()">
-          <option [ngValue]="''">Tất cả</option>
-          <option [ngValue]="'paid'">{{ payoutStatusLabel('paid') }}</option>
-          <option [ngValue]="'pending'">{{ payoutStatusLabel('pending') }}</option>
-          <option [ngValue]="'in_transit'">{{ payoutStatusLabel('in_transit') }}</option>
-          <option [ngValue]="'canceled'">{{ payoutStatusLabel('canceled') }}</option>
-          <option [ngValue]="'failed'">{{ payoutStatusLabel('failed') }}</option>
-        </select>
+    <div class="payout-filters filter-card filter-card--inline filter-grid">
+      <label class="filter-field filter-field--span-6">
+        <span class="filter-label">Trạng thái</span>
+        <span class="filter-control">
+          <select class="filter-select" [(ngModel)]="payoutStatus" [disabled]="payoutLoading || payoutLoadingMore" (change)="applyPayoutFilter()">
+            <option [ngValue]="''">Tất cả</option>
+            <option [ngValue]="'paid'">{{ payoutStatusLabel('paid') }}</option>
+            <option [ngValue]="'pending'">{{ payoutStatusLabel('pending') }}</option>
+            <option [ngValue]="'in_transit'">{{ payoutStatusLabel('in_transit') }}</option>
+            <option [ngValue]="'canceled'">{{ payoutStatusLabel('canceled') }}</option>
+            <option [ngValue]="'failed'">{{ payoutStatusLabel('failed') }}</option>
+          </select>
+          <svg class="filter-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </span>
       </label>
-      <label class="field">
-        <span class="field__label">Giới hạn</span>
-        <select class="select" [(ngModel)]="payoutLimit" [disabled]="payoutLoading || payoutLoadingMore" (change)="applyPayoutFilter()">
-          <option [ngValue]="10">10</option>
-          <option [ngValue]="20">20</option>
-          <option [ngValue]="50">50</option>
-          <option [ngValue]="100">100</option>
-        </select>
+      <label class="filter-field filter-field--span-6">
+        <span class="filter-label">Giới hạn</span>
+        <span class="filter-control">
+          <select class="filter-select" [(ngModel)]="payoutLimit" [disabled]="payoutLoading || payoutLoadingMore" (change)="applyPayoutFilter()">
+            <option [ngValue]="10">10</option>
+            <option [ngValue]="20">20</option>
+            <option [ngValue]="50">50</option>
+            <option [ngValue]="100">100</option>
+          </select>
+          <svg class="filter-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </span>
       </label>
     </div>
 
