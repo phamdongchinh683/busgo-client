@@ -1,22 +1,7 @@
 :host {
   display: block;
-  width: min(620px, 100%);
+  width: 100%;
   min-width: 0;
-}
-
-.toolbar__action {
-  align-items: flex-end;
-}
-
-.toolbar__spacer {
-  visibility: hidden;
-}
-
-.toolbar__action .action-button {
-  width: 42px;
-  height: 42px;
-  min-width: 42px;
-  min-height: 42px;
 }
 
 .company-picker .filter-input {
@@ -65,15 +50,6 @@
 
 @media (max-width: 960px) {
   :host {
-    width: 100%;
-  }
-
-  .toolbar__action {
-    grid-column: 1 / -1;
-    align-items: stretch;
-  }
-
-  .toolbar__action .action-button {
     width: 100%;
   }
 }

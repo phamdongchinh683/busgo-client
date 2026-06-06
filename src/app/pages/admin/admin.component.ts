@@ -8,13 +8,12 @@ import { PageHeaderIntroComponent } from '@app/shared/components/page-header-int
 import { PageToastService } from '@app/shared/services/page-toast.service';
 import { auth, companyAdmin, publicApi } from '../../data/services';
 import { Company, CompanyListResponse } from '../../data/interfaces/company';
-import { CompanyAdmin, CreateCompanyAdminBody, UpdateCompanyAdminBody } from '../../data/interfaces/company-admin';
+import { CompanyAdmin, UpdateCompanyAdminBody } from '../../data/interfaces/company-admin';
 import { normalizeCompanyAdminList, mapCompanyAdminRow } from './utils/company-admin.mapper';
 import { getApiErrorMessage } from '@app/shared/utils/api-error.util';
 import { DEFAULT_PAGE_LIMIT, PAGE_LIMITS, type PageLimit } from '../../data/constants';
 import { CompanyAdminToolbarComponent } from './components/company-admin-toolbar/company-admin-toolbar.component';
 import { CompanyAdminTableComponent } from './components/company-admin-table/company-admin-table.component';
-import { CompanyAdminCreateModalComponent } from './components/company-admin-create-modal/company-admin-create-modal.component';
 import { CompanyAdminEditModalComponent } from './components/company-admin-edit-modal/company-admin-edit-modal.component';
 import { UserNotificationModalComponent } from '../user/components/user-notification-modal/user-notification-modal.component';
 
@@ -27,7 +26,6 @@ import { UserNotificationModalComponent } from '../user/components/user-notifica
     PageHeaderIntroComponent,
     CompanyAdminToolbarComponent,
     CompanyAdminTableComponent,
-    CompanyAdminCreateModalComponent,
     CompanyAdminEditModalComponent,
     UserNotificationModalComponent,
   ],
@@ -38,18 +36,11 @@ export class AdminComponent implements OnInit {
   pageLimits = PAGE_LIMITS;
 
   admins: CompanyAdmin[] = [];
-  createCompanies: Company[] = [];
-  createCompaniesLoading = false;
-  createCompaniesLoadingMore = false;
-  createCompanyDropdownOpen = false;
-  createCompanySearch = new FormControl('');
   filterCompanies: Company[] = [];
   companiesLoading = false;
   companiesLoadingMore = false;
   companyDropdownOpen = false;
   selectedCompany: Company | null = null;
-  private createCompanyNextCursor: number | null = null;
-  private createCompanySearchTerm = '';
   companySearch = new FormControl('');
   private companyNextCursor: number | null = null;
   private companySearchTerm = '';
@@ -58,9 +49,6 @@ export class AdminComponent implements OnInit {
   nextCursor: number | null = null;
   loading = false;
   loadingMore = false;
-
-  showCreate = false;
-  createSubmitting = false;
 
   showEdit = false;
   editingAdmin: CompanyAdmin | null = null;
@@ -80,7 +68,6 @@ export class AdminComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.fetchCreateCompanies('');
     this.fetchFilterCompanies('');
 
     this.companySearch.valueChanges
@@ -92,21 +79,11 @@ export class AdminComponent implements OnInit {
         this.companyDropdownOpen = true;
       });
 
-    this.createCompanySearch.valueChanges
-      .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
-      .subscribe((name) => {
-        const term = (name ?? '').toString().trim();
-        this.createCompanySearchTerm = term;
-        this.fetchCreateCompanies(term);
-        this.createCompanyDropdownOpen = true;
-      });
-
     const onClick = (event: MouseEvent) => {
       const target = event.target as HTMLElement | null;
       if (!target) return;
       if (target.closest('.dropdown') || target.closest('.company-picker') || target.closest('.field--company .input')) return;
       this.companyDropdownOpen = false;
-      this.createCompanyDropdownOpen = false;
     };
     window.addEventListener('click', onClick);
     this.destroyRef.onDestroy(() => window.removeEventListener('click', onClick));
@@ -135,69 +112,9 @@ export class AdminComponent implements OnInit {
     this.fetchMoreFilterCompanies();
   }
 
-  onCreateCompanySearchValueChange(value: string) {
-    this.createCompanySearch.setValue(value);
-  }
-
-  onCreateCompanyDropdownOpenChange(open: boolean) {
-    this.createCompanyDropdownOpen = open;
-    if (open && this.createCompanies.length === 0 && !this.createCompaniesLoading) {
-      this.fetchCreateCompanies(this.createCompanySearchTerm);
-    }
-  }
-
-  selectCreateCompany(company: Company | null) {
-    this.createCompanySearch.setValue(company?.name ?? '', { emitEvent: false });
-    this.createCompanyDropdownOpen = false;
-  }
-
-  onCreateCompanyDropdownScroll(event: Event) {
-    const el = event.target as HTMLElement;
-    const reachedBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 16;
-    if (!reachedBottom) return;
-    this.fetchMoreCreateCompanies();
-  }
-
   onLimitChange(value: PageLimit) {
     this.limit = value;
     this.fetch();
-  }
-
-  openCreate() {
-    this.resetCreateCompanyPicker();
-    this.showCreate = true;
-  }
-
-  onCreateOpenChange(open: boolean) {
-    this.showCreate = open;
-    if (!open) {
-      this.createSubmitting = false;
-      this.resetCreateCompanyPicker();
-    }
-  }
-
-  onCreateValidateFailed(msg: string) {
-    this.toast.show(msg, 'warning');
-  }
-
-  onCreateSubmit(body: CreateCompanyAdminBody) {
-    this.createSubmitting = true;
-    this.api.createCompanyAdmin(body).subscribe({
-      next: (res) => {
-        const created = this.resolveCreatedAdmin(res, body);
-        if (created) {
-          this.admins = [created, ...this.admins];
-        }
-        this.toast.show('Thành công.', 'success');
-        this.onCreateOpenChange(false);
-        this.cdr.markForCheck();
-      },
-      error: (err: unknown) => {
-        this.toast.show(getApiErrorMessage(err, 'Thất bại.'), 'error');
-        this.createSubmitting = false;
-        this.cdr.markForCheck();
-      },
-    });
   }
 
   onUpdateClick(admin: CompanyAdmin) {
@@ -250,35 +167,6 @@ export class AdminComponent implements OnInit {
     if (this.nextCursor === null || this.loadingMore) return;
     this.loadingMore = true;
     this.fetchAdmins(this.nextCursor, false);
-  }
-
-  private resolveCreatedAdmin(
-    res: { message?: string } | Record<string, unknown>,
-    body: CreateCompanyAdminBody,
-  ): CompanyAdmin | null {
-    if (this.selectedCompany && this.selectedCompany.id !== body.companyId) return null;
-
-    const raw = res as Record<string, unknown>;
-    const entity = raw['companyAdmin'] ?? raw['admin'] ?? raw['user'];
-    if (entity && typeof entity === 'object') {
-      return mapCompanyAdminRow(entity as Record<string, unknown>);
-    }
-
-    const companyName =
-      this.createCompanies.find((company) => company.id === body.companyId)?.name ??
-      this.filterCompanies.find((company) => company.id === body.companyId)?.name ??
-      this.selectedCompany?.name ??
-      '';
-
-    return {
-      id: -Date.now(),
-      fullName: body.fullName,
-      email: body.contactInfo.email,
-      phone: body.contactInfo.phone,
-      status: 'active',
-      companyId: body.companyId,
-      companyName,
-    };
   }
 
   private fetch() {
@@ -354,58 +242,6 @@ export class AdminComponent implements OnInit {
           this.companiesLoadingMore = false;
         },
       });
-  }
-
-  private fetchMoreCreateCompanies() {
-    if (this.createCompanyNextCursor === null) return;
-    if (this.createCompaniesLoading || this.createCompaniesLoadingMore) return;
-
-    this.createCompaniesLoadingMore = true;
-    this.publicCompanies
-      .getCompanies(this.COMPANY_PAGE_LIMIT, this.createCompanyNextCursor, this.createCompanySearchTerm || undefined)
-      .subscribe({
-        next: (res: CompanyListResponse) => {
-          const incoming = res.companies ?? [];
-          const existingIds = new Set(this.createCompanies.map((company) => company.id));
-          const merged = incoming.filter((company) => !existingIds.has(company.id));
-          this.createCompanies = [...this.createCompanies, ...merged];
-          this.createCompanyNextCursor = res.next ?? null;
-          this.createCompaniesLoadingMore = false;
-        },
-        error: () => {
-          this.createCompaniesLoadingMore = false;
-        },
-      });
-  }
-
-  private fetchCreateCompanies(name: string) {
-    this.createCompaniesLoading = true;
-    this.createCompanies = [];
-    this.createCompanyNextCursor = null;
-
-    this.publicCompanies.getCompanies(this.COMPANY_PAGE_LIMIT, undefined, name || undefined).subscribe({
-      next: (res: CompanyListResponse) => {
-        this.createCompanies = res.companies ?? [];
-        this.createCompanyNextCursor = res.next ?? null;
-        this.createCompaniesLoading = false;
-        this.createCompaniesLoadingMore = false;
-      },
-      error: () => {
-        this.createCompanies = [];
-        this.createCompanyNextCursor = null;
-        this.createCompaniesLoading = false;
-        this.createCompaniesLoadingMore = false;
-      },
-    });
-  }
-
-  private resetCreateCompanyPicker(): void {
-    this.createCompanyDropdownOpen = false;
-    this.createCompanySearch.setValue('', { emitEvent: false });
-    if (this.createCompanySearchTerm) {
-      this.createCompanySearchTerm = '';
-      this.fetchCreateCompanies('');
-    }
   }
 
   private fetchFilterCompanies(name: string) {

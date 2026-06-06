@@ -19,7 +19,7 @@
 
 <div *ngIf="!loading && admins.length === 0" class="empty">
   <h3>Không có tài khoản Nhà Xe</h3>
-  <p>Hãy thử điều chỉnh tìm kiếm hoặc tạo tài khoản mới.</p>
+  <p>Hãy thử điều chỉnh tìm kiếm.</p>
 </div>
 
 <div *ngIf="admins.length > 0" class="table-wrap" [class.table-wrap--busy]="loading" [attr.aria-busy]="loading">

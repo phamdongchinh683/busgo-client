@@ -23,7 +23,6 @@ export class CompanyAdminToolbarComponent {
   @Input() companySearchValue = '';
 
   @Output() limitChange = new EventEmitter<PageLimit>();
-  @Output() createClick = new EventEmitter<void>();
   @Output() selectCompany = new EventEmitter<Company | null>();
   @Output() dropdownOpenChange = new EventEmitter<boolean>();
   @Output() companyDropdownScroll = new EventEmitter<Event>();

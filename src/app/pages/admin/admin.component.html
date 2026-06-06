@@ -20,7 +20,6 @@
         (limitChange)="onLimitChange($event)"
         (selectCompany)="selectFilterCompany($event)"
         (companyDropdownScroll)="onCompanyDropdownScroll($event)"
-        (createClick)="openCreate()"
       ></app-company-admin-toolbar>
     </div>
   </div>
@@ -44,23 +43,6 @@
     </div>
   </div>
 </div>
-
-<app-company-admin-create-modal
-  [open]="showCreate"
-  (openChange)="onCreateOpenChange($event)"
-  [companies]="createCompanies"
-  [companiesLoading]="createCompaniesLoading"
-  [companiesLoadingMore]="createCompaniesLoadingMore"
-  [dropdownOpen]="createCompanyDropdownOpen"
-  (dropdownOpenChange)="onCreateCompanyDropdownOpenChange($event)"
-  [companySearchValue]="createCompanySearch.value ?? ''"
-  (companySearchValueChange)="onCreateCompanySearchValueChange($event)"
-  (companyDropdownScroll)="onCreateCompanyDropdownScroll($event)"
-  (companySelected)="selectCreateCompany($event)"
-  [submitting]="createSubmitting"
-  (submitted)="onCreateSubmit($event)"
-  (validateFailed)="onCreateValidateFailed($event)"
-></app-company-admin-create-modal>
 
 <app-company-admin-edit-modal
   [open]="showEdit"

@@ -93,12 +93,20 @@
   min-width: 0;
 }
 
+.filter-field--span-1 {
+  grid-column: span 1;
+}
+
 .filter-field--span-2 {
   grid-column: span 2;
 }
 
 .filter-field--span-3 {
   grid-column: span 3;
+}
+
+.filter-field--span-7 {
+  grid-column: span 7;
 }
 
 .filter-field--span-4 {
@@ -115,6 +123,18 @@
 
 .filter-field--span-8 {
   grid-column: span 8;
+}
+
+.filter-field--span-9 {
+  grid-column: span 9;
+}
+
+.filter-field--span-10 {
+  grid-column: span 10;
+}
+
+.filter-field--span-11 {
+  grid-column: span 11;
 }
 
 .filter-field--span-12 {
@@ -223,12 +243,17 @@
 }
 
 @media (max-width: 960px) {
+  .filter-field--span-1,
   .filter-field--span-2,
   .filter-field--span-3,
   .filter-field--span-4,
   .filter-field--span-5,
   .filter-field--span-6,
-  .filter-field--span-8 {
+  .filter-field--span-7,
+  .filter-field--span-8,
+  .filter-field--span-9,
+  .filter-field--span-10,
+  .filter-field--span-11 {
     grid-column: span 6;
   }
 }
@@ -244,12 +269,17 @@
     flex-direction: column;
   }
 
+  .filter-field--span-1,
   .filter-field--span-2,
   .filter-field--span-3,
   .filter-field--span-4,
   .filter-field--span-5,
   .filter-field--span-6,
+  .filter-field--span-7,
   .filter-field--span-8,
+  .filter-field--span-9,
+  .filter-field--span-10,
+  .filter-field--span-11,
   .filter-field--span-12 {
     grid-column: 1 / -1;
   }
