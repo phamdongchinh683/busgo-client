@@ -1,5 +1,5 @@
 export interface ChatBox {
-  id: number;
+  id: string;
   lastMessage?: string;
   senderId?: number;
   receiverId?: number;
@@ -18,7 +18,7 @@ export interface ChatBoxListResponse {
 
 export interface CreateChatBoxBody {
   message: string;
-  receiverId: number;
+  receiverId: string | number;
 }
 
 export interface ChatMessage {

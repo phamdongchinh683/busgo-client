@@ -66,19 +66,19 @@ export class ApiService {
       .pipe(tap(() => clearCacheByPrefix(this.usersCache, 'user-list')));
   }
 
-  updateUser(userId: number, payload: UpdateUserBody): Observable<UpdateUserResponse> {
+  updateUser(userId: string, payload: UpdateUserBody): Observable<UpdateUserResponse> {
     return this.http
       .put<UpdateUserResponse>(`${constant.baseUrl}/super-admin/user/${userId}`, payload)
       .pipe(tap(() => clearCacheByPrefix(this.usersCache, 'user-list')));
   }
 
-  deleteUser(userId: number): Observable<DeleteUserResponse> {
+  deleteUser(userId: string): Observable<DeleteUserResponse> {
     return this.http
       .delete<DeleteUserResponse>(`${constant.baseUrl}/super-admin/user/${userId}`)
       .pipe(tap(() => clearCacheByPrefix(this.usersCache, 'user-list')));
   }
 
-  updatePassword(userId: number, password: string): Observable<UpdateUserPasswordResponse> {
+  updatePassword(userId: string, password: string): Observable<UpdateUserPasswordResponse> {
     return this.http.put<UpdateUserPasswordResponse>(
       `${constant.baseUrl}/super-admin/user/${userId}/password`,
       { password },

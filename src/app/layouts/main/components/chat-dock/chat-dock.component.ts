@@ -77,7 +77,7 @@ export class ChatDockComponent {
   readonly loadingOlderMessages = signal(false);
   readonly threadMessagesError = signal<string | null>(null);
 
-  readonly selectedBoxId = signal<number | null>(null);
+  readonly selectedBoxId = signal<string | null>(null);
   readonly selectedTitle = signal('');
   readonly draft = signal('');
   readonly sendError = signal('');
@@ -140,7 +140,8 @@ export class ChatDockComponent {
   /** Đổi thread / reload → bỏ response HTTP cũ (race), không liên quan tới `next`. */
   private threadMessagesEpoch = 0;
   private typingStopDebounce: ReturnType<typeof setTimeout> | null = null;
-  private typingActiveBoxId: number | null = null;
+  private typingActiveBoxId: string | null = null;
+  private recipientSearchDebounce: ReturnType<typeof setTimeout> | null = null;
   private peerConnection: RTCPeerConnection | null = null;
   private localStream: MediaStream | null = null;
   private remoteStream: MediaStream | null = null;
@@ -284,10 +285,20 @@ export class ChatDockComponent {
   onRecipientSearchInput(event: Event): void {
     const v = (event.target as HTMLInputElement).value;
     this.searchQuery.set(v);
+
+    // Auto search after short pause (no need to press Enter)
+    if (this.recipientSearchDebounce) clearTimeout(this.recipientSearchDebounce);
+    this.recipientSearchDebounce = setTimeout(() => {
+      this.runUserSearch(v);
+    }, 450);
   }
 
   onRecipientSearchSubmit(event?: Event): void {
     event?.preventDefault();
+    if (this.recipientSearchDebounce) {
+      clearTimeout(this.recipientSearchDebounce);
+      this.recipientSearchDebounce = null;
+    }
     this.runUserSearch(this.searchQuery());
   }
 
@@ -303,8 +314,11 @@ export class ChatDockComponent {
       .pipe(
         map((res) => {
           const myId = getChatViewerUserId();
-          let list = res.users.filter((u) => u.id !== myId);
-          if (filters.search) list = clientFilterUsers(list, filters.search);
+          let list = res.users.filter((u) => {
+            const chatId = (u as any).publicId ?? u.id;
+            return Number(chatId) !== myId;
+          });
+          list = clientFilterUsers(list, term);
           return list;
         }),
         finalize(() => this.searchingUsers.set(false)),
@@ -381,8 +395,8 @@ export class ChatDockComponent {
   }
 
   private handleChatUnreadCount(p: ChatUnreadCountPayload): void {
-    const boxId = +p.boxId!;
-    if (!(boxId >= 1)) return;
+    const boxId = p.boxId ? String(p.boxId) : '';
+    if (!boxId) return;
     const lm = p.lastMessage;
     if (typeof lm === 'string' && lm.trim()) {
       this.patchBoxPreview(boxId, lm, undefined, { clearLastMessageSenderWhenNoId: true });
@@ -468,11 +482,19 @@ export class ChatDockComponent {
     this.searchQuery.set('');
     this.searchResults.set([]);
     this.createError.set('');
+    if (this.recipientSearchDebounce) {
+      clearTimeout(this.recipientSearchDebounce);
+      this.recipientSearchDebounce = null;
+    }
     this.newChatPopupOpen.set(true);
   }
 
   closeNewChatPopup(): void {
     if (this.creating()) return;
+    if (this.recipientSearchDebounce) {
+      clearTimeout(this.recipientSearchDebounce);
+      this.recipientSearchDebounce = null;
+    }
     this.newChatPopupOpen.set(false);
   }
 
@@ -481,21 +503,28 @@ export class ChatDockComponent {
     const message = this.newMessage().trim();
     const myId = getChatViewerUserId();
     const peer = this.selectedReceiver();
-    const receiverId = peer ? Number(peer.id) : NaN;
 
-    if (!message || myId === null) {
-      this.createError.set('Nhập nội dung và đăng nhập hợp lệ.');
+    if (myId === null) {
+      console.warn('[chat] getChatViewerUserId() returned null (will still attempt create; backend should derive creator from token). localStorage user =', localStorage.getItem('user'));
+    }
+
+    if (!message) {
+      this.createError.set('Vui lòng nhập nội dung tin nhắn đầu tiên.');
       return;
     }
-    if (!peer?.fullName?.trim()) {
-      this.createError.set('Chọn người nhận có họ tên hợp lệ.');
-      return;
-    }
-    if (!peer || !Number.isFinite(receiverId) || receiverId <= 0) {
+
+    if (!peer) {
       this.createError.set('Tìm và chọn một người nhận.');
       return;
     }
-    if (receiverId === myId) {
+    if (!peer.fullName?.trim()) {
+      this.createError.set('Chọn người nhận có họ tên hợp lệ.');
+      return;
+    }
+
+    const receiverIdRaw = (peer as any).publicId ?? peer.id;
+    const receiverIdNum = Number(receiverIdRaw);
+    if (myId !== null && receiverIdNum === myId) {
       this.createError.set('Không thể chọn chính mình làm người nhận.');
       return;
     }
@@ -503,14 +532,52 @@ export class ChatDockComponent {
     this.creating.set(true);
     this.createError.set('');
     this.chatService
-      .createBox({ message, receiverId })
+      .createBox({ message, receiverId: receiverIdRaw })
       .pipe(finalize(() => this.creating.set(false)), takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: () => {
+        next: (res: unknown) => {
           this.newChatPopupOpen.set(false);
+          this.newMessage.set('');
+          this.selectedReceiver.set(null);
+
+          // Ensure we actually fetch fresh list (in case a previous load was in flight).
+          this.boxesLoadInFlight = false;
           this.loadBoxesInitial();
+
+          // Auto-open the newly created conversation so the user actually enters the box.
+          // The create response may contain the box id (or we match by the peer we just picked).
+          setTimeout(() => {
+            const list = this.boxes();
+            if (!list.length) return;
+
+            let toOpen: ChatBox | undefined;
+
+            // Try to extract a box id directly from the create response if backend provides one.
+            const resObj = (res && typeof res === 'object') ? (res as Record<string, unknown>) : null;
+            const candidateId =
+              resObj && (resObj['id'] ?? resObj['boxId'] ?? (resObj['data'] && typeof resObj['data']==='object' ? (resObj['data'] as any)['id'] : null));
+            if (candidateId != null) {
+              const sid = String(candidateId);
+              toOpen = list.find((b) => b.id === sid);
+            }
+
+            // Fallback: match by the receiver we chose for this new chat (compare numerically against box ids).
+            if (!toOpen) {
+              toOpen = list.find((b) => b.senderId === receiverIdNum || b.receiverId === receiverIdNum);
+            }
+
+            // Last resort: newest box is usually first after create.
+            if (!toOpen) toOpen = list[0];
+
+            if (toOpen) {
+              this.openThread(toOpen, true);
+            }
+          }, 160);
         },
-        error: () => this.createError.set('Không tạo được cuộc trò chuyện.'),
+        error: (err: unknown) => {
+          console.error('[createBox] failed', err);
+          this.createError.set('Không tạo được cuộc trò chuyện.');
+        },
       });
   }
 
@@ -978,7 +1045,8 @@ export class ChatDockComponent {
   }
 
   userSearchHitOnline(u: User): boolean {
-    const uid = Number(u.id);
+    const chatId = (u as any).publicId ?? u.id;
+    const uid = Number(chatId);
     if (!Number.isFinite(uid)) return false;
     return this.socket.onlineUserIds().has(uid);
   }
@@ -1035,7 +1103,7 @@ export class ChatDockComponent {
   }
 
   private patchBoxPreview(
-    boxId: number,
+    boxId: string,
     text: string,
     lastMessageSenderId?: number,
     opts?: { clearLastMessageSenderWhenNoId?: boolean },
@@ -1107,7 +1175,7 @@ export class ChatDockComponent {
     });
   }
 
-  private appendLocalOutgoing(_boxId: number, text: string): void {
+  private appendLocalOutgoing(_boxId: string, text: string): void {
     const uid = getChatViewerUserId();
     const optimistic: ChatMessage = {
       id: Date.now(),
@@ -1123,7 +1191,7 @@ export class ChatDockComponent {
     this.scrollToBottom();
   }
 
-  private appendLocalImagePending(boxId: number, localUrl: string): number {
+  private appendLocalImagePending(boxId: string, localUrl: string): number {
     const uid = getChatViewerUserId();
     const tempId = Date.now();
     const optimistic: ChatMessage & { pendingUpload?: boolean } = {
@@ -1142,7 +1210,7 @@ export class ChatDockComponent {
     return tempId;
   }
 
-  private markPendingImageUploaded(boxId: number, tempId: number, remoteUrl: string): void {
+  private markPendingImageUploaded(boxId: string, tempId: number, remoteUrl: string): void {
     this.messages.update((list) =>
       list.map((m) =>
         m.id === tempId
@@ -1156,7 +1224,7 @@ export class ChatDockComponent {
     this.cleanupPendingObjectUrl(tempId);
   }
 
-  private removePendingImage(boxId: number, tempId: number): void {
+  private removePendingImage(boxId: string, tempId: number): void {
     this.messages.update((list) => list.filter((m) => m.id !== tempId));
     this.cleanupPendingObjectUrl(tempId);
   }
@@ -1283,8 +1351,8 @@ export class ChatDockComponent {
   }
 
   private handleTypingStart(p: ChatTypingPayload): void {
-    const boxId = Number(p.boxId);
-    if (!Number.isFinite(boxId)) return;
+    const boxId = p.boxId != null ? String(p.boxId) : '';
+    if (!boxId) return;
     if (!this.inChatThread() || this.selectedBoxId() !== boxId) return;
     const myId = getChatViewerUserId();
     if (myId !== null && p.userId === myId) return;
@@ -1292,8 +1360,8 @@ export class ChatDockComponent {
   }
 
   private handleTypingStop(p: ChatTypingPayload): void {
-    const boxId = Number(p.boxId);
-    if (!Number.isFinite(boxId)) return;
+    const boxId = p.boxId != null ? String(p.boxId) : '';
+    if (!boxId) return;
     if (this.selectedBoxId() !== boxId) return;
     const myId = getChatViewerUserId();
     if (myId !== null && p.userId === myId) return;
@@ -1301,13 +1369,13 @@ export class ChatDockComponent {
   }
 
   private handleMessageRecalled(p: ChatMessageRecalledPayload): void {
-    const boxId = Number(p.boxId);
+    const boxId = p.boxId != null ? String(p.boxId) : '';
     const messageId = Number(p.messageId);
-    if (!Number.isFinite(boxId) || !Number.isFinite(messageId)) return;
+    if (!boxId || !Number.isFinite(messageId)) return;
     this.applyRecalledMessage(boxId, messageId, p.body);
   }
 
-  private applyRecalledMessage(boxId: number, messageId: number, body: string): void {
+  private applyRecalledMessage(boxId: string, messageId: number, body: string): void {
     let changed = false;
     this.messages.update((list) =>
       list.map((m) => {
@@ -1338,8 +1406,8 @@ export class ChatDockComponent {
   }
 
   private shouldHandleCallPayload(boxIdRaw: number | string): boolean {
-    const boxId = Number(boxIdRaw);
-    return Number.isFinite(boxId) && this.inChatThread() && this.selectedBoxId() === boxId;
+    const boxId = boxIdRaw != null ? String(boxIdRaw) : '';
+    return !!boxId && this.inChatThread() && this.selectedBoxId() === boxId;
   }
 
   private isPayloadFromMe(userId: number): boolean {
@@ -1465,7 +1533,7 @@ export class ChatDockComponent {
     this.callStatus.set('Đối phương đã kết thúc cuộc gọi.');
   }
 
-  private createPeerConnection(boxId: number): RTCPeerConnection {
+  private createPeerConnection(boxId: string): RTCPeerConnection {
     // If we somehow still have an old PC in a bad state (e.g. previous glare or mid-call error),
     // close it to avoid InvalidStateError on subsequent setLocal/setRemote.
     if (this.peerConnection) {
@@ -1647,8 +1715,7 @@ export class ChatDockComponent {
   }
 
   private handleSocketMessageNew(msg: ChatRealtimeMessage): void {
-    const boxId = Number(msg.boxId);
-    if (!Number.isFinite(boxId)) return;
+    const boxId = msg.boxId;
 
     const myId = getChatViewerUserId();
     if (myId !== null && Number(msg.senderId) === myId) return;
@@ -1706,8 +1773,8 @@ export class ChatDockComponent {
   }
 
   private handleChatNew(msg: ChatRealtimeMessage): void {
-    const boxId = Number(msg.boxId);
-    if (!Number.isFinite(boxId)) return;
+    const boxId = msg.boxId != null ? String(msg.boxId) : '';
+    if (!boxId) return;
 
     const peerTitle = msg.title?.trim() || msg.senderName.trim() || 'Chat';
 

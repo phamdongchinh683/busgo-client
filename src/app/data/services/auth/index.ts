@@ -15,7 +15,7 @@ export interface UpdatePasswordResponse {
 }
 
 export interface SendNotificationRequest {
-  userId: number;
+  userId: string | number;
   title: string;
   body: string;
   data?: string;

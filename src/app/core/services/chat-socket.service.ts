@@ -82,15 +82,15 @@ export class ChatSocketService {
 
   readonly onlineUserIds = signal<ReadonlySet<number>>(new Set());
 
-  private joinedBoxId: number | null = null;
+  private joinedBoxId: string | null = null;
 
   private readonly onSocketConnect = (): void => {
     if (this.joinedBoxId === null) return;
     this.emitChatJoin(this.joinedBoxId);
   };
 
-  private emitChatJoin(boxId: number): void {
-    this.socket?.emit('chat:join', { boxId: Number(boxId) });
+  private emitChatJoin(boxId: string): void {
+    this.socket?.emit('chat:join', { boxId });
   }
 
   private forceLogoutFromSocket(reason: string): void {
@@ -291,8 +291,8 @@ export class ChatSocketService {
     this.teardownSocket();
   }
 
-  joinBox(boxId: number): void {
-    const id = +boxId;
+  joinBox(boxId: string): void {
+    const id = boxId;
     if (!this.socket?.connected) this.connect();
     const sock = this.socket;
     if (!sock) return;
@@ -306,10 +306,11 @@ export class ChatSocketService {
     }
   }
 
-  leaveBox(boxId: number): void {
-    const id = +boxId;
+  leaveBox(boxId: string): void {
+    const id = boxId;
     this.socket?.emit('chat:leave', { boxId: id });
-    if (this.joinedBoxId === id) this.joinedBoxId = null;
+    if (this.joinedBoxId === id) 
+      this.joinedBoxId = null;
   }
 
   leaveJoinedRoom(): void {
@@ -317,72 +318,62 @@ export class ChatSocketService {
     this.leaveBox(this.joinedBoxId);
   }
 
-  emitMessageSend(boxId: number, body: string): void {
-    const id = +boxId;
+  emitMessageSend(boxId: string, body: string): void {
     if (!this.socket?.connected) this.connect();
     const senderId = getChatViewerUserId();
     this.socket?.emit('chat:message:send', {
       body,
       message: body,
-      boxId: id,
+      boxId,
       ...(senderId !== null ? { senderId } : {}),
       createdAt: new Date().toISOString(),
       senderName: viewerFullNameFromStorage(),
     });
   }
 
-  emitChatRead(boxId: number): void {
-    const id = +boxId;
+  emitChatRead(boxId: string): void {
     if (!this.socket?.connected) this.connect();
-    this.socket?.emit('chat:read', { boxId: id });
+    this.socket?.emit('chat:read', { boxId });
   }
 
-  emitTypingStart(boxId: number): void {
-    const id = +boxId;
+  emitTypingStart(boxId: string): void {
     if (!this.socket?.connected) this.connect();
-    this.socket?.emit('chat:typing:start', { boxId: id });
+    this.socket?.emit('chat:typing:start', { boxId });
   }
 
-  emitTypingStop(boxId: number): void {
-    const id = +boxId;
+  emitTypingStop(boxId: string): void {
     if (!this.socket?.connected) this.connect();
-    this.socket?.emit('chat:typing:stop', { boxId: id });
+    this.socket?.emit('chat:typing:stop', { boxId });
   }
 
-  emitCallStart(boxId: number, callType: string): void {
-    const id = +boxId;
+  emitCallStart(boxId: string, callType: string): void {
     if (!this.socket?.connected) this.connect();
-    this.socket?.emit('chat:call:start', { boxId: id, callType: normalizeCallType(callType) });
+    this.socket?.emit('chat:call:start', { boxId, callType: normalizeCallType(callType) });
   }
 
-  emitCallOffer(boxId: number, offer: unknown): void {
-    const id = +boxId;
+  emitCallOffer(boxId: string, offer: unknown): void {
     if (!this.socket?.connected) this.connect();
-    this.socket?.emit('chat:call:offer', { boxId: id, offer });
+    this.socket?.emit('chat:call:offer', { boxId, offer });
   }
 
-  emitCallAnswer(boxId: number, answer: unknown): void {
-    const id = +boxId;
+  emitCallAnswer(boxId: string, answer: unknown): void {
     if (!this.socket?.connected) this.connect();
-    this.socket?.emit('chat:call:answer', { boxId: id, answer });
+    this.socket?.emit('chat:call:answer', { boxId, answer });
   }
 
-  emitCallIceCandidate(boxId: number, candidate: unknown): void {
-    const id = +boxId;
+  emitCallIceCandidate(boxId: string, candidate: unknown): void {
     if (!this.socket?.connected) this.connect();
-    this.socket?.emit('chat:call:ice-candidate', { boxId: id, candidate });
+    this.socket?.emit('chat:call:ice-candidate', { boxId, candidate });
   }
 
-  emitCallReject(boxId: number): void {
-    const id = +boxId;
+  emitCallReject(boxId: string): void {
     if (!this.socket?.connected) this.connect();
-    this.socket?.emit('chat:call:reject', { boxId: id });
+    this.socket?.emit('chat:call:reject', { boxId });
   }
 
-  emitCallEnd(boxId: number): void {
-    const id = +boxId;
+  emitCallEnd(boxId: string): void {
     if (!this.socket?.connected) this.connect();
-    this.socket?.emit('chat:call:end', { boxId: id });
+    this.socket?.emit('chat:call:end', { boxId });
   }
 
   private teardownSocket(): void {

@@ -5,9 +5,8 @@ export function getChatViewerUserId(): number | null {
   const raw = localStorage.getItem('user');
   if (!raw) return null;
   try {
-    const u = JSON.parse(raw) as { id?: number | string };
-    const n = +(u.id ?? 0);
-    return n > 0 ? n : null;
+    const u = JSON.parse(raw);
+    return u['id'];
   } catch {
     return null;
   }
@@ -76,13 +75,10 @@ function extractBoxRows(r: Record<string, unknown>): unknown[] | null {
   return null;
 }
 
-function coerceBoxId(o: Record<string, unknown>): number | null {
+function coerceBoxId(o: Record<string, unknown>): string | null {
   const raw = o['id'] ?? o['boxId'];
-  if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
-  if (typeof raw === 'string' && raw.trim() !== '') {
-    const n = parseInt(raw, 10);
-    return Number.isFinite(n) ? n : null;
-  }
+  if (typeof raw === 'string' && raw.trim() !== '') return raw.trim();
+  if (typeof raw === 'number' && Number.isFinite(raw)) return String(raw);
   return null;
 }
 

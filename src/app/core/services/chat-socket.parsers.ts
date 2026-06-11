@@ -44,7 +44,7 @@ export function coerceChatRealtimePayload(raw: unknown): ChatRealtimeMessage | n
   return {
     senderId,
     body,
-    boxId: boxId as number | string,
+    boxId: String(boxId),
     senderName,
     ...(createdAt ? { createdAt } : {}),
     ...(title ? { title } : {}),
@@ -62,7 +62,7 @@ export function coerceTypingPayload(raw: unknown): ChatTypingPayload | null {
   const boxId = o['boxId'];
   const userId = toSocketNumber(o['userId']);
   if (boxId === undefined || boxId === null || userId === null) return null;
-  return { boxId: boxId as number | string, userId };
+  return { boxId: String(boxId), userId };
 }
 
 export function coerceMessageRecalledPayload(raw: unknown): ChatMessageRecalledPayload | null {
@@ -78,7 +78,7 @@ export function coerceMessageRecalledPayload(raw: unknown): ChatMessageRecalledP
   const receiverId = toSocketNumber(o['receiverId']);
   const updatedAt = pickStr(o, 'updatedAt');
   return {
-    boxId: boxId as number | string,
+    boxId: String(boxId),
     messageId: messageId as number | string,
     body,
     senderId,
@@ -105,7 +105,7 @@ export function coerceUnreadPayload(raw: unknown): ChatUnreadCountPayload | null
   }
 
   return {
-    boxId: boxId as number | string,
+    boxId: String(boxId),
     ...(viewerUnread !== undefined ? { count: viewerUnread } : {}),
     ...(unreadCountAlias !== undefined ? { unreadCount: unreadCountAlias } : {}),
     ...(unreadReceiverCount !== undefined ? { unreadReceiverCount } : {}),
@@ -122,7 +122,7 @@ export function coerceCallStartPayload(raw: unknown): ChatCallStartPayload | nul
   if (boxId === undefined || boxId === null || userId === null) return null;
   return {
     userId,
-    boxId: boxId as number | string,
+    boxId: String(boxId),
     callType: normalizeCallType(o['callType']),
   };
 }
@@ -149,5 +149,5 @@ export function coerceCallSignalPayload(
   const userId = toSocketNumber(o['userId']);
   const payload = o[payloadKey];
   if (boxId === undefined || boxId === null || userId === null || payload === undefined) return null;
-  return { userId, boxId: boxId as number | string, payload };
+  return { userId, boxId: String(boxId), payload };
 }

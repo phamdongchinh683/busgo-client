@@ -393,7 +393,7 @@
             <button type="button" class="messenger__new-cancel action-button action-button--ghost" (click)="closeNewChatPopup()">
             Hủy
           </button>
-            <button type="button" class="messenger__send-lg action-button" (click)="submitNewChat()" [disabled]="creating()">
+            <button type="button" class="messenger__send-lg action-button" (click)="submitNewChat()" [disabled]="creating() || !selectedReceiver() || !newMessage().trim()">
             {{ creating() ? 'Đang tạo…' : 'Bắt đầu trò chuyện' }}
           </button>
         </footer>

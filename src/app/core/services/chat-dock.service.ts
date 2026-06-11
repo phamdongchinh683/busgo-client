@@ -9,7 +9,7 @@ export class ChatDockService {
   readonly panelAnchor = signal<{ top: number; right: number } | null>(null);
 
   private readonly _panelOpenedViaHeaderToggle = signal(false);
-  private lastUnreadByBox = new Map<number, number>();
+  private lastUnreadByBox = new Map<string, number>();
 
   togglePanel(anchor?: { top: number; right: number }): void {
     if (anchor) this.panelAnchor.set(anchor);
@@ -34,13 +34,13 @@ export class ChatDockService {
     this.recomputeUnreadBadgeFromMap();
   }
 
-  bumpUnreadIfNeeded(panelOpen: boolean, activeBoxId: number | null, eventBoxId: number): void {
+  bumpUnreadIfNeeded(panelOpen: boolean, activeBoxId: string | null, eventBoxId: string): void {
     let should = false;
     if (!panelOpen) should = true;
     else if (activeBoxId === null || activeBoxId !== eventBoxId) should = true;
     if (!should) return;
 
-    const id = +eventBoxId;
+    const id = eventBoxId;
 
     const cur = this.lastUnreadByBox.get(id) ?? 0;
     this.lastUnreadByBox.set(id, cur + 1);
@@ -63,8 +63,8 @@ export class ChatDockService {
     this.recomputeUnreadBadgeFromMap();
   }
 
-  applySocketUnreadCount(boxId: number, count: number): void {
-    const id = +boxId;
+  applySocketUnreadCount(boxId: string, count: number): void {
+    const id = boxId;
     const next = Math.max(0, Math.floor(Number(count)));
     const prev = this.lastUnreadByBox.get(id) ?? 0;
     this.lastUnreadByBox.set(id, next);

@@ -24,17 +24,18 @@ export function buildUserSearchFilters(term: string): UserFilters | null {
   if (t.includes('@')) return { limit: 20, email: t };
   const digits = t.replace(/\D/g, '');
   if (digits.length >= 9) return { limit: 20, phone: digits };
-  return { limit: 25, search: t };
+  return { limit: 20, search: t };
 }
 
 export function clientFilterUsers(users: User[], term: string): User[] {
   const q = term.trim().toLowerCase();
   if (q.length < 2) return users;
+  const qDigits = q.replace(/\D/g, '');
   return users.filter(
     (u) =>
       u.fullName.toLowerCase().includes(q) ||
       (u.email ?? '').toLowerCase().includes(q) ||
-      (u.phone ?? '').replace(/\D/g, '').includes(q.replace(/\D/g, '')),
+      (qDigits.length > 0 && (u.phone ?? '').replace(/\D/g, '').includes(qDigits)),
   );
 }
 

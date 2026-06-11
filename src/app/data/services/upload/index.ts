@@ -29,7 +29,7 @@ export class ApiService {
 
   constructor(private readonly http: HttpClient) {}
 
-  getPresigned(folder: string, id: number): Observable<UploadPresignedResponse> {
+  getPresigned(folder: string, id: string | number): Observable<UploadPresignedResponse> {
     const cacheKey = this.presignedCacheKey(folder, id);
     const cached = this.presignedCache.get(cacheKey);
     if (cached && cached.expiresAt > Date.now()) {
@@ -58,11 +58,11 @@ export class ApiService {
     return request$;
   }
 
-  getChatBoxPresigned(boxId: number): Observable<UploadPresignedResponse> {
+  getChatBoxPresigned(boxId: string): Observable<UploadPresignedResponse> {
     return this.getPresigned('chat', boxId);
   }
 
-  private presignedCacheKey(folder: string, id: number): string {
+  private presignedCacheKey(folder: string, id: string | number): string {
     return `${folder}:${id}`;
   }
 

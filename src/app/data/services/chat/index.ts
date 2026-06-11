@@ -24,7 +24,7 @@ export class ApiService {
   }
 
   listMessages(
-    boxId: number,
+    boxId: string,
     opts: { limit?: number; next?: number | null; message?: string } = {},
   ): Observable<ChatMessagesListResponse> {
     const limit = opts.limit ?? 10;
@@ -48,7 +48,7 @@ export class ApiService {
     });
   }
 
-  sendMessage(boxId: number, body: SendChatMessageBody): Observable<unknown> {
+  sendMessage(boxId: string, body: SendChatMessageBody): Observable<unknown> {
     return this.http.post(`${chatBase()}/box/${boxId}/message`, body, {
       headers: {
         'Content-Type': 'application/json',
@@ -57,7 +57,7 @@ export class ApiService {
     });
   }
 
-  recallMessage(boxId: number, messageId: number): Observable<unknown> {
+  recallMessage(boxId: string, messageId: number): Observable<unknown> {
     return this.http.put(`${chatBase()}/box/${boxId}/message/${messageId}`, {}, {
       headers: {
         'Content-Type': 'application/json',

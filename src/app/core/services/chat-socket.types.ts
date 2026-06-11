@@ -1,14 +1,14 @@
 export interface ChatRealtimeMessage {
   senderId: number;
   body: string;
-  boxId: number | string;
+  boxId: string;
   createdAt?: string;
   senderName: string;
   title?: string;
 }
 
 export interface ChatUnreadCountPayload {
-  boxId: number | string;
+  boxId:  string;
   count?: number;
   unreadCount?: number;
   unreadReceiverCount?: number;
@@ -18,11 +18,11 @@ export interface ChatUnreadCountPayload {
 
 export interface ChatTypingPayload {
   userId: number;
-  boxId: number | string;
+  boxId: string;
 }
 
 export interface ChatMessageRecalledPayload {
-  boxId: number | string;
+  boxId: string;
   messageId: number | string;
   body: string;
   senderId: number;
@@ -34,7 +34,7 @@ export type ChatCallType = 'voice' | 'video';
 
 export interface ChatCallStartPayload {
   userId: number;
-  boxId: number | string;
+  boxId: string;
   callType: ChatCallType;
 }
 
@@ -44,6 +44,6 @@ export interface ChatCallActivePayload extends ChatCallStartPayload {
 
 export interface ChatCallSignalPayload<T = unknown> {
   userId: number;
-  boxId: number | string;
+  boxId: string;
   payload: T;
 }

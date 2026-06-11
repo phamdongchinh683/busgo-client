@@ -4,7 +4,7 @@ export type UserAuthType = 'facebook' | 'google';
 export type StaffProfileRole = 'company_admin' | 'dispatcher' | 'support' | string;
 
 export interface User {
-  id: number;
+  id: string;
   fullName: string;
   email: string | null;
   phone: string | null;
@@ -12,7 +12,9 @@ export interface User {
   role: UserRole;
   type?: UserAuthType | null;
   staffProfileRole?: StaffProfileRole | null;
-  password: string;
+  password?: string;
+  /** Chat-facing / public identifier for this user (used for receiverId etc. in conversations) */
+  publicId?: string | number;
 }
 
 export interface UserListResponse {
