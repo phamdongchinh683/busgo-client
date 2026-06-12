@@ -13,12 +13,12 @@ export function mapCompanyAdminRow(raw: Record<string, unknown>): CompanyAdmin {
   const contact = raw['contactInfo'] as { email?: string; phone?: string } | undefined;
   const phoneSource = String(contact?.phone ?? raw['phone'] ?? '');
   return {
-    id: Number(raw['id']),
+    id: String(raw['id'] ?? ''),
     fullName: String(raw['fullName'] ?? ''),
     email: String(contact?.email ?? raw['email'] ?? ''),
     phone: digitsOnlyPhone(phoneSource) || phoneSource.trim(),
     status: normalizeStatus(raw['status']),
-    companyId: Number(raw['companyId'] ?? ''),
+    companyId: String(raw['companyId'] ?? ''),
     companyName: String(raw['companyName'] ?? ''),
   };
 }

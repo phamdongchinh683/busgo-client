@@ -1,12 +1,12 @@
 export type CompanyAdminStatus = 'active' | 'inactive' | 'banned';
 
 export interface CompanyAdmin {
-  id: number;
+  id: string;
   fullName: string;
   email: string;
   phone: string;
   status: CompanyAdminStatus;
-  companyId: number;
+  companyId: string;
   companyName: string;
 }
 
